@@ -90,8 +90,8 @@ light_volumetrics_vs20.fxc
 
 vance_scope_ps30.fxc
 vance_scope_vs30.fxc
-vance_liquid_ps30.fxc
-vance_liquid_vs30.fxc
+//vance_liquid_ps30.fxc
+//vance_liquid_vs30.fxc
 lpreview1_ps2x.fxc
 
 //writez_vs20.fxc
