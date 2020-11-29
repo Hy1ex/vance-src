@@ -82,6 +82,7 @@
 #include "bonetoworldarray.h"
 #include "cmodel.h"
 #include "renderparm.h"
+#include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -3879,6 +3880,15 @@ void CClientShadowMgr::AdvanceFrame()
 	m_ShadowAllocator.AdvanceFrame();
 }
 
+int _cdecl CompareLights(const ClientShadowHandle_t *light_left, const ClientShadowHandle_t *light_right)
+{
+	const FlashlightState_t& flashlightState1 = shadowmgr->GetFlashlightState(g_pClientShadowMgr->GetShadowHandle(*light_left));
+	const FlashlightState_t& flashlightState2 = shadowmgr->GetFlashlightState(g_pClientShadowMgr->GetShadowHandle(*light_right));
+
+	float distance1 = (flashlightState1.m_vecLightOrigin - MainViewOrigin()).Length();
+	float distance2 = (flashlightState2.m_vecLightOrigin - MainViewOrigin()).Length();
+	return int(distance1 - distance2);
+}
 
 //-----------------------------------------------------------------------------
 // Re-render shadow depth textures that lie in the leaf list
@@ -3889,6 +3899,7 @@ int CClientShadowMgr::BuildActiveShadowDepthList(const CViewSetup& viewSetup, in
 	GeneratePerspectiveFrustum(viewSetup.origin, viewSetup.angles, viewSetup.zNear, viewSetup.zFar, viewSetup.fov, viewSetup.m_flAspectRatio, viewFrustum);
 
 	int nActiveDepthShadowCount = 0;
+	CUtlVector<ClientShadowHandle_t> vActiveShadows;
 	for (ClientShadowHandle_t i = m_Shadows.Head(); i != m_Shadows.InvalidIndex(); i = m_Shadows.Next(i))
 	{
 		ClientShadow_t& shadow = m_Shadows[i];
@@ -3904,7 +3915,7 @@ int CClientShadowMgr::BuildActiveShadowDepthList(const CViewSetup& viewSetup, in
 			continue;
 
 		// Calculate an AABB around the shadow frustum
-		/*Vector vecAbsMins, vecAbsMaxs;
+		Vector vecAbsMins, vecAbsMaxs;
 		CalculateAABBFromProjectionMatrix( shadow.m_WorldToShadow, &vecAbsMins, &vecAbsMaxs );
 
 		Frustum_t viewFrustum;
@@ -3914,25 +3925,27 @@ int CClientShadowMgr::BuildActiveShadowDepthList(const CViewSetup& viewSetup, in
 		// If it's not in the view frustum, move on
 		if ( R_CullBox( vecAbsMins, vecAbsMaxs, viewFrustum ) )
 		{
-			shadowmgr->SetFlashlightDepthTexture( shadow.m_ShadowHandle, NULL, 0 );
 			continue;
-		}*/
+		}
+		
 
+		vActiveShadows.AddToHead(i);
+	}
+
+	vActiveShadows.Sort(CompareLights);
+
+	FOR_EACH_VEC(vActiveShadows, i)
+	{
+		ClientShadow_t& shadow = m_Shadows[vActiveShadows[i]];
 		if (nActiveDepthShadowCount >= nMaxDepthShadows)
 		{
-			static bool s_bOverflowWarning = false;
-			if (!s_bOverflowWarning)
-			{
-				Warning("Too many depth textures rendered in a single view!\n");
-				Assert(0);
-				s_bOverflowWarning = true;
-			}
 			shadowmgr->SetFlashlightDepthTexture(shadow.m_ShadowHandle, NULL, 0);
 			continue;
 		}
 
-		pActiveDepthShadows[nActiveDepthShadowCount++] = i;
+		pActiveDepthShadows[nActiveDepthShadowCount++] = vActiveShadows[i];
 	}
+
 	return nActiveDepthShadowCount;
 }
 
