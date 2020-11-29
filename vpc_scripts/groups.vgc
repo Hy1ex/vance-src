@@ -22,7 +22,6 @@ $Group "game"
 	"server"
 	"tier1"
 	"vgui_controls"
-	"rendersystem"
 }
 
 $Group "shaders"
@@ -56,7 +55,6 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
-	"rendersystem"
 }
 
 $Group "tools"
