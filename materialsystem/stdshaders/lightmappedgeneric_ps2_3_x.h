@@ -158,139 +158,6 @@ sampler ShadowDepthSampler		: register( s14 );
 sampler RandRotSampler			: register( s15 );
 #endif
 
-#if CSM_PERF != 0
-sampler CSMDepthSampler		: register( s13 );
-const float4x4 g_CSMWorldToTexture		: register( c22 );
-const float4 g_CascadeFwd						:  register( c26 );
-const float4 g_CascadeLight						:  register( c27 );
-const float4 g_CascadeAmbient					:  register( c1 );
-
-const float2 g_CascadeBias						:  register( c5 );
-const float2 g_CascadeResolution				:  register( c6 );
-const float4 g_CascadeSize						:  register( c9 );
-
-#define SLOPESCALE g_CascadeBias.x
-#define DEPTHBIAS g_CascadeBias.y
-#define CascadeSize g_CascadeResolution
-
-fuckyou
-
-float DoCSM( sampler DepthSampler, const float3 vProjCoords, float vViewDepth, float LdN )
-{
-	float2 rtSize = CascadeSize;//float2(4096.0f * 4.0f, 4096.0f) * 2.0f;
-	float fEpsilonX    = 1.0f / rtSize.y;
-	float fEpsilonY    = 1.0f / rtSize.x;
-
-#if PERF < 1
-	float3 cascade0 = float3( float2((vProjCoords.x / 4), vProjCoords.y), vProjCoords.z);
-	float3 cascade1 = float3( float2((vProjCoords.x / 4) + (g_CascadeSize.y - 2 - 1.0f/8.0f - 0.5), vProjCoords.y + (g_CascadeSize.y - 1) / 2) / g_CascadeSize.y, vProjCoords.z);
-#endif
-#if PERF < 2
-	float3 cascade2 = float3( float2((vProjCoords.x / 4) + (g_CascadeSize.z - 3 - 1.0f/8.0f), vProjCoords.y + (g_CascadeSize.z - 1) / 2) / g_CascadeSize.z, vProjCoords.z);
-#endif
-	float3 cascade3 = float3( float2((vProjCoords.x / 4) + (g_CascadeSize.w - 4 - 1.0f/8.0f), vProjCoords.y + (g_CascadeSize.w - 1) / 2) / g_CascadeSize.w, vProjCoords.z);
-
-	float projMask = 1.0f;
-	if(vViewDepth >= g_CascadeSize.w * g_CascadeSize.x - 100)
-	{
-		projMask = 0.0f;
-	}
-	
-	float4 vShadowTweaks = float4(fEpsilonX, fEpsilonY, 0.0f, 0.0f);
-#if PERF < 1
-	float shadowProjDiff0 = 1;
-	float3 shadowMapCenter_objDepth0 = cascade0;
-	float2 shadowMapCenter0 = shadowMapCenter_objDepth0.xy;
-	float objDepth0 = shadowMapCenter_objDepth0.z + DEPTHBIAS * (SLOPESCALE * LdN) * shadowProjDiff0;
-	float3 vShadowPos0 = float3(shadowMapCenter0, objDepth0);
-	
-	float shadowProjDiff1 = g_CascadeSize.y;
-	float3 shadowMapCenter_objDepth1 = cascade1;
-	float2 shadowMapCenter1 = shadowMapCenter_objDepth1.xy;
-	float objDepth1 = shadowMapCenter_objDepth1.z + DEPTHBIAS * (SLOPESCALE * LdN) * shadowProjDiff1;
-	float3 vShadowPos1 = float3(shadowMapCenter1, objDepth1);
-#endif
-
-#if PERF < 2
-	float shadowProjDiff2 = g_CascadeSize.z;
-	float3 shadowMapCenter_objDepth2 = cascade2;
-	float2 shadowMapCenter2 = shadowMapCenter_objDepth2.xy;
-	float objDepth2 = shadowMapCenter_objDepth2.z + DEPTHBIAS * (SLOPESCALE * LdN) * shadowProjDiff2;
-	float3 vShadowPos2 = float3(shadowMapCenter2, objDepth2);
-#endif
-
-	float shadowProjDiff3 = g_CascadeSize.w;
-	float3 shadowMapCenter_objDepth3 = cascade3;
-	float2 shadowMapCenter3 = shadowMapCenter_objDepth3.xy;
-	float objDepth3 = shadowMapCenter_objDepth3.z + DEPTHBIAS * (SLOPESCALE * LdN) * shadowProjDiff3;
-	float3 vShadowPos3 = float3(shadowMapCenter3, objDepth3);
-
-	/*float shadow0 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter0.xy, objDepth0);
-	float shadow1 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter1.xy, objDepth1);
-	float shadow2 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter2.xy, objDepth2);
-	float shadow3 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter3.xy, objDepth3);*/
-	
-	float shadow3 = PCF(DepthSampler,rtSize, shadowMapCenter3.xy, objDepth3);
-
-#if CSM_PERF < 3
-	float shadow2 = PCF(DepthSampler,rtSize, shadowMapCenter2.xy, objDepth2);
-#else
-	float shadow2 = shadow3;
-#endif
-
-#if CSM_PERF < 2
-	float shadow1 = PCF(DepthSampler,rtSize, shadowMapCenter1.xy, objDepth1);
-	float shadow0 = PCF(DepthSampler,rtSize, shadowMapCenter0.xy, objDepth0);
-#else
-	float shadow1 = shadow2;
-	float shadow0 = shadow2;
-#endif
-
-
-	/*float shadow0 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos0, vShadowTweaks);
-	float shadow1 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos1, vShadowTweaks);
-	float shadow2 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos2, vShadowTweaks);
-	float shadow3 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos3, vShadowTweaks);
-
-	float shadow0 = DoShadowRAWZ(DepthSampler, float4(vShadowPos0, 1.0f));
-	float shadow1 = DoShadowRAWZ(DepthSampler, float4(vShadowPos1, 1.0f));
-	float shadow2 = DoShadowRAWZ(DepthSampler, float4(vShadowPos2, 1.0f));
-	float shadow3 = DoShadowRAWZ(DepthSampler, float4(vShadowPos3, 1.0f));*/
-
-
-	float shadow01 = lerp(shadow0,shadow1,pow(saturate(vViewDepth / (g_CascadeSize.x - 6)), 20.0f));
-	float shadow012 = lerp(shadow01,shadow2,pow(saturate(vViewDepth / (g_CascadeSize.y * g_CascadeSize.x - 6)), 20.0f));
-	float shadow0123 = lerp(shadow012,shadow3,pow(saturate(vViewDepth / (g_CascadeSize.z * g_CascadeSize.x - 6)), 20.0f));
-
-	float shadow = shadow0123;
-
-	if(projMask == 1.0f)
-	{
-		float smoothCSMMask = pow(saturate(vViewDepth / (g_CascadeSize.w * g_CascadeSize.x - 100)), 20.0f);
-		float shadowFinal = lerp(shadow, 1.0f, smoothCSMMask);
-		return shadowFinal;
-	}
-	else
-	{
-		return 1.0f;
-	}
-	
-}
-
-float3 DoCSMLight(in float3 worldPos, in float3 worldNormal, float3 albedo, float ViewZ)
-{
-	float3 Out;
-	float LdN = max(1.0f - saturate(dot(worldNormal, -g_CascadeFwd.xyz)), 0.01);
-	float4 flashlightSpacePosition = mul( float4( worldPos, 1.0f ), g_CSMWorldToTexture );
-	float3 vProjCoords = flashlightSpacePosition.xyz / flashlightSpacePosition.w;
-	float flShadow = DoCSM(CSMDepthSampler, vProjCoords, ViewZ, LdN);
-	float diffuse = dot(worldNormal, -g_CascadeFwd.xyz);
-	diffuse = saturate(diffuse);
-
-	Out = albedo * g_CascadeLight * diffuse * flShadow;
-	return Out;
-}
-#endif
 
 struct PS_INPUT
 {
@@ -615,7 +482,7 @@ HALF4 main( PS_INPUT i ) : COLOR
 	diffuseLighting *= 2.0*tex2D(WarpLightingSampler,float2(len,0));
 #endif
 
-#if CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT ) || CSM_PERF
+#if CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
 	float3 worldSpaceNormal = mul( vNormal, i.tangentSpaceTranspose );
 #endif
 
@@ -704,10 +571,7 @@ HALF4 main( PS_INPUT i ) : COLOR
 #endif
 	}
 #endif
-
-#if CSM_PERF != 0
-	diffuseComponent += DoCSMLight(i.worldPos_projPosZ.xyz, worldSpaceNormal, albedo.xyz, length(i.worldPos_projPosZ.xyz - g_EyePos));
-#endif
+	
 	HALF3 result = diffuseComponent + specularLighting;
 	
 #if LIGHTING_PREVIEW

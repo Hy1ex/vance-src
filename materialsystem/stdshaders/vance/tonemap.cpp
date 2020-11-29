@@ -7,7 +7,7 @@
 
 #include "BaseVSShader.h"
 
-#include "SDK_screenspaceeffect_vs20.inc"
+#include "SDK_screenspaceeffect_vs30.inc"
 #include "Vance_Tonemap_ps30.inc"
 
 ConVar r_post_tonemap_underexposure("r_post_tonemap_underexposure", "1");
@@ -51,8 +51,8 @@ SHADER_DRAW
 		pShaderShadow->VertexShaderVertexFormat(fmt, 1, 0, 0);
 
 		// Pre-cache shaders
-		DECLARE_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
-		SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
+		DECLARE_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+		SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
 
 		//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 		{
@@ -80,8 +80,8 @@ SHADER_DRAW
 			fExposure[1] = fExposure[2] = fExposure[3] = fExposure[0];
 			pShaderAPI->SetPixelShaderConstant(2, fExposure);
 
-		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
-		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs20);
+		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
 
 		//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 		{

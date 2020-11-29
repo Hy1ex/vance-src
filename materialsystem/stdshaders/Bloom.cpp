@@ -7,7 +7,7 @@
 
 #include "BaseVSShader.h"
 
-#include "SDK_screenspaceeffect_vs20.inc"
+#include "SDK_screenspaceeffect_vs30.inc"
 #include "SDK_Bloom_ps30.inc"
 
 BEGIN_VS_SHADER_FLAGS( SDK_Bloom, "Help for Bloom", SHADER_NOT_EDITABLE )
@@ -51,8 +51,8 @@ BEGIN_VS_SHADER_FLAGS( SDK_Bloom, "Help for Bloom", SHADER_NOT_EDITABLE )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
 
 			DECLARE_STATIC_PIXEL_SHADER( sdk_bloom_ps30 );
 			SET_STATIC_PIXEL_SHADER(sdk_bloom_ps30);
@@ -62,8 +62,8 @@ BEGIN_VS_SHADER_FLAGS( SDK_Bloom, "Help for Bloom", SHADER_NOT_EDITABLE )
 		{
 			BindTexture( SHADER_SAMPLER0, FBTEXTURE, -1 );
 			BindTexture( SHADER_SAMPLER1, BLURTEXTURE, -1 );
-			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
 
 			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_bloom_ps30 );
 			SET_DYNAMIC_PIXEL_SHADER(sdk_bloom_ps30);

@@ -1081,7 +1081,6 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		
 		SET_DYNAMIC_PIXEL_SHADER_COMBO(CUBEMAPCORRECTED, isEnvmapCorrected && hasEnvmap && mat_cubemapparallax.GetBool());
 		SET_DYNAMIC_PIXEL_SHADER_COMBO(LIGHTING_PREVIEW, nFixedLightingMode);
-		SET_DYNAMIC_PIXEL_SHADER_COMBO(CSM_PERF, /*bCSM ? MIN(r_csm_performance.GetInt() + 1, 3) :*/ 0); // this shit doesnt work aa
 		SET_DYNAMIC_PIXEL_SHADER_CMD(DynamicCmdsOut, lightmappedgeneric_ps30);
 #endif // !1
 
