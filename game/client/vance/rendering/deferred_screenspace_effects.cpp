@@ -111,14 +111,13 @@ void CSSAO::Init(void)
 
 	materials->BeginRenderTargetAllocation();
 
-	m_Normal.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_Normals");
+	m_Normal.Init("_rt_Normals", TEXTURE_GROUP_RENDER_TARGET);
 	m_SSAO.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFB");
 	m_SSAOX.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFBX");
 	m_SSAOY.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFBY");
 
 	materials->EndRenderTargetAllocation();
 
-	m_Normal_Mat.Init(materials->FindMaterial("shaders/normal_reconstruction", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_SSAO_Mat.Init(materials->FindMaterial("shaders/ssgi", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_SSAO_BilateralX.Init(materials->FindMaterial("shaders/ssao_bilateralx", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_SSAO_BilateralY.Init(materials->FindMaterial("shaders/ssao_bilateraly", TEXTURE_GROUP_PIXEL_SHADERS, true));
@@ -139,11 +138,6 @@ void CSSAO::Render(int x, int y, int w, int h)
 		return;
 	IMaterialVar* var;
 	CMatRenderContextPtr pRenderContext(materials);
-
-	UpdateScreenEffectTexture(0, x, y, w, h, false);
-	pRenderContext->PushRenderTargetAndViewport(m_Normal);
-	DrawScreenEffectQuad(m_Normal_Mat, m_Normal->GetActualWidth(), m_Normal->GetActualHeight());
-	pRenderContext->PopRenderTargetAndViewport();
 
 	UpdateScreenEffectTexture(0, x, y, w, h, false);
 	pRenderContext->PushRenderTargetAndViewport(m_SSAO);
@@ -513,4 +507,75 @@ void CVolumetrics::Render(int x, int y, int w, int h)
 	var->SetFloatValue(1.0f);
 
 	DrawScreenEffectMaterial(m_VolumetricsCombine, x, y, w, h);
+}
+
+void CSSR::Init(void)
+{
+	PrecacheMaterial("shaders/SSR");
+	PrecacheMaterial("shaders/ssr_add");
+
+	materials->BeginRenderTargetAllocation();
+
+	m_SSR.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSR");
+	m_SSRX.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSRX");
+	m_SSRY.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSRY");
+
+	materials->EndRenderTargetAllocation();
+
+	m_SSR_Mat.Init(materials->FindMaterial("shaders/SSR", TEXTURE_GROUP_PIXEL_SHADERS, true));
+	m_SSR_Add.Init(materials->FindMaterial("shaders/ssr_add", TEXTURE_GROUP_PIXEL_SHADERS, true));
+
+	m_SSR_BilateralX.Init(materials->FindMaterial("shaders/ssr_bilateralx", TEXTURE_GROUP_PIXEL_SHADERS, true));
+	m_SSR_BilateralY.Init(materials->FindMaterial("shaders/ssr_bilateraly", TEXTURE_GROUP_PIXEL_SHADERS, true));
+}
+
+void CSSR::Shutdown(void)
+{
+	m_SSR.Shutdown();
+	m_SSR_Mat.Shutdown();
+	m_SSR_Add.Shutdown();
+}
+
+ConVar r_post_ssr("r_post_ssr", "0", FCVAR_ARCHIVE);
+ConVar r_post_ssr_raystep("r_post_ssr_raystep", "1", FCVAR_ARCHIVE);
+ConVar r_post_ssr_maxdepth("r_post_ssr_maxdepth", "1", FCVAR_ARCHIVE);
+ConVar r_post_ssr_stepmul("r_post_ssr_stepmul", "1.0", FCVAR_ARCHIVE);
+void CSSR::Render(int x, int y, int w, int h)
+{
+	VPROF("CSSR::Render");
+
+	if (!r_post_ssr.GetBool() || (IsEnabled() == false))
+		return;
+
+	CMatRenderContextPtr pRenderContext(materials);
+
+	IMaterialVar* var;
+	var = m_SSR_Mat->FindVar("$C1_X", NULL);
+	var->SetFloatValue(r_post_ssr_raystep.GetFloat());
+	var = m_SSR_Mat->FindVar("$C1_Y", NULL);
+	var->SetFloatValue(r_post_ssr_maxdepth.GetFloat());
+	var = m_SSR_Mat->FindVar("$C1_Z", NULL);
+	var->SetFloatValue(r_post_ssr_stepmul.GetFloat());
+
+	UpdateScreenEffectTexture(0, x, y, w, h, false);
+	pRenderContext->PushRenderTargetAndViewport(m_SSR);
+	DrawScreenEffectQuad(m_SSR_Mat, m_SSR->GetActualWidth(), m_SSR->GetActualHeight());
+	pRenderContext->PopRenderTargetAndViewport();
+
+	UpdateScreenEffectTexture(0, x, y, w, h, false);
+	pRenderContext->PushRenderTargetAndViewport(m_SSRX);
+	DrawScreenEffectQuad(m_SSR_BilateralX, m_SSRX->GetActualWidth(), m_SSRX->GetActualHeight());
+	pRenderContext->PopRenderTargetAndViewport();
+
+	UpdateScreenEffectTexture(0, x, y, w, h, false);
+	pRenderContext->PushRenderTargetAndViewport(m_SSRY);
+	DrawScreenEffectQuad(m_SSR_BilateralY, m_SSRY->GetActualWidth(), m_SSRY->GetActualHeight());
+	pRenderContext->PopRenderTargetAndViewport();
+
+	var = m_SSR_Add->FindVar("$C1_X", NULL);
+	var->SetFloatValue(1.0f);
+
+	DrawScreenEffectMaterial(m_SSR_Add, x, y, w, h);
+
+	pRenderContext.SafeRelease();
 }

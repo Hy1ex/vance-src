@@ -44,5 +44,8 @@ ADD_SCREENSPACE_EFFECT(CBloom, vance_bloom);
 // Volumetric lighting combine
 ADD_SCREENSPACE_EFFECT(CVolumetrics, vance_volumetrics);
 
+// SSR
+ADD_SCREENSPACE_EFFECT(CSSR, vance_ssr);
+
 // SSAO
 ADD_SCREENSPACE_EFFECT(CSSAO, vance_ssao);

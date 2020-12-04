@@ -65,7 +65,9 @@ float3 readPos(in float2 coord)
 float3 readNormal(in float2 coord)
 {
     float3 normal = tex2D(NormalSamp, float2(coord.x + g_resolution.x / 2.0f, coord.y + g_resolution.y / 2.0f)).rgb;
-    return normal;
+    float4 viewNormal = mul(float4(normal.xyz, 0.0f), g_View);
+    viewNormal.z = -viewNormal.z;
+    return viewNormal;
 }
 
 float rand(float2 n) { 

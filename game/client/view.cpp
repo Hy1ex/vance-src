@@ -362,6 +362,21 @@ void CViewRender::Init( void )
 		TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT,
 		CREATERENDERTARGETFLAGS_HDR);
 
+	m_NormalBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_Normals",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0);
+	m_MRAOBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_MRAO",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0);
+
 	materials->EndRenderTargetAllocation();
 }
 
@@ -394,6 +409,7 @@ void CViewRender::LevelInit( void )
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_bloom");
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_tonemap");
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssao");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssr");
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_volumetrics");
 	
 }
@@ -411,6 +427,7 @@ void CViewRender::LevelShutdown( void )
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_bloom");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_tonemap");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_ssao");
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_ssr");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_volumetrics");
 }
 

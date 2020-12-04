@@ -11,17 +11,18 @@
 #include "screenspace_simple_vs30.inc"
 #include "gaussian_depthaware_ps30.inc"
 
-ConVar r_post_ssao_blursize("r_post_ssao_blursize", "4.0", FCVAR_CHEAT);
-ConVar r_post_ssao_blurarea("r_post_ssao_blurarea", "0.001", FCVAR_CHEAT);
-ConVar r_post_ssao_blurangle_theshold("r_post_ssao_blurangle_theshold", "30", FCVAR_CHEAT);
+ConVar r_post_ssr_blursize("r_post_ssr_blursize", "1.0", FCVAR_CHEAT);
+ConVar r_post_ssr_blurarea("r_post_ssr_blurarea", "0.001", FCVAR_CHEAT);
+ConVar r_post_ssr_blurangle_theshold("r_post_ssr_blurangle_theshold", "30", FCVAR_CHEAT);
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
+BEGIN_VS_SHADER( Gaussian_DepthAware_Roughness, "Depth aware gaussian blur" )
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( FBTEXTURE, SHADER_PARAM_TYPE_TEXTURE, "_rt_FullFrameFB", "" )
 		SHADER_PARAM( DEPTHBUFFER, SHADER_PARAM_TYPE_TEXTURE, "_rt_DepthBuffer", "")
+		SHADER_PARAM( MRAO, SHADER_PARAM_TYPE_TEXTURE, "_rt_MRAO", "")
 		SHADER_PARAM( NORMALS, SHADER_PARAM_TYPE_TEXTURE, "_rt_Normals", "")
 		SHADER_PARAM( HORIZONTAL, SHADER_PARAM_TYPE_INTEGER, "1", "")
 		SHADER_PARAM( BLURSIZE, SHADER_PARAM_TYPE_FLOAT, "1.0", "" )
@@ -49,6 +50,10 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 		{
 			LoadTexture(NORMALS);
 		}
+		if (params[MRAO]->IsDefined())
+		{
+			LoadTexture(MRAO);
+		}
 	}
 	
 	SHADER_FALLBACK
@@ -71,6 +76,7 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 			pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
 			pShaderShadow->EnableTexture( SHADER_SAMPLER1, true);
 			pShaderShadow->EnableTexture( SHADER_SAMPLER2, true);
+			pShaderShadow->EnableTexture( SHADER_SAMPLER3, true);
 			int fmt = VERTEX_POSITION;
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
@@ -86,9 +92,9 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 		DYNAMIC_STATE
 		{
 			float fBlurSize[4];
-			fBlurSize[0] = r_post_ssao_blursize.GetFloat();
-			fBlurSize[1] = r_post_ssao_blurarea.GetFloat();
-			fBlurSize[2] = cos(r_post_ssao_blurangle_theshold.GetFloat());
+			fBlurSize[0] = r_post_ssr_blursize.GetFloat();
+			fBlurSize[1] = r_post_ssr_blurarea.GetFloat();
+			fBlurSize[2] = cos(r_post_ssr_blurangle_theshold.GetFloat());
 			fBlurSize[3] = 0.0f;
 			pShaderAPI->SetPixelShaderConstant( 0, fBlurSize );
 
@@ -105,6 +111,7 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 			BindTexture( SHADER_SAMPLER0, FBTEXTURE, -1 );
 			BindTexture( SHADER_SAMPLER1, DEPTHBUFFER, -1);
 			BindTexture( SHADER_SAMPLER2, NORMALS, -1);
+			BindTexture( SHADER_SAMPLER3, MRAO, -1);
 			DECLARE_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
 			SET_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
 

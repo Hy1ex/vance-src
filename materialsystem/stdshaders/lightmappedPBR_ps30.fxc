@@ -194,10 +194,19 @@ struct PS_INPUT
 
 };
 
+struct PS_OUTPUT
+{
+    float4 MainOut : COLOR0;
+    float4 Normal : COLOR1;
+    float4 MRAO : COLOR2;
+};
+
 #if LIGHT_PREVIEW == 2
 LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
+#elif LIGHT_PREVIEW == 1
+HALF4 main(PS_INPUT i) : COLOR
 #else
-HALF4 main( PS_INPUT i ) : COLOR
+PS_OUTPUT main(PS_INPUT i) : COLOR
 #endif
 {
 	bool bBumpmap = BUMPMAP ? true : false;
@@ -226,6 +235,8 @@ HALF4 main( PS_INPUT i ) : COLOR
 	float3 tangentSpaceNormal = normalTexel * 2.0f - 1.0f;
 
 	float3 vWorldNormal = mul( tangentSpaceNormal, i.TBN );
+	
+    PS_OUTPUT output = (PS_OUTPUT)0;
     
 	HALF3 lightmapColor1 = HALF3( 1.0f, 1.0f, 1.0f );
 	HALF3 lightmapColor2 = HALF3( 1.0f, 1.0f, 1.0f );
@@ -303,6 +314,12 @@ HALF4 main( PS_INPUT i ) : COLOR
 	return FinalOutput( Output, 0, PIXEL_FOG_TYPE_NONE, TONEMAP_SCALE_NONE );
 #else
 	bool bWriteDepthToAlpha = ( WRITE_DEPTH_TO_DESTALPHA != 0 ) && ( WRITEWATERFOGTODESTALPHA == 0 );
-	return FinalOutput( float4( result.rgb, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w );
+    output.MainOut = FinalOutput(float4(result.rgb, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w);
+#if !FLASHLIGHT
+    output.Normal = float4(vWorldNormal.xyz, 1.0f);
+    output.MRAO = float4(metallicMap, roughnessMap, AOSample, 1.0f);
+#endif
+	
+    return output;
 #endif
 }

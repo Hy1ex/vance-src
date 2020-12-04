@@ -36,7 +36,7 @@ class IDeferredExtension : public IBaseInterface
 {
 public:
 
-	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const VMatrix& matView, const VMatrix& matFrustum, const VMatrix& matInverseFrustum) = 0;
+	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const VMatrix& matView, const VMatrix& matProj, const VMatrix& matFrustum, const VMatrix& matInverseFrustum) = 0;
 
 	virtual void CommitLightData_Global(const lightData_Global_t &data) = 0;
 };
@@ -51,7 +51,8 @@ public:
 	CDeferredExtension();
 	~CDeferredExtension();
 
-	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const VMatrix& matView, const VMatrix& matFrustum, const VMatrix& matInverseFrustum);
+	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar,
+								  const VMatrix& matView, const VMatrix& matProj, const VMatrix& matFrustum, const VMatrix& matInverseFrustum);
 	virtual void CommitZScale(const float& zScale);
 
 	virtual void CommitLightData_Global(const lightData_Global_t& data);
@@ -72,6 +73,7 @@ private:
 	Vector4D m_vecForward;
 public:
 	VMatrix m_matView;
+	VMatrix m_matProj;
 	VMatrix m_matViewInv;
 	VMatrix m_matProjInv;
 private:

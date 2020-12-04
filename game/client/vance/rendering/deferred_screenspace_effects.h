@@ -66,7 +66,6 @@ private:
 	CTextureReference	m_SSAOX;
 	CTextureReference	m_SSAOY;
 
-	CMaterialReference	m_Normal_Mat;
 	CMaterialReference	m_SSAO_Mat;
 	CMaterialReference	m_SSAO_BilateralX;
 	CMaterialReference	m_SSAO_BilateralY;
@@ -177,6 +176,34 @@ private:
 
 	CMaterialReference	m_VolumetricsSample;
 	CMaterialReference	m_VolumetricsCombine;
+};
+
+
+class CSSR : public IScreenSpaceEffect
+{
+public:
+	CSSR(void) { };
+
+	virtual void Init(void);
+	virtual void Shutdown(void);
+	virtual void SetParameters(KeyValues* params) {};
+	virtual void Enable(bool bEnable) { m_bEnabled = bEnable; }
+	virtual bool IsEnabled() { return m_bEnabled; }
+
+	virtual void Render(int x, int y, int w, int h);
+
+private:
+	bool				m_bEnabled;
+
+	CTextureReference	m_SSR;
+	CTextureReference	m_SSRX;
+	CTextureReference	m_SSRY;
+
+	CMaterialReference	m_SSR_BilateralX;
+	CMaterialReference	m_SSR_BilateralY;
+
+	CMaterialReference	m_SSR_Mat;
+	CMaterialReference	m_SSR_Add;
 };
 
 #endif

@@ -1129,9 +1129,11 @@ void CViewRender::DrawViewModels( const CViewSetup &view, bool drawViewmodel )
 		pRTDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(view.m_eStereoEye-1), ISourceVirtualReality::RT_Depth );
 	}
 
-	if(!s_bDrawViewmodelShadow)
-		render->Push3DView( viewModelSetup, 0, pRTColor, GetFrustum(), pRTDepth );
-
+	if (!s_bDrawViewmodelShadow)
+	{
+		render->Push3DView(viewModelSetup, 0, pRTColor, GetFrustum(), pRTDepth);
+		PushGBufferRT();
+	}
 #ifdef PORTAL //the depth range hack doesn't work well enough for the portal mod (and messing with the depth hack values makes some models draw incorrectly)
 				//step up to a full depth clear if we're extremely close to a portal (in a portal environment)
 	extern bool LocalPlayerIsCloseToPortal( void ); //defined in C_Portal_Player.cpp, abstracting to a single bool function to remove explicit dependence on c_portal_player.h/cpp, you can define the function as a "return true" in other build configurations at the cost of some perf
@@ -1529,9 +1531,17 @@ void CViewRender::ProcessGlobals(const CViewSetup& view)
 	
 	Vector vFwd;
 	AngleVectors(view.angles, &vFwd);
-	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar, matView, matViewInv, matProjInv);
+	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar, matView, matPerspective, matViewInv, matProjInv);
 
 	GetLightingManager()->SetRenderConstants(matPerspective, view);
+}
+
+void CViewRender::PushGBufferRT()
+{
+	CMatRenderContextPtr pRenderContext(materials);
+	pRenderContext->SetRenderTargetEx(1, m_NormalBuffer);
+	pRenderContext->SetRenderTargetEx(2, m_MRAOBuffer);
+	pRenderContext.SafeRelease();
 }
 
 //-----------------------------------------------------------------------------
@@ -2041,6 +2051,7 @@ void CViewRender::SetupMain3DView( const CViewSetup &view, int &nClearFlags )
 	}
 
 	render->Push3DView(view, nClearFlags, GetFullFrameHDRTexture(), GetFrustum());
+	PushGBufferRT();
 
 	// If we didn't clear the depth here, we'll need to clear it later
 	nClearFlags ^= nDepthStencilFlags; // Toggle these bits
@@ -3167,6 +3178,7 @@ void CViewRender::ViewDrawScene_Intro( const CViewSetup &view, int nClearFlags, 
 		SetupVis( playerView, visFlags );
 		
 		render->Push3DView( playerView, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH, NULL, GetFrustum() );
+		PushGBufferRT();
 		DrawWorldAndEntities( true /* drawSkybox */, playerView, VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH  );
 		render->PopView( GetFrustum() );
 
@@ -3360,6 +3372,7 @@ bool CViewRender::DrawOneMonitor( ITexture *pRenderTarget, int cameraNum, C_Poin
 	// @MULTICORE (toml 8/11/2006): this should be a renderer....
 	Frustum frustum;
  	render->Push3DView( monitorView, VIEW_CLEAR_DEPTH | VIEW_CLEAR_COLOR, pRenderTarget, (VPlane *)frustum );
+	PushGBufferRT();
 	ViewDrawScene( false, SKYBOX_2DSKYBOX_VISIBLE, monitorView, 0, VIEW_MONITOR );
  	render->PopView( frustum );
 
@@ -5065,6 +5078,7 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	//m_bOverrideVisOrigin could hose us here, so call direct
 	render->ViewSetupVis( false, 1, &m_pSky3dParams->origin.Get() );
 	render->Push3DView( (*this), m_ClearFlags, pRenderTarget, GetFrustum(), pDepthTarget );
+	m_pMainView->PushGBufferRT();
 
 	// Store off view origin and angles
 	SetupCurrentView( origin, angles, iSkyBoxViewID );
@@ -6685,6 +6699,7 @@ bool CReflectiveGlassView::AdjustView( float flWaterHeight )
 void CReflectiveGlassView::PushView( float waterHeight )
 {
 	render->Push3DView( *this, m_ClearFlags, GetWaterReflectionTexture(), GetFrustum() );
+	m_pMainView->PushGBufferRT();
 	 
 	Vector4D plane;
 	VectorCopy( m_ReflectionPlane.normal, plane.AsVector3D() );
@@ -6752,6 +6767,7 @@ bool CRefractiveGlassView::AdjustView( float flWaterHeight )
 void CRefractiveGlassView::PushView( float waterHeight )
 {
 	render->Push3DView( *this, m_ClearFlags, GetWaterRefractionTexture(), GetFrustum() );
+	m_pMainView->PushGBufferRT();
 
 	Vector4D plane;
 	VectorMultiply( m_ReflectionPlane.normal, -1, plane.AsVector3D() );

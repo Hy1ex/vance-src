@@ -17,7 +17,7 @@ set "GAMEDIR=%cd%\..\..\..\game\VANCE"
 
 @REM this will vary for people here, maybe use the appid finder i have in quiver in this
 @REM Totterynine : oh god
-set "ENGINEDIR=E:\SourceStuff\vancegame"
+set "ENGINEDIR=E:\SourceStuff\vancegame\vancegame\"
 
 set "SOURCEDIR=..\.."
 set "BUILD_SHADER=call _buildshaders.bat"

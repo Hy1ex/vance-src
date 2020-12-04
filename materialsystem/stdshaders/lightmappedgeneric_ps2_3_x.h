@@ -189,10 +189,20 @@ struct PS_INPUT
 #endif
 };
 
+struct PS_OUTPUT
+{
+	float4 MainOut : COLOR0;
+	float4 Normal : COLOR1;
+	float4 MRAO : COLOR2;
+	float4 Masks : COLOR3;
+};
+
 #if LIGHTING_PREVIEW == 2
 LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
+#elif LIGHTING_PREVIEW == 1
+HALF4 main(PS_INPUT i) : COLOR
 #else
-HALF4 main( PS_INPUT i ) : COLOR
+PS_OUTPUT main( PS_INPUT i ) : COLOR
 #endif
 {
 	bool bBaseTexture2 = BASETEXTURE2 ? true : false;
@@ -224,6 +234,8 @@ HALF4 main( PS_INPUT i ) : COLOR
 #if BUMPMAP == 1	// not ssbump
 	vNormal.xyz = vNormal.xyz * 2.0f - 1.0f;					// make signed if we're not ssbump
 #endif
+
+	PS_OUTPUT output = (PS_OUTPUT)0;
 
 	HALF3 lightmapColor1 = HALF3( 1.0f, 1.0f, 1.0f );
 	HALF3 lightmapColor2 = HALF3( 1.0f, 1.0f, 1.0f );
@@ -482,9 +494,9 @@ HALF4 main( PS_INPUT i ) : COLOR
 	diffuseLighting *= 2.0*tex2D(WarpLightingSampler,float2(len,0));
 #endif
 
-#if CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
+//#if CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
 	float3 worldSpaceNormal = mul( vNormal, i.tangentSpaceTranspose );
-#endif
+//#endif
 
 	float3 diffuseComponent = albedo.xyz * diffuseLighting;
 
@@ -602,8 +614,11 @@ HALF4 main( PS_INPUT i ) : COLOR
 #if WRITEWATERFOGTODESTALPHA && (PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT)
 	alpha = fogFactor;
 #endif
-
-	return FinalOutput( float4( result.rgb, alpha ), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w );
+	output.MainOut = FinalOutput(float4(result.rgb, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w);
+	output.Normal = float4(worldSpaceNormal.xyz, 1.0f);
+	output.MRAO = float4(0.0f, 1.0f, 1.0f, 1.0f);
+	output.Masks = float4(1.0f, 0.0f, 0.0f, 0.0f);
+	return output;
 
 #endif
 }

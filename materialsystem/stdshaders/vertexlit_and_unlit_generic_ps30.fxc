@@ -220,11 +220,19 @@ float4 FinalOutputConst( const float4 vShaderColor, float pixelFogFactor, float 
 	return result;
 }
 
+struct PS_OUTPUT
+{
+    float4 MainOut : COLOR0;
+    float4 Normal : COLOR1;
+    float4 MRAO : COLOR2;
+};
 
 #if LIGHTING_PREVIEW == 2
 LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
+#elif LIGHTING_PREVIEW == 1
+HALF4 main(PS_INPUT i) : COLOR
 #else
-float4 main( PS_INPUT i ) : COLOR
+PS_OUTPUT main(PS_INPUT i) : COLOR
 #endif
 {
 	bool bDetailTexture = DETAILTEXTURE ? true : false;
@@ -489,17 +497,25 @@ float4 main( PS_INPUT i ) : COLOR
 		alpha *= DepthFeathering( DepthSampler, vScreenPos / i.projPos.w, i.projPos.w - i.projPos.z, i.projPos.w, g_DepthFeatheringConstants );
 	}
 #	endif
-
+	
+    PS_OUTPUT output = (PS_OUTPUT) 0;
+    if (!bFlashlight)
+    {
+        output.Normal = float4(i.worldSpaceNormal.xyz, 1.0f);
+        output.MRAO = float4(0.0f, 1.0f, 1.0f, 0.0f);
+    }
 #if defined( SHADER_MODEL_PS_2_0 )
 	float fogFactor = CalcPixelFogFactor( PIXELFOGTYPE, g_FogParams, g_EyePos.z, i.worldPos_projPosZ.z, i.projPos.z );
 	#if (PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT)
 		alpha = lerp( alpha, fogFactor, g_fWriteWaterFogToDestAlpha );
 	#endif
-	return FinalOutput( float4( result.rgb, alpha ), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, false, i.projPos.z );
+	output.MainOut = FinalOutput( float4( result.rgb, alpha ), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, false, i.projPos.z );
+	return output;
 #else // 2b or higher
 	float fogFactor = CalcPixelFogFactorConst( g_fPixelFogType, g_FogParams, g_EyePos.z, i.worldPos_projPosZ.z, i.projPos.z );
 	alpha = lerp( alpha, fogFactor, g_fWriteWaterFogToDestAlpha ); // Use the fog factor if it's height fog
-	return FinalOutputConst( float4( result.rgb, alpha ), fogFactor, g_fPixelFogType, TONEMAP_SCALE_LINEAR, g_fWriteDepthToAlpha, i.projPos.z );
+    output.MainOut = FinalOutputConst(float4(result.rgb, alpha), fogFactor, g_fPixelFogType, TONEMAP_SCALE_LINEAR, g_fWriteDepthToAlpha, i.projPos.z);
+    return output;
 #endif
 
 #endif

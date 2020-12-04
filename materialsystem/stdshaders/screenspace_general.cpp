@@ -230,9 +230,15 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 
 			if (USES_VIEWPROJ != -1 && params[USES_VIEWPROJ]->GetIntValue() != 0)
 			{
+				pShaderAPI->SetPixelShaderConstant(6, GetDeferredExt()->GetOriginBase());
+
 				pShaderAPI->SetPixelShaderConstant(8, GetDeferredExt()->m_matViewInv.Base(), 4);
 				pShaderAPI->SetPixelShaderConstant(12, GetDeferredExt()->m_matProjInv.Base(), 4);
 				pShaderAPI->SetPixelShaderConstant(16, GetDeferredExt()->m_matView.Base(), 4);
+				pShaderAPI->SetPixelShaderConstant(20, GetDeferredExt()->m_matProj.Base(), 4);
+
+				float zPlanes[2] = { GetDeferredExt()->GetZDistNear(), GetDeferredExt()->GetZDistFar() };
+				pShaderAPI->SetPixelShaderConstant(24, zPlanes);
 			}
 
 			pShaderAPI->SetVertexShaderIndex( 0 );

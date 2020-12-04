@@ -21,6 +21,7 @@ void CDeferredExtension::CommitCommonData(const Vector& origin,
 	const Vector& fwd,
 	const float& zNear, const float& zFar,
 	const VMatrix& matView,
+	const VMatrix& matProj,
 	const VMatrix& matViewInv,
 	const VMatrix& matProjInv
 )
@@ -30,6 +31,7 @@ void CDeferredExtension::CommitCommonData(const Vector& origin,
 	m_matViewInv = matViewInv;
 	m_matProjInv = matProjInv;
 	m_matView = matView;
+	m_matProj = matProj;
 	m_flZDists[0] = zNear;
 	m_flZDists[1] = zFar;
 }

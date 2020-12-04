@@ -256,10 +256,19 @@ struct PS_INPUT
 	float3 vWorldBinormal: TEXCOORD8;
 };
 
+struct PS_OUTPUT
+{
+    float4 MainOut : COLOR0;
+    float4 Normal : COLOR1;
+    float4 MRAO : COLOR2;
+};
+
 #if LIGHT_PREVIEW == 2
 LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
+#elif LIGHT_PREVIEW == 1
+HALF4 main(PS_INPUT i) : COLOR
 #else
-HALF4 main( PS_INPUT i ) : COLOR
+PS_OUTPUT main(PS_INPUT i) : COLOR
 #endif
 {
 	float2 UV = i.baseTexCoord;
@@ -329,7 +338,15 @@ HALF4 main( PS_INPUT i ) : COLOR
 	Output.flags = float4( 1.0f - metallicMap, roughnessMap, 1, alpha );
 	return FinalOutput( Output, 0, PIXEL_FOG_TYPE_NONE, TONEMAP_SCALE_NONE );	
 #else
+	
+    PS_OUTPUT output = (PS_OUTPUT) 0;
+	
 	bool bWriteDepthToAlpha = ( WRITE_DEPTH_TO_DESTALPHA != 0 ) && ( WRITEWATERFOGTODESTALPHA == 0 );
-	return FinalOutput( float4( result, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z );
+    output.MainOut = FinalOutput(float4(result, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.projPos.z);
+#if !FLASHLIGHT
+    output.Normal = float4(vWorldNormal.xyz, 1.0f);
+    output.MRAO = float4(metallicMap, roughnessMap, AOSample, 0.0f);
+#endif
+    return output;
 #endif
 }

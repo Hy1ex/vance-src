@@ -167,7 +167,14 @@ float4 FinalOutputConst( const float4 vShaderColor, float pixelFogFactor, float 
 	return result;
 }
 
-float4 main( PS_INPUT i ) : COLOR
+struct PS_OUTPUT
+{
+    float4 MainOut : COLOR0;
+    float4 Normal : COLOR1;
+    float4 MRAO : COLOR2;
+};
+
+PS_OUTPUT main(PS_INPUT i) : COLOR
 {
 	bool bCubemap = CUBEMAP ? true : false;
 	bool bDiffuseLighting = DIFFUSELIGHTING ? true : false;
@@ -339,12 +346,13 @@ float4 main( PS_INPUT i ) : COLOR
 #else // 2b or higher
 	alpha = lerp( alpha, fogFactor, g_fPixelFogType * g_fWriteWaterFogToDestAlpha ); // Use the fog factor if it's height fog
 #endif
-
-#if defined( SHADER_MODEL_PS_2_0 )
-	return FinalOutput( float4( result.rgb, alpha ), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, false, i.worldPos_projPosZ.w );
-#else
-	return FinalOutputConst( float4( result.rgb, alpha ), fogFactor, g_fPixelFogType, TONEMAP_SCALE_LINEAR, g_fWriteDepthToAlpha, i.worldPos_projPosZ.w );
+	
+    PS_OUTPUT output = (PS_OUTPUT) 0;
+    output.MainOut = FinalOutputConst(float4(result.rgb, alpha), fogFactor, g_fPixelFogType, TONEMAP_SCALE_LINEAR, g_fWriteDepthToAlpha, i.worldPos_projPosZ.w);
+#if !FLASHLIGHT
+    output.Normal = float4(worldSpaceNormal.xyz, 1.0f);
+    output.MRAO = float4(0.0f, 1.0f, 1.0f, 0.0f);
 #endif
-
+    return output;
 }
 

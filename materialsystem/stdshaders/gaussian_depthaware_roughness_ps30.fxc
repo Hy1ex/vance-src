@@ -5,15 +5,15 @@
 
 sampler2D	sceneSampler	: register( s0 );
 sampler2D   depthSampler    : register(s1);
-sampler2D   normalSampler    : register(s2);
-const float3 blurVars	   : register( c0 );
+sampler2D   normalSampler   : register(s2);
+sampler2D   mraoSampler     : register(s3);
+const float3 blurVars	    : register( c0 );
 const float2 screenRes : register(c1);
 uniform float4x4 g_ProjInv : register(c2);
 const float2 g_zPlanes : register(c6);
 
 #define g_zNear g_zPlanes.x
 #define g_zFar g_zPlanes.y
-
 #define blurSize blurVars.x
 #define blurArea blurVars.y
 #define blurAngle blurVars.z
@@ -43,8 +43,16 @@ float3 readNormals(in float2 coord)
     return tex2D(normalSampler, float2(coord.x + screenRes.x / 2.0f, coord.y + screenRes.y / 2.0f)).xyz;
 }
 
+float3 readMRAO(in float2 coord)
+{
+    return tex2D(mraoSampler, float2(coord.x + screenRes.x / 2.0f, coord.y + screenRes.y / 2.0f)).xyz;
+}
+
 float3 tex2Ddepth(sampler2D tex, float3 desireUV, float2 UV)
 {
+    float roughness = readMRAO(UV).y;
+    desireUV.y *= roughness;
+    
 #if HORIZONTAL == 1
     float3 compare = tex2D(tex, float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
     float compare_depth = readDepth(float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
@@ -63,7 +71,8 @@ float3 tex2Ddepth(sampler2D tex, float3 desireUV, float2 UV)
 
 // Main
 float4 main( VS_OUTPUT IN ) : COLOR0
-{
+{ 
+
    float3 sum = 0;
    sum += tex2Ddepth(sceneSampler, float3(IN.TexCoord0.x, blurSize*4, IN.TexCoord0.y), IN.TexCoord0) * 0.0162162162;
    sum += tex2Ddepth(sceneSampler, float3(IN.TexCoord0.x, blurSize*3, IN.TexCoord0.y), IN.TexCoord0) * 0.0540540541;
