@@ -22,14 +22,14 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define BURST_SIZE 3
+#define BURST_SIZE 2
 #define BURST_SOONEST_REFIRE_RATE 0.4 // tap-shoot speed
-#define BURST_AUTO_REFIRE_RATE SequenceDuration(); // hold-shoot speed
+#define BURST_AUTO_REFIRE_RATE 0.3; // hold-shoot speed
 #define BURST_RATE 0.05
 #define BURST_DAMAGE 5.0 // per-bullet of the burst damage
 
 #define AUTO_ACCURACY_CONE 0.0 // 100% accurate
-#define AUTO_DAMAGE 5.0
+#define AUTO_DAMAGE 15.0
 
 //-----------------------------------------------------------------------------
 // CWeaponResistanceGun
@@ -326,7 +326,7 @@ void CWeaponResistanceGun::SecondaryAttack(void)
 //-----------------------------------------------------------------------------
 void CWeaponResistanceGun::ItemPostFrame(void)
 {
-	BaseClass::ItemPostFrame();
+	//BaseClass::ItemPostFrame();
 
 	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
 	if (!pPlayer)
@@ -343,12 +343,12 @@ void CWeaponResistanceGun::ItemPostFrame(void)
 		return;
 	}
 
-	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime)) // shoot as fast as the player can click
+	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime) && m_bFullAutoMode) // shoot as fast as the player can click
 	{
 		PrimaryAttack();
 		return;
 	}
-	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime)) // if we're holding shoot at a slower speed
+	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) && !m_bFullAutoMode) // if we're holding shoot at a slower speed
 	{
 		PrimaryAttack();
 		return;
@@ -389,8 +389,13 @@ bool CWeaponResistanceGun::Holster(CBaseCombatWeapon* pSwitchingTo)
 		// Still switching mode. Cancel the transition.
 		m_bFullAutoMode = !m_bFullAutoMode;
 	}
-
-	return BaseClass::Holster(pSwitchingTo);
+	//hack to get proper holster animation if in secondary attack mode
+	bool ret = BaseClass::Holster(pSwitchingTo);
+	if (m_bFullAutoMode)
+	{
+		SendWeaponAnim(ACT_VM_HOLSTER_EXTENDED);
+	}
+	return ret;
 }
 
 bool CWeaponResistanceGun::Reload(void)
