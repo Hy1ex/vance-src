@@ -34,8 +34,7 @@ END_PREDICTION_DATA()
 extern ConVar r_flashlightfov;
 
 C_VancePlayer::C_VancePlayer() :
-	m_LagAnglesHistory("C_VancePlayer::CalcFlashlightLag"),
-	C_BaseHLPlayer()
+	m_LagAnglesHistory("C_VancePlayer::CalcFlashlightLag")
 {
 	m_vecLagAngles.Init();
 	m_LagAnglesHistory.Setup(&m_vecLagAngles, 0);
