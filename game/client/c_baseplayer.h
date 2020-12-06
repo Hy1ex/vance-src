@@ -536,9 +536,8 @@ private:
 
 	bool			m_bFiredWeapon;
 
-
 	// Player flashlight dynamic light pointers
-	CFlashlightEffect *m_pFlashlight;
+	bool			m_bFlashlightEnabled;
 
 	typedef CHandle<C_BaseCombatWeapon> CBaseCombatWeaponHandle;
 	CNetworkVar( CBaseCombatWeaponHandle, m_hLastWeapon );
