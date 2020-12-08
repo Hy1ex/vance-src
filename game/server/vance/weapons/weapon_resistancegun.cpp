@@ -24,7 +24,7 @@
 
 #define BURST_SIZE 2
 #define BURST_SOONEST_REFIRE_RATE 0.4 // tap-shoot speed
-#define BURST_AUTO_REFIRE_RATE 0.3; // hold-shoot speed
+#define BURST_AUTO_REFIRE_RATE 0.4; // hold-shoot speed
 #define BURST_RATE 0.05
 #define BURST_DAMAGE 5.0 // per-bullet of the burst damage
 
