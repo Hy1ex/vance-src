@@ -226,7 +226,7 @@ float4 main( VS_OUTPUT IN ) : COLOR0
     float3 normal = readNormal(IN.texCoord);
     float3 position = float3(float2(IN.texCoord.x, IN.texCoord.y), depth.x);
 
-	float radius_depth = radius/depth.x;
+	float radius_depth = radius;
     float result = 1.0;
 	[unroll(32)]
     for(int i=0; i < samples; i++) 

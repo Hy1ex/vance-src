@@ -99,23 +99,6 @@ float rand_white(in float2 uv)
     return abs(noise.x + noise.y) * 0.5;
 }
 
-float3 rand_white_3d(in float2 uv)
-{
-    float nX = rand_white(uv);
-    float nY = rand_white(1.0f.xx - uv);
-    float nZ = rand_white(float2(1.0f.xx - uv).yx);
-    return float3(nX, nY, nZ);
-}
-
-float3 interleaved3d(float2 coord)
-{
-    float2 screen = coord * BaseResolution;
-    return float3(
-    frac(52.9829189 * frac(0.06711056 * screen.x + 0.00583715 * screen.y)),
-    frac(52.9829189 * frac(0.06711056 * screen.y + 0.00583715 * screen.x)),
-    frac(52.9829189 * frac(0.06711056 * (1.0f - screen.x) + 0.00583715 * (1.0f - screen.y))));
-}
-
 struct PS_INPUT
 {
 	float2 texCoord				: TEXCOORD0;
@@ -128,18 +111,10 @@ float4 main(PS_INPUT i) : COLOR0
     float3 worldPos = readPos(i.texCoord);
     float3 eyeDir = normalize(worldPos - g_EyeOrigin);
     float3 reflection = reflect(eyeDir, WorldNormals);
-    float3 vNoise = interleaved3d(i.texCoord) * 2.0f - 1.0f;
     float metallic = MRAO.x;
     float modelMask = MRAO.a;
     
-    float roughness = MRAO.y;
-    roughness *= roughness;
-    
-    float roughVector = normalize(WorldNormals - vNoise);
-    reflection += vNoise * roughness;
-    reflection = normalize(reflection);
-    
-    roughness = 1.0f - MRAO.y;
+    float roughness = 1.0f - MRAO.y;
     roughness *= roughness;
     roughness *= roughness;
     

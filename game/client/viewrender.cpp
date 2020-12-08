@@ -1536,11 +1536,17 @@ void CViewRender::ProcessGlobals(const CViewSetup& view)
 	GetLightingManager()->SetRenderConstants(matPerspective, view);
 }
 
-void CViewRender::PushGBufferRT()
+void CViewRender::PushGBufferRT(bool firstPush)
 {
 	CMatRenderContextPtr pRenderContext(materials);
 	pRenderContext->SetRenderTargetEx(1, m_NormalBuffer);
 	pRenderContext->SetRenderTargetEx(2, m_MRAOBuffer);
+
+	if (firstPush)
+	{
+		pRenderContext->ClearColor4ub(0, 255, 0, 255); // full red channel because of roughness channel of MRAO buffer
+		pRenderContext->ClearBuffers(true, true);
+	}
 	pRenderContext.SafeRelease();
 }
 
@@ -2051,7 +2057,7 @@ void CViewRender::SetupMain3DView( const CViewSetup &view, int &nClearFlags )
 	}
 
 	render->Push3DView(view, nClearFlags, GetFullFrameHDRTexture(), GetFrustum());
-	PushGBufferRT();
+	PushGBufferRT(true);
 
 	// If we didn't clear the depth here, we'll need to clear it later
 	nClearFlags ^= nDepthStencilFlags; // Toggle these bits

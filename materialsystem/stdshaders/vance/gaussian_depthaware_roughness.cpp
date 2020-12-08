@@ -9,16 +9,16 @@
 #include "IDeferredExt.h"
 
 #include "screenspace_simple_vs30.inc"
-#include "gaussian_depthaware_ps30.inc"
+#include "gaussian_depthaware_roughness_ps30.inc"
 
-ConVar r_post_ssr_blursize("r_post_ssr_blursize", "1.0", FCVAR_CHEAT);
+ConVar r_post_ssr_blursize("r_post_ssr_blursize", "5.0", FCVAR_CHEAT);
 ConVar r_post_ssr_blurarea("r_post_ssr_blurarea", "0.001", FCVAR_CHEAT);
 ConVar r_post_ssr_blurangle_theshold("r_post_ssr_blurangle_theshold", "30", FCVAR_CHEAT);
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-BEGIN_VS_SHADER( Gaussian_DepthAware_Roughness, "Depth aware gaussian blur" )
+BEGIN_VS_SHADER( Gaussian_DepthAware_Roughness, "Depth aware gaussian blur that depends on roughness from MRAO buffer" )
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( FBTEXTURE, SHADER_PARAM_TYPE_TEXTURE, "_rt_FullFrameFB", "" )
 		SHADER_PARAM( DEPTHBUFFER, SHADER_PARAM_TYPE_TEXTURE, "_rt_DepthBuffer", "")
@@ -84,9 +84,9 @@ BEGIN_VS_SHADER( Gaussian_DepthAware_Roughness, "Depth aware gaussian blur" )
 			DECLARE_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
 			SET_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
 
-			DECLARE_STATIC_PIXEL_SHADER(gaussian_depthaware_ps30);
+			DECLARE_STATIC_PIXEL_SHADER(gaussian_depthaware_roughness_ps30);
 			SET_STATIC_PIXEL_SHADER_COMBO(HORIZONTAL, params[HORIZONTAL]->GetIntValue());
-			SET_STATIC_PIXEL_SHADER(gaussian_depthaware_ps30);
+			SET_STATIC_PIXEL_SHADER(gaussian_depthaware_roughness_ps30);
 		}
 
 		DYNAMIC_STATE
@@ -119,8 +119,8 @@ BEGIN_VS_SHADER( Gaussian_DepthAware_Roughness, "Depth aware gaussian blur" )
 
 			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{
-				DECLARE_DYNAMIC_PIXEL_SHADER(gaussian_depthaware_ps30);
-				SET_DYNAMIC_PIXEL_SHADER(gaussian_depthaware_ps30);
+				DECLARE_DYNAMIC_PIXEL_SHADER(gaussian_depthaware_roughness_ps30);
+				SET_DYNAMIC_PIXEL_SHADER(gaussian_depthaware_roughness_ps30);
 			}
 		}
 		Draw();

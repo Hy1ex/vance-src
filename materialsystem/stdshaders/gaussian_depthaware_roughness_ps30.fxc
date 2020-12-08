@@ -14,9 +14,9 @@ const float2 g_zPlanes : register(c6);
 
 #define g_zNear g_zPlanes.x
 #define g_zFar g_zPlanes.y
-#define blurSize blurVars.x
-#define blurArea blurVars.y
-#define blurAngle blurVars.z
+#define g_blurSize blurVars.x
+#define g_blurArea blurVars.y
+#define g_blurAngle blurVars.z
 
 // Structs
 struct VS_OUTPUT
@@ -50,28 +50,29 @@ float3 readMRAO(in float2 coord)
 
 float3 tex2Ddepth(sampler2D tex, float3 desireUV, float2 UV)
 {
-    float roughness = readMRAO(UV).y;
-    desireUV.y *= roughness;
+    float3 blurUV = float3(desireUV.x, desireUV.z, desireUV.y);
     
 #if HORIZONTAL == 1
-    float3 compare = tex2D(tex, float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
-    float compare_depth = readDepth(float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
-    float3 compare_normal = normalize(readNormals(float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z)));
+    float3 compare = tex2D(tex, float2(blurUV.x + blurUV.z*screenRes.x, blurUV.y));
+    float compare_depth = readDepth(float2(blurUV.x + blurUV.z*screenRes.x, blurUV.y));
+    float3 compare_normal = normalize(readNormals(float2(blurUV.x + blurUV.z*screenRes.x, blurUV.y)));
 #else
-    float3 compare = tex2D(tex, float2(desireUV.x, desireUV.z + desireUV.y*screenRes.y));
-    float compare_depth = readDepth(float2(desireUV.x, desireUV.z + desireUV.y * screenRes.y));
-    float3 compare_normal = normalize(readNormals(float2(desireUV.x, desireUV.z + desireUV.y * screenRes.y)));
+    float3 compare = tex2D(tex, float2(blurUV.x, blurUV.y + blurUV.z * screenRes.y));
+    float compare_depth = readDepth(float2(blurUV.x, blurUV.y + blurUV.z * screenRes.y));
+    float3 compare_normal = normalize(readNormals(float2(blurUV.x, blurUV.y + desireUV.z * screenRes.y)));
 #endif
 
     float3 result = tex2D(tex, UV);
     float result_depth = readDepth(UV);
     float3 result_normal = normalize(readNormals(UV));
-    return (abs(compare_depth - result_depth) > blurArea || dot(compare_normal, result_normal) < blurAngle) ? result : compare;
+    return (abs(compare_depth - result_depth) > g_blurArea || dot(compare_normal, result_normal) < g_blurAngle) ? result : compare;
 }
 
 // Main
 float4 main( VS_OUTPUT IN ) : COLOR0
-{ 
+{
+    float roughness = readMRAO(IN.TexCoord0.xy).y;
+    float blurSize = g_blurSize * roughness;
 
    float3 sum = 0;
    sum += tex2Ddepth(sceneSampler, float3(IN.TexCoord0.x, blurSize*4, IN.TexCoord0.y), IN.TexCoord0) * 0.0162162162;

@@ -431,7 +431,7 @@ public:
 	bool			ShouldDrawViewModel( bool drawViewmodel );
 	void			DrawViewModels( const CViewSetup &view, bool drawViewmodel );
 
-	void			PushGBufferRT();
+	void			PushGBufferRT(bool firstPush = false);
 private:
 	int				m_BuildWorldListsNumber;
 

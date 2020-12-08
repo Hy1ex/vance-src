@@ -25,6 +25,13 @@ struct VS_OUTPUT
 	float3 TexCoord0  : TEXCOORD0;
 };
 
+float4 readTextureFixup(in sampler2D sample, in float2 UV, in float texscale)
+{
+    float4 result = tex2D(sample, float2(UV.x + (screenRes.x * texscale) / 2.0f, UV.y + (screenRes.y * texscale) / 2.0f));
+
+    return result;
+}
+
 float LinearizeDepth(float d, float f, float n)
 {
     return n * f / (f + d * (n - f));
@@ -46,11 +53,13 @@ float3 readNormals(in float2 coord)
 float3 tex2Ddepth(sampler2D tex, float3 desireUV, float2 UV)
 {
 #if HORIZONTAL == 1
-    float3 compare = tex2D(tex, float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
+    float3 compare = readTextureFixup(tex, float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z), 1.0f).rgb;
+    //float3 compare = tex2D(tex, float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
     float compare_depth = readDepth(float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z));
     float3 compare_normal = normalize(readNormals(float2(desireUV.x + desireUV.y*screenRes.x, desireUV.z)));
 #else
-    float3 compare = tex2D(tex, float2(desireUV.x, desireUV.z + desireUV.y*screenRes.y));
+    float3 compare = readTextureFixup(tex, float2(desireUV.x, desireUV.z + desireUV.y * screenRes.y), 1.0f).rgb;
+    //float3 compare = tex2D(tex, float2(desireUV.x, desireUV.z + desireUV.y*screenRes.y));
     float compare_depth = readDepth(float2(desireUV.x, desireUV.z + desireUV.y * screenRes.y));
     float3 compare_normal = normalize(readNormals(float2(desireUV.x, desireUV.z + desireUV.y * screenRes.y)));
 #endif
