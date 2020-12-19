@@ -2352,12 +2352,13 @@ void CBaseEntity::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 //-----------------------------------------------------------------------------
 int CBaseEntity::GetTracerAttachment( void )
 {
-	int iAttachment = TRACER_DONT_USE_ATTACHMENT;
+	//int iAttachment = TRACER_DONT_USE_ATTACHMENT;
+	int iAttachment = 1;
 
-	if ( g_pGameRules->IsMultiplayer() )
+	/*if ( g_pGameRules->IsMultiplayer() )
 	{
 		iAttachment = 1;
-	}
+	}*/
 
 	return iAttachment;
 }

@@ -213,7 +213,7 @@ void CWeaponResistanceGun::BurstThink(void)
 	AngleVectors(angShootDir, &vecShootDir);
 	Vector vecSpread = m_nBurstShot == 0 ? VECTOR_CONE_PRECALCULATED : VECTOR_CONE_4DEGREES;
 
-	FireBulletProjectiles(1, vecShootOrigin, vecShootDir, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, BURST_DAMAGE);
+	FireBulletProjectiles(1, vecShootOrigin, vecShootDir, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, 1, BURST_DAMAGE);
 
 	pPlayer->DoMuzzleFlash();
 

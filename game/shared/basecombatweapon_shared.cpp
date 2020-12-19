@@ -12,6 +12,7 @@
 #include "physics_saverestore.h"
 #include "datacache/imdlcache.h"
 #include "activitylist.h"
+#include "particle_parse.h"
 
 // NVNT start extra includes
 #include "haptics/haptic_utils.h"
@@ -61,6 +62,8 @@ ConVar tf_weapon_criticals_bucket_cap( "tf_weapon_criticals_bucket_cap", "1000.0
 ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "-250.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
+
+ConVar cl_useparticletracers("cl_useparticletracers", "1", FCVAR_ARCHIVE, "Determines whether or not particle tracers should be used (or the legacy hardcoded ones)");
 
 CBaseCombatWeapon::CBaseCombatWeapon()
 {
@@ -305,6 +308,7 @@ void CBaseCombatWeapon::Precache( void )
 				CBaseEntity::PrecacheScriptSound( shootsound );
 			}
 		}
+		PrecacheParticleSystem("bullet_tracer02_red_crit");
 	}
 	else
 	{
@@ -804,16 +808,24 @@ void CBaseCombatWeapon::MakeTracer( const Vector &vecTracerSrc, const trace_t &t
 
 	int iAttachment = GetTracerAttachment();
 
-	switch ( iTracerType )
+	if (cl_useparticletracers.GetBool())
 	{
-	case TRACER_LINE:
-		UTIL_Tracer( vNewSrc, tr.endpos, iEntIndex, iAttachment, 0.0f, true, pszTracerName );
-		break;
-
-	case TRACER_LINE_AND_WHIZ:
-		UTIL_Tracer( vNewSrc, tr.endpos, iEntIndex, iAttachment, 0.0f, true, pszTracerName );
-		break;
+		DispatchParticleEffect("bullet_tracer02_red_crit", vNewSrc, tr.endpos, vec3_angle, NULL);
 	}
+	else
+	{
+		switch (iTracerType)
+		{
+		case TRACER_LINE:
+			UTIL_Tracer(vNewSrc, tr.endpos, iEntIndex, iAttachment, 0.0f, true, pszTracerName);
+			break;
+
+		case TRACER_LINE_AND_WHIZ:
+			UTIL_Tracer(vNewSrc, tr.endpos, iEntIndex, iAttachment, 0.0f, true, pszTracerName);
+			break;
+		}
+	}
+
 }
 
 void CBaseCombatWeapon::GiveTo( CBaseEntity *pOther )

@@ -477,7 +477,7 @@ void CVanceMachineGun::PrimaryAttack(void)
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
 	Vector vecDirShooting = pPlayer->GetAutoaimVector(AUTOAIM_SCALE_DEFAULT);
 	Vector vecSpread = pPlayer->GetAttackSpread(this);
-	FireBulletProjectiles(iBulletsToFire, vecSrc, vecDirShooting, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2);
+	FireBulletProjectiles(iBulletsToFire, vecSrc, vecDirShooting, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1);
 
 	//Factor in the view kick
 	AddViewKick();

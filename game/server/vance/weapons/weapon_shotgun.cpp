@@ -188,7 +188,7 @@ void CWeaponShotgun::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool
 		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
 	}
 
-	FireBulletProjectiles( 8, vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
+	FireBulletProjectiles( 8, vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -478,7 +478,7 @@ void CWeaponShotgun::PrimaryAttack( void )
 	// Fire the bullets, and force the first shot to be perfectly accuracy.
 	ProjectileBulletsInfo_t info;
 	info.m_iShots = sk_plr_num_shotgun_pellets.GetInt();
-	FireBulletProjectiles(sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, true, true);
+	FireBulletProjectiles(sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, -1, 0, NULL, true, true);
 	
 	pPlayer->ViewPunch( QAngle( random->RandomFloat( -2.0f, -1.0f ), random->RandomFloat( -2.0f, 2.0f ), 0.0f ) );
 
