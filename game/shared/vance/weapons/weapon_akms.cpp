@@ -53,7 +53,8 @@ public:
 protected:
 	//bool m_bJammed;
 	bool m_bCoolingDown;
-	CNetworkVar(int, m_iHeat);
+	CNetworkVar(bool, m_bSmoking);
+	int m_iHeat;
 	float m_flCooldownTime;
 	float m_flPerCooldownTime;
 };
@@ -63,7 +64,7 @@ PRECACHE_WEAPON_REGISTER(weapon_akms);
 
 IMPLEMENT_SERVERCLASS_ST(CWeaponAKMS, DT_WeaponAKMS)
 
-SendPropInt(SENDINFO(m_iHeat)),
+SendPropBool(SENDINFO(m_bSmoking)),
 
 END_SEND_TABLE()
 
@@ -71,6 +72,7 @@ CWeaponAKMS::CWeaponAKMS()
 {
 	//m_bJammed = false;
 	m_bCoolingDown = true;
+	m_bSmoking = false;
 	m_iHeat = 0;
 	m_flCooldownTime = gpGlobals->curtime;
 	m_flPerCooldownTime = gpGlobals->curtime;
@@ -199,6 +201,14 @@ void CWeaponAKMS::ManageHeat()
 		m_flPerCooldownTime = gpGlobals->curtime + 0.1f;
 		m_iHeat--;
 	}
+	if (m_iHeat > 25)
+	{
+		m_bSmoking = true;
+	}
+	else
+	{
+		m_bSmoking = false;
+	}
 }
 #else
 class C_WeaponAKMS : public C_BaseVanceWeapon
@@ -214,14 +224,14 @@ public:
 	virtual void UpdateOnRemove();
 	void HandleSmoking();
 protected:
-	CNetworkVar(int, m_iHeat);
+	CNetworkVar(bool, m_bSmoking);
 	HPARTICLEFFECT m_pSmoke;
 };
 
 STUB_WEAPON_CLASS_IMPLEMENT(weapon_akms, C_WeaponAKMS);
 
 IMPLEMENT_CLIENTCLASS_DT(C_WeaponAKMS, DT_WeaponAKMS, CWeaponAKMS)
-RecvPropInt(RECVINFO(m_iHeat)),
+RecvPropBool(RECVINFO(m_bSmoking)),
 END_RECV_TABLE()
 
 
@@ -260,7 +270,7 @@ void C_WeaponAKMS::UpdateOnRemove()
 
 void C_WeaponAKMS::HandleSmoking()
 {
-	if (m_iHeat > 25)
+	/*if (m_iHeat > 25)
 	{
 		CBasePlayer* pOwner = ToBasePlayer(GetOwner());
 		if (!pOwner)
@@ -279,6 +289,24 @@ void C_WeaponAKMS::HandleSmoking()
 		m_pSmoke->StartEmission();
 	}
 	else if (m_pSmoke && m_iHeat < 25)
+	{
+		m_pSmoke->StopEmission();
+	}*/
+	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
+	if (!pOwner)
+	{
+		return;
+	}
+	CBaseAnimating* pVM = pOwner->GetViewModel();
+	if (!pVM)
+	{
+		return;
+	}
+	if (!m_pSmoke && m_bSmoking)
+	{
+		m_pSmoke = pVM->ParticleProp()->Create("muzzle_akms_smoke", PATTACH_POINT_FOLLOW, "smoke");
+	}
+	else if (m_pSmoke && !m_bSmoking)
 	{
 		m_pSmoke->StopEmission();
 	}
