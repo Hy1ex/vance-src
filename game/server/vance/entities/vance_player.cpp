@@ -2074,27 +2074,27 @@ void CVancePlayer::LedgeClimbTick()
 
 void CVancePlayer::TryLedgeClimb()
 {
-	auto lambda0 = [this](Vector start) -> bool {
-		Vector forward;
-		EyeVectors(&forward);
+	auto checkClimbability = [this](Vector vecStart) -> bool {
+		Vector vecForward;
+		EyeVectors(&vecForward);
 
 		trace_t tr;
-		UTIL_TraceHull(start + Vector(0, 0, VEC_HULL_MAX.z),
-			start - Vector(0, 0, VEC_HULL_MAX.z) * 2,
+		UTIL_TraceHull(vecStart + Vector(0, 0, VEC_HULL_MAX.z),
+			vecStart - Vector(0, 0, VEC_HULL_MAX.z) * 2,
 			VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
 
-		UTIL_TraceHull(tr.endpos,
-			tr.endpos,
-			VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+		UTIL_TraceHull(tr.endpos, tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, 
+			MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+
 		if (tr.DidHit())
 			return true;
 
 		if (vance_climb_debug.GetBool())
 		{
-			debugoverlay->AddBoxOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
-			debugoverlay->AddBoxOverlay(start - Vector(0, 0, VEC_HULL_MAX.z) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
+			debugoverlay->AddBoxOverlay(vecStart + Vector(0, 0, VEC_HULL_MAX.z), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
+			debugoverlay->AddBoxOverlay(vecStart - Vector(0, 0, VEC_HULL_MAX.z) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
 
-			debugoverlay->AddLineOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), start - Vector(0, 0, VEC_HULL_MAX.z) * 2, 0, 0, 255, true, 10);
+			debugoverlay->AddLineOverlay(vecStart + Vector(0, 0, VEC_HULL_MAX.z), vecStart - Vector(0, 0, VEC_HULL_MAX.z) * 2, 0, 0, 255, true, 10);
 		}
 
 		m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
@@ -2110,17 +2110,15 @@ void CVancePlayer::TryLedgeClimb()
 		return false;
 	};
 
-	Vector forward;
-	QAngle angDir = QAngle(0.0f, EyeAngles().y, EyeAngles().z);
-	AngleVectors(angDir, &forward);
+	Vector vecForward = UTIL_YawToVector(GetAbsAngles()[YAW]);
 
-	Vector eyeCrouchOrigin = VEC_DUCK_VIEW + GetAbsOrigin();
+	Vector vecEyePos = VEC_DUCK_VIEW + GetAbsOrigin();
 
-	Vector vStart = eyeCrouchOrigin;
-	Vector vEnd = vStart + (forward * CLIMB_TRACE_DIST);
+	Vector vecStart = vecEyePos;
+	Vector vecEnd = vecStart + (vecForward * CLIMB_TRACE_DIST);
 
 	trace_t tr;
-	UTIL_TraceLine(vStart, vEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+	UTIL_TraceLine(vecStart, vecEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
 
 	if (!tr.DidHitWorld())
 	{
@@ -2130,21 +2128,21 @@ void CVancePlayer::TryLedgeClimb()
 
 	if (vance_climb_debug.GetBool())
 	{
-		debugoverlay->AddLineOverlay(vStart, tr.endpos, 0, 0, 255, true, 10);
-		debugoverlay->AddLineOverlay(vStart, vEnd, 255, 0, 0, true, 10);
+		debugoverlay->AddLineOverlay(vecStart, tr.endpos, 0, 0, 255, true, 10);
+		debugoverlay->AddLineOverlay(vecStart, vecEnd, 255, 0, 0, true, 10);
 	}
 
 	m_flClimbFraction = tr.fraction;
 
-	for (float posFraction = 0.0f; lambda0(tr.endpos) && posFraction <= 1.0f; posFraction += 1.0f / vance_climb_checkray_count.GetInt())
+	for (float posFraction = 0.0f; checkClimbability(tr.endpos) && posFraction <= 1.0f; posFraction += 1.0f / vance_climb_checkray_count.GetInt())
 	{
-		vStart = eyeCrouchOrigin + (VEC_VIEW - VEC_DUCK_VIEW) * posFraction;
-		vEnd = vStart + (forward * CLIMB_TRACE_DIST);
-		UTIL_TraceLine(vStart, vEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+		vecStart = vecEyePos + (VEC_VIEW - VEC_DUCK_VIEW) * posFraction;
+		vecEnd = vecStart + (vecForward * CLIMB_TRACE_DIST);
+		UTIL_TraceLine(vecStart, vecEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
 
 		if (vance_climb_debug.GetBool())
 		{
-			debugoverlay->AddLineOverlay(vStart, tr.endpos, 0, 0, 255, true, 10);
+			debugoverlay->AddLineOverlay(vecStart, tr.endpos, 0, 0, 255, true, 10);
 		}
 	}
 }
