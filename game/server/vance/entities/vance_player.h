@@ -19,7 +19,6 @@ typedef enum
 {
 	ACTION_NONE = 0,
 	ACTION_SLIDE,
-	ACTION_VAULT,
 	ACTION_CLIMB
 } ParkourAction_t;
 
@@ -79,19 +78,22 @@ public:
 	virtual void			ItemPostFrame();
 	void					SetAnimation(PLAYER_ANIM playerAnim);
 
-	void					HandleSlide(void);
-	void					HandleVault(void);
-	void					HandleLedgeClimb(void);
-	bool					StartLedgeClimb(Vector start);
-	void					Think(void);
+	// Parkour abilities
+	void					SlideTick();
+	void					TrySlide();
+
+	void					LedgeClimbTick();
+	void					TryLedgeClimb();
+
+	void					Think();
 
 	virtual bool			CanBreatheUnderwater() const { return IsSuitEquipped() && m_HL2Local.m_flSuitPower > 0.0f; }
 
-	inline const char		*GetPlayerWorldModel() { return IsSuitEquipped() ? P_PLAYER_HEV : P_PLAYER_ALYX; }
-	inline const char		*GetLegsViewModel() { return IsSuitEquipped() ? V_KICK_HEV : V_KICK_ALYX; }
-	inline const char		*GetArmsViewModel() { return IsSuitEquipped() ? C_ARMS_HEV : C_ARMS_ALYX; }
+	inline const char		*GetPlayerWorldModel() const { return IsSuitEquipped() ? P_PLAYER_HEV : P_PLAYER_ALYX; }
+	inline const char		*GetLegsViewModel() const { return IsSuitEquipped() ? V_KICK_HEV : V_KICK_ALYX; }
+	inline const char		*GetArmsViewModel() const { return IsSuitEquipped() ? C_ARMS_HEV : C_ARMS_ALYX; }
 	
-	inline bool				IsBleeding() { return m_bBleed; }
+	inline bool				IsBleeding() const { return m_bBleed; }
 
 	void					UseTourniquet();
 	void					InjectStim();
@@ -161,7 +163,9 @@ private:
 	Vector		m_vecClimbStartOrigin;
 	Vector		m_vecClimbOutVelocity;
 	float		m_flClimbFraction;
-	float		m_flClimbTraceFraction;
+
+	Vector		m_vecSlideStartPos;
+	Vector		m_vecSlideEndPos;
 };
 
 #endif // VANCE_PLAYER_H

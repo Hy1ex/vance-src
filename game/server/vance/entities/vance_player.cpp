@@ -34,17 +34,12 @@
 #include "coordsize.h"
 #include "rumble_shared.h"
 #include "interpolatortypes.h"
-
+#include "ammodef.h"
+#include "nav_mesh.h"
+#include "nav_node.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-#include <ammodef.h>
-
-/*
-	TODO: Make medkits 'fade out' bleeding by slowing down and weakening damage
-	TODO: Improve bleeding code, it should be a damage type
-	TODO: Implement tourniquets
-*/
 
 extern ConVar player_showpredictedposition;
 extern ConVar player_showpredictedposition_timestep;
@@ -1230,24 +1225,6 @@ void CVancePlayer::PostThink(void)
 	angles[PITCH] = 0;
 	SetLocalAngles(angles);
 
-	switch (m_ParkourAction)
-	{
-	case ACTION_SLIDE:
-		HandleSlide();
-		//SetNextThink(gpGlobals->curtime + 0.05f);
-		break;
-	case ACTION_VAULT:
-		HandleVault();
-		//SetNextThink(gpGlobals->curtime + 0.05f);
-		break;
-	case ACTION_CLIMB:
-		HandleLedgeClimb();
-		//SetNextThink(gpGlobals->curtime + 0.05f);
-		break;
-	default:
-		break;
-	}
-
 	m_pPlayerAnimState->Update();
 }
 
@@ -2006,23 +1983,54 @@ void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 }
 
 ConVar vance_slide_velocity("vance_slide_velocity", "865", FCVAR_CHEAT);
+ConVar vance_slide_distance("vance_slide_distance", "300", FCVAR_CHEAT);
 
-void CVancePlayer::HandleSlide(void)
+void CVancePlayer::SlideTick()
 {
-	m_ParkourAction = ACTION_NONE;
+#if 0
+	bool bFailedSlide = false;
+	bool bFinishedSlide = false;
+
+//	float fDistanceTravelled = (GetAbsOrigin() - m_vecSlideStartPos).Length();
+
+	Vector vecPosition = vec3_origin;
+
+	
+
+	if (bFailedSlide || bFinishedSlide)
+	{
+		m_ParkourAction = ACTION_NONE;
+		EnableControl(true);
+		if (IsDucking())
+			SetSize(VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
+		else
+			SetSize(VEC_HULL_MIN, VEC_HULL_MAX);
+	}
+#endif
 }
 
-void CVancePlayer::HandleVault(void)
+void CVancePlayer::TrySlide()
 {
+#if 0
+	Vector vecYaw;
+	GetVectors(&vecYaw, nullptr, nullptr);
+
+	m_vecSlideDir = vecYaw;
+	m_vecSlideStartPos = GetAbsOrigin();
+
+	Vector vecPathPoints[4];
+
+	SetSize(VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
+	EnableControl(false);
+
+	m_ParkourAction = ACTION_SLIDE;
+#else
 	m_ParkourAction = ACTION_NONE;
+#endif
 }
 
-void CVancePlayer::HandleLedgeClimb(void)
+void CVancePlayer::LedgeClimbTick()
 {
-	Vector forward;
-	QAngle angle = GetAbsAngles();
-	AngleVectors(QAngle(0, angle.y, angle.z), &forward);
-
 	if (m_flClimbFraction >= 1.0f)
 	{
 		Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
@@ -2064,106 +2072,134 @@ void CVancePlayer::HandleLedgeClimb(void)
 	}
 }
 
-// Returns true on failure, false on success
-// it was done this way so we can use it in a loop
-bool CVancePlayer::StartLedgeClimb(Vector start)
+void CVancePlayer::TryLedgeClimb()
 {
+	auto lambda0 = [this](Vector start) -> bool {
+		Vector forward;
+		EyeVectors(&forward);
+
+		trace_t tr;
+		UTIL_TraceHull(start + Vector(0, 0, VEC_HULL_MAX.z),
+			start - Vector(0, 0, VEC_HULL_MAX.z) * 2,
+			VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+
+		UTIL_TraceHull(tr.endpos,
+			tr.endpos,
+			VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+		if (tr.DidHit())
+			return true;
+
+		if (vance_climb_debug.GetBool())
+		{
+			debugoverlay->AddBoxOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
+			debugoverlay->AddBoxOverlay(start - Vector(0, 0, VEC_HULL_MAX.z) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
+
+			debugoverlay->AddLineOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), start - Vector(0, 0, VEC_HULL_MAX.z) * 2, 0, 0, 255, true, 10);
+		}
+
+		m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
+		m_vecClimbStartOrigin = GetAbsOrigin();
+		m_flClimbFraction = 0.0f;
+		m_ParkourAction = ACTION_CLIMB;
+
+		// Don't get stuck during this traversal since we'll just be slamming the player origin
+		SetMoveType(MOVETYPE_NOCLIP);
+		SetMoveCollide(MOVECOLLIDE_DEFAULT);
+		SetSolid(SOLID_NONE);
+
+		return false;
+	};
+
 	Vector forward;
-	EyeVectors(&forward);
+	QAngle angDir = QAngle(0.0f, EyeAngles().y, EyeAngles().z);
+	AngleVectors(angDir, &forward);
+
+	Vector eyeCrouchOrigin = VEC_DUCK_VIEW + GetAbsOrigin();
+
+	Vector vStart = eyeCrouchOrigin;
+	Vector vEnd = vStart + (forward * CLIMB_TRACE_DIST);
 
 	trace_t tr;
-	UTIL_TraceHull(start + Vector(0,0,VEC_HULL_MAX.z),
-				   start - Vector(0, 0, VEC_HULL_MAX.z) * 2,
-		VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+	UTIL_TraceLine(vStart, vEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
 
-	UTIL_TraceHull(tr.endpos,
-		tr.endpos,
-		VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
-	if (tr.DidHit())
-		return true;
+	if (!tr.DidHitWorld())
+	{
+		SetNextThink(gpGlobals->curtime + 0.05f);
+		return;
+	}
 
 	if (vance_climb_debug.GetBool())
 	{
-		debugoverlay->AddBoxOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
-		debugoverlay->AddBoxOverlay(start - Vector(0, 0, VEC_HULL_MAX.z) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10);
-
-		debugoverlay->AddLineOverlay(start + Vector(0, 0, VEC_HULL_MAX.z), start - Vector(0, 0, VEC_HULL_MAX.z) * 2, 0, 0, 255, true, 10);
+		debugoverlay->AddLineOverlay(vStart, tr.endpos, 0, 0, 255, true, 10);
+		debugoverlay->AddLineOverlay(vStart, vEnd, 255, 0, 0, true, 10);
 	}
 
-	m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
-	m_vecClimbStartOrigin = GetAbsOrigin();
-	m_flClimbFraction = 0.0f;
-	m_ParkourAction = ACTION_CLIMB;
+	m_flClimbFraction = tr.fraction;
 
-	// Don't get stuck during this traversal since we'll just be slamming the player origin
-	SetMoveType(MOVETYPE_NOCLIP);
-	SetMoveCollide(MOVECOLLIDE_DEFAULT);
-	SetSolid(SOLID_NONE);
-
-	return false;
-}
-
-void CVancePlayer::Think(void)
-{
-	if (GetGroundEntity()) // if we're on the ground
+	for (float posFraction = 0.0f; lambda0(tr.endpos) && posFraction <= 1.0f; posFraction += 1.0f / vance_climb_checkray_count.GetInt())
 	{
-		/*if ((m_nButtons & IN_JUMP) && (GetAbsOrigin().z + tr.m_pEnt->WorldAlignMaxs().z) >= 36)
-		{
-			m_ParkourAction = ACTION_VAULT;
-			SetNextThink(gpGlobals->curtime + 0.05f);
-			return;
-		}
-
-		if ((IsSprinting()) && (m_nButtons & IN_DUCK) && (m_ParkourAction != ACTION_SLIDE))
-		{
-			m_ParkourAction = ACTION_SLIDE;
-			//m_flSprintElapsedTime = 0.0f;
-			SetNextThink(gpGlobals->curtime + 0.05f);
-			return;
-		}*/
-	}
-
-	if ((m_nButtons & IN_JUMP) && m_ParkourAction == ACTION_NONE)
-	{
-		Vector forward;
-		QAngle angDir = QAngle(0.0f, EyeAngles().y, EyeAngles().z);
-		AngleVectors(angDir, &forward);
-
-		Vector eyeCrouchOrigin = VEC_DUCK_VIEW + GetAbsOrigin();
-
-		Vector vStart = eyeCrouchOrigin;
-		Vector vEnd = vStart + (forward * CLIMB_TRACE_DIST);
-
-		trace_t tr;
+		vStart = eyeCrouchOrigin + (VEC_VIEW - VEC_DUCK_VIEW) * posFraction;
+		vEnd = vStart + (forward * CLIMB_TRACE_DIST);
 		UTIL_TraceLine(vStart, vEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
-
-		if (!tr.DidHitWorld())
-		{
-			SetNextThink(gpGlobals->curtime + 0.05f);
-			return;
-		}
 
 		if (vance_climb_debug.GetBool())
 		{
 			debugoverlay->AddLineOverlay(vStart, tr.endpos, 0, 0, 255, true, 10);
-			debugoverlay->AddLineOverlay(vStart, vEnd, 255, 0, 0, true, 10);
 		}
+	}
+}
 
-		m_flClimbTraceFraction = tr.fraction;
-
-		for (float posFraction = 0.0f; StartLedgeClimb(tr.endpos) && posFraction <= 1.0f; posFraction += 1.0f / vance_climb_checkray_count.GetInt())
+void CVancePlayer::Think()
+{
+	if (m_ParkourAction == ACTION_NONE)
+	{
+		// If we're on the ground, sprinting, holding the duck key and not sliding already
+		if (GetGroundEntity() && IsSprinting() && (m_nButtons & IN_DUCK))
 		{
-			vStart = eyeCrouchOrigin + (VEC_VIEW - VEC_DUCK_VIEW) * posFraction;
-			vEnd = vStart + (forward * CLIMB_TRACE_DIST);
-			UTIL_TraceLine(vStart, vEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
-
-			if (vance_climb_debug.GetBool())
-			{
-				debugoverlay->AddLineOverlay(vStart, tr.endpos, 0, 0, 255, true, 10);
-			}
+			TrySlide();
+		}
+		// Hold jump to climb, no special conditions required
+		else if (m_nButtons & IN_JUMP)
+		{
+			TryLedgeClimb();
+		}
+	}
+	else
+	{
+		switch (m_ParkourAction)
+		{
+		case ACTION_SLIDE:
+			SlideTick();
+			break;
+		case ACTION_CLIMB:
+			LedgeClimbTick();
+			break;
+		default:
+			Warning("%s L%s: SHOULD NOT BE HERE\n", __FILE__, __LINE__);
 		}
 	}
 
-	SetNextThink(gpGlobals->curtime + 0.05f);
+	SetNextThink(gpGlobals->curtime);
 	return;
+}
+
+CON_COMMAND_F(trace_hull_test, "Trace a hull in front of you and show the output in 3D", FCVAR_NONE)
+{
+	CBasePlayer* pPlayer = ToBasePlayer(UTIL_GetCommandClient());
+	if (!pPlayer)
+		return;
+
+	Vector vecEyes, vecForward;
+	pPlayer->EyePositionAndVectors(&vecEyes, &vecForward, nullptr, nullptr);
+
+	trace_t tr;
+	UTIL_TraceHull(vecEyes, vecEyes + vecForward * 64.0f,
+		VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, MASK_SOLID_BRUSHONLY, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+
+	if (tr.DidHit())
+	{
+		DevMsg("trace_hull_test hit!\n");
+		NDebugOverlay::Box(vecEyes + vecForward * 64.0f, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, 255, 0, 0, 100, 10.0f);
+		NDebugOverlay::Cross3D(tr.endpos, 1.0f, 0, 0, 255, false, 10.0f);
+	}
 }
