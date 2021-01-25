@@ -36,7 +36,7 @@ class IDeferredExtension : public IBaseInterface
 {
 public:
 
-	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const VMatrix& matView, const VMatrix& matProj, const VMatrix& matFrustum, const VMatrix& matInverseFrustum) = 0;
+	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const float& curtime, const VMatrix& matView, const VMatrix& matProj, const VMatrix& matFrustum, const VMatrix& matInverseFrustum) = 0;
 
 	virtual void CommitLightData_Global(const lightData_Global_t &data) = 0;
 };
@@ -51,7 +51,7 @@ public:
 	CDeferredExtension();
 	~CDeferredExtension();
 
-	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar,
+	virtual void CommitCommonData(const Vector& origin, const Vector& fwd, const float& zNear, const float& zFar, const float& curtime,
 								  const VMatrix& matView, const VMatrix& matProj, const VMatrix& matFrustum, const VMatrix& matInverseFrustum);
 	virtual void CommitZScale(const float& zScale);
 
@@ -65,6 +65,7 @@ public:
 	inline const float& GetZDistNear();
 	inline const float& GetZDistFar();
 	inline float GetZScale();
+	inline float GetCurrentTime();
 private:
 
 	lightData_Global_t m_globalLight;
@@ -79,7 +80,7 @@ public:
 private:
 	float m_flZDists[3];
 	float m_flFOV;
-
+	float m_curTime;
 	Vector m_vEyePos;
 };
 
@@ -116,6 +117,10 @@ float* CDeferredExtension::GetViewInvBase()
 float* CDeferredExtension::GetProjInvBase()
 {
 	return m_matProjInv.Base();
+}
+float CDeferredExtension::GetCurrentTime()
+{
+	return m_curTime;
 }
 
 #endif

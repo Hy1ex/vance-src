@@ -24,6 +24,11 @@ public:
 	bool IsCascadedShadowMappingEnabled() const;
 	bool IsVolumetricsEnabled() const;
 
+	bool IsDynamicSkyEnabled() const;
+	bool UsesTimeForAngles() const;
+	float DayNightTimescale() const;
+	float CurrentTime() const;
+
 	void GetShadowMappingConstants(QAngle& angSunAngles, Vector& vecLight, Vector& vecAmbient) const
 	{
 		angSunAngles = m_angSunAngles;
@@ -53,6 +58,10 @@ private:
 	bool m_bOldEnableShadows;
 
 	bool m_bEnableVolumetrics;
+	bool m_bEnableDynamicSky;
+	bool m_bEnableTimeAngles;
+	float m_flDayNightTimescale;
+	float m_fTime;
 };
 
 extern C_GlobalLight* g_pCSMLight;

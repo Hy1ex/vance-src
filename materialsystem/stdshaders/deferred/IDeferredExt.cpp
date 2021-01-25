@@ -20,6 +20,7 @@ void CDeferredExtension::CommitLightData_Global(const lightData_Global_t &data)
 void CDeferredExtension::CommitCommonData(const Vector& origin,
 	const Vector& fwd,
 	const float& zNear, const float& zFar,
+	const float& curTime,
 	const VMatrix& matView,
 	const VMatrix& matProj,
 	const VMatrix& matViewInv,
@@ -34,6 +35,7 @@ void CDeferredExtension::CommitCommonData(const Vector& origin,
 	m_matProj = matProj;
 	m_flZDists[0] = zNear;
 	m_flZDists[1] = zFar;
+	m_curTime = curTime;
 }
 
 void CDeferredExtension::CommitZScale(const float& zFar)

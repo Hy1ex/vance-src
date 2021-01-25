@@ -1207,6 +1207,27 @@ void CViewRender::DrawViewModels( const CViewSetup &view, bool drawViewmodel )
 	pRenderContext->PopMatrix();
 }
 
+void CViewRender::DrawSky(const CViewSetup& view)
+{
+	if (!m_SkydomeEntity)
+		return;
+
+	/*int drawn = modelrender->DrawModel(
+		STUDIO_RENDER,
+		m_SkydomeEntity,
+		MODEL_INSTANCE_INVALID,
+		-1,		// no entity index
+		m_SkydomeModel,
+		view.origin,
+		vec3_angle,
+		0,	// skin
+		0,	// body
+		0  // hitboxset
+	);*/
+	m_SkydomeEntity->SetAbsOrigin(view.origin);
+	m_SkydomeEntity->DrawModel(STUDIO_RENDER);
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1531,7 +1552,7 @@ void CViewRender::ProcessGlobals(const CViewSetup& view)
 	
 	Vector vFwd;
 	AngleVectors(view.angles, &vFwd);
-	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar, matView, matPerspective, matViewInv, matProjInv);
+	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar, g_pCSMLight->CurrentTime(), matView, matPerspective, matViewInv, matProjInv);
 
 	GetLightingManager()->SetRenderConstants(matPerspective, view);
 }
@@ -3800,6 +3821,13 @@ void CRendering3dView::DrawWorld( float waterZAdjust )
 	if( !r_drawopaqueworld.GetBool() )
 	{
 		return;
+	}
+
+	if ((m_DrawFlags & DF_DRAWSKYBOX) && (g_pCSMLight && g_pCSMLight->IsDynamicSkyEnabled()))
+	{
+		m_DrawFlags &= ~DF_DRAWSKYBOX; // dont render engine sky, we have our own sky now
+
+		m_pMainView->DrawSky(*this);
 	}
 
 	unsigned long engineFlags = BuildEngineDrawWorldListFlags( m_DrawFlags );

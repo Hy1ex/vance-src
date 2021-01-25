@@ -430,6 +430,7 @@ public:
 	// Drawing primitives
 	bool			ShouldDrawViewModel( bool drawViewmodel );
 	void			DrawViewModels( const CViewSetup &view, bool drawViewmodel );
+	void			DrawSky(const CViewSetup& view);
 
 	void			PushGBufferRT(bool firstPush = false);
 private:
@@ -492,6 +493,7 @@ private:
 	CMaterialReference	m_ModulateSingleColor;
 	CMaterialReference	m_ScreenOverlayMaterial;
 	CMaterialReference	m_UnderWaterOverlayMaterial;
+	C_BaseEntity*		m_SkydomeEntity; // HACKHACK: i wish there was a better way to do this, but modelrender forced my hand
 
 	ITexture*			m_DepthBuffer;
 	ITexture*			m_NormalBuffer;

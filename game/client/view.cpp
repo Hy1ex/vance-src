@@ -327,6 +327,8 @@ void CViewRender::Init( void )
 	static int flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
 	if (depthOld)
 		flags = depthOld->GetFlags();
+	
+	m_SkydomeEntity = NULL;
 
 	int iW, iH;
 	materials->GetBackBufferDimensions(iW, iH);
@@ -411,7 +413,15 @@ void CViewRender::LevelInit( void )
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssao");
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssr");
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_volumetrics");
+
+	model_t* skyModel = (model_t*)engine->LoadModel("models/dev/skydome.mdl");
 	
+	m_SkydomeEntity = new C_BaseAnimating;
+	m_SkydomeEntity->InitializeAsClientEntity(NULL, RENDER_GROUP_OPAQUE_ENTITY_HUGE);
+
+	m_SkydomeEntity->SetModelPointer(skyModel);
+
+	m_SkydomeEntity->AddEffects(EF_NOINTERP | EF_NOSHADOW | EF_NORECEIVESHADOW);
 }
 
 //-----------------------------------------------------------------------------

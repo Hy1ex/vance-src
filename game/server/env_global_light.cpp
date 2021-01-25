@@ -38,6 +38,10 @@ public:
 	void	InputSetEnableShadows(inputdata_t& inputdata);
 	void	InputSetLightColor(inputdata_t& inputdata);
 
+	void	InputSetEnableDynamicSky(inputdata_t& inputdata);
+	void	InputSetTimescale(inputdata_t& inputdata);
+	void	InputSetTime(inputdata_t& inputdata);
+
 	virtual int	ObjectCaps(void) { return BaseClass::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
 	DECLARE_SERVERCLASS();
@@ -59,9 +63,15 @@ private:
 	CNetworkVar(float, m_flNorthOffset);
 	CNetworkVar(bool, m_bEnableShadows);
 	CNetworkVar(bool, m_bEnableVolumetrics);
+
+	CNetworkVar(bool, m_bEnableDynamicSky);
+	CNetworkVar(bool, m_bEnableTimeAngles);
+	CNetworkVar(float, m_flDayNightTimescale);
+	CNetworkVar(float, m_fTime);
 };
 
 LINK_ENTITY_TO_CLASS(env_global_light, CGlobalLight);
+LINK_ENTITY_TO_CLASS(env_environment, CGlobalLight);
 
 BEGIN_DATADESC(CGlobalLight)
 
@@ -76,6 +86,12 @@ DEFINE_KEYFIELD(m_bEnableShadows, FIELD_BOOLEAN, "enableshadows"),
 DEFINE_KEYFIELD(m_bEnableVolumetrics, FIELD_BOOLEAN, "enablevolumetrics"),
 DEFINE_KEYFIELD(m_flColorTransitionTime, FIELD_FLOAT, "colortransitiontime"),
 
+DEFINE_KEYFIELD(m_bEnableDynamicSky, FIELD_BOOLEAN, "enabledynamicsky"),
+DEFINE_KEYFIELD(m_bEnableTimeAngles, FIELD_BOOLEAN, "usetimeforangles"),
+
+DEFINE_KEYFIELD(m_flDayNightTimescale, FIELD_FLOAT, "timescale"),
+DEFINE_KEYFIELD(m_fTime, FIELD_FLOAT, "time"),
+
 // Inputs
 DEFINE_INPUT(m_flSunDistance, FIELD_FLOAT, "SetDistance"),
 DEFINE_INPUT(m_flFOV, FIELD_FLOAT, "SetFOV"),
@@ -88,6 +104,9 @@ DEFINE_INPUTFUNC(FIELD_VOID, "Enable", InputEnable),
 DEFINE_INPUTFUNC(FIELD_VOID, "Disable", InputDisable),
 DEFINE_INPUTFUNC(FIELD_STRING, "SetTexture", InputSetTexture),
 DEFINE_INPUTFUNC(FIELD_BOOLEAN, "EnableShadows", InputSetEnableShadows),
+DEFINE_INPUTFUNC(FIELD_BOOLEAN, "EnableDynamicSky", InputSetEnableDynamicSky),
+DEFINE_INPUTFUNC(FIELD_FLOAT, "EnableSetTimescale", InputSetTimescale),
+DEFINE_INPUTFUNC(FIELD_FLOAT, "SetTime", InputSetTime),
 
 DEFINE_FIELD(m_LinearFloatLightColor, FIELD_VECTOR),
 DEFINE_FIELD(m_LinearFloatAmbientColor, FIELD_VECTOR),
@@ -107,6 +126,10 @@ SendPropFloat(SENDINFO(m_flFOV), 0, SPROP_NOSCALE),
 SendPropFloat(SENDINFO(m_flNearZ), 0, SPROP_NOSCALE),
 SendPropFloat(SENDINFO(m_flNorthOffset), 0, SPROP_NOSCALE),
 SendPropBool(SENDINFO(m_bEnableShadows)),
+
+SendPropBool(SENDINFO(m_bEnableDynamicSky)),
+SendPropFloat(SENDINFO(m_flDayNightTimescale)),
+SendPropFloat(SENDINFO(m_fTime)),
 END_SEND_TABLE()
 
 
@@ -122,6 +145,11 @@ CGlobalLight::CGlobalLight()
 	m_LinearFloatLightColor.Init(1.0f, 1.0f, 1.0f);
 	m_flFOV = 5.0f;
 	m_bEnableShadows = false;
+
+	m_bEnableDynamicSky = false;
+	m_bEnableTimeAngles = false;
+	m_flDayNightTimescale = 1.0f;
+	m_fTime = 0.0f;
 }
 
 
@@ -257,4 +285,19 @@ void CGlobalLight::InputSetEnableShadows(inputdata_t& inputdata)
 void CGlobalLight::InputSetLightColor(inputdata_t& inputdata)
 {
 	//m_LightColor = inputdata.value.Color32();
+}
+
+void CGlobalLight::InputSetEnableDynamicSky(inputdata_t& inputdata)
+{
+	m_bEnableDynamicSky = inputdata.value.Bool();
+}
+
+void CGlobalLight::InputSetTimescale(inputdata_t& inputdata)
+{
+	m_flDayNightTimescale = inputdata.value.Float();
+}
+
+void CGlobalLight::InputSetTime(inputdata_t& inputdata)
+{
+	m_fTime = inputdata.value.Float();
 }
