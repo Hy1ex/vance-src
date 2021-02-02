@@ -480,7 +480,7 @@ void CWeaponShotgun::PrimaryAttack( void )
 	info.m_iShots = sk_plr_num_shotgun_pellets.GetInt();
 	FireBulletProjectiles(sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, -1, 0, NULL, true, true);
 	
-	pPlayer->ViewPunch( QAngle( random->RandomFloat( -2.0f, -1.0f ), random->RandomFloat( -2.0f, 2.0f ), 0.0f ) );
+	pPlayer->ViewPunch( QAngle( random->RandomFloat( -6.0f, -3.0f ), random->RandomFloat( -2.0f, 2.0f ), 0.0f ) );
 
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2f, GetOwner() );
 
