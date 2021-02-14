@@ -2203,6 +2203,11 @@ typedef enum
 		ACT_VM_WALK_EXTENDED,
 		ACT_VM_HOLSTER_EXTENDED,
 		ACT_VM_RETRACT,
+
+		ACT_VM_SWING_LEFT,
+		ACT_VM_SWING_RIGHT,
+		ACT_VM_IDLE_TO_THROW,
+		ACT_VM_THROW_IDLE,
 #endif
 
 	// this is the end of the global activities, private per-monster activities start here.

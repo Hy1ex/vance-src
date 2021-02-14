@@ -137,4 +137,16 @@ protected:
 #endif
 };
 
+#ifdef CLIENT_DLL
+// HACKHACK: i hate this
+class C_VanceBludgeonWeapon : public CBaseVanceWeapon
+{
+public:
+	DECLARE_CLASS(C_VanceBludgeonWeapon, CBaseVanceWeapon);
+	DECLARE_CLIENTCLASS();
+};
+
+#endif // CLIENT_DLL
+
+
 #endif // VANCE_BASEWEAPON_SHARED_H

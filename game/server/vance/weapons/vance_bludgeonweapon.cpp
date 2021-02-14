@@ -28,15 +28,16 @@
 IMPLEMENT_SERVERCLASS_ST( CVanceBludgeonWeapon, DT_VanceBludgeonWeapon )
 END_SEND_TABLE()
 
-#define BLUDGEON_HULL_DIM		16
+ConVar sk_plr_melee_raycount("sk_plr_melee_raycount", "10");
+ConVar sk_plr_melee_angle("sk_plr_melee_angle", "30");
+ConVar sk_plr_melee_swingspeed("sk_plr_melee_swingspeed", "0.25");
 
-static const Vector g_bludgeonMins(-BLUDGEON_HULL_DIM,-BLUDGEON_HULL_DIM,-BLUDGEON_HULL_DIM);
-static const Vector g_bludgeonMaxs(BLUDGEON_HULL_DIM,BLUDGEON_HULL_DIM,BLUDGEON_HULL_DIM);
+ConVar vance_melee_debug("vance_melee_debug", "0");
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-CVanceBludgeonWeapon::CVanceBludgeonWeapon()
+CVanceBludgeonWeapon::CVanceBludgeonWeapon() : m_flSwing(0.0f)
 {
 	m_bFiresUnderwater = true;
 }
@@ -115,24 +116,14 @@ void CVanceBludgeonWeapon::ItemPostFrame( void )
 //------------------------------------------------------------------------------
 void CVanceBludgeonWeapon::PrimaryAttack()
 {
-	Swing( false );
+	m_bSwingSwitch = !m_bSwingSwitch;
+	Swing();
 }
-
-//------------------------------------------------------------------------------
-// Purpose :
-// Input   :
-// Output  :
-//------------------------------------------------------------------------------
-void CVanceBludgeonWeapon::SecondaryAttack()
-{
-	Swing( true );
-}
-
 
 //------------------------------------------------------------------------------
 // Purpose: Implement impact function
 //------------------------------------------------------------------------------
-void CVanceBludgeonWeapon::Hit( trace_t &traceHit, Activity nHitActivity, bool bIsSecondary )
+void CVanceBludgeonWeapon::Hit( trace_t &traceHit, Activity nHitActivity)
 {
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 	
@@ -151,8 +142,11 @@ void CVanceBludgeonWeapon::Hit( trace_t &traceHit, Activity nHitActivity, bool b
 	if ( pHitEntity != NULL )
 	{
 		Vector hitDirection;
-		pPlayer->EyeVectors( &hitDirection, NULL, NULL );
+		pPlayer->EyeVectors( NULL, &hitDirection, NULL );
 		VectorNormalize( hitDirection );
+
+		if (m_bSwingSwitch)
+			hitDirection = -hitDirection;
 
 		CTakeDamageInfo info( GetOwner(), GetOwner(), GetDamageForActivity( nHitActivity ), DMG_CLUB );
 
@@ -172,7 +166,7 @@ void CVanceBludgeonWeapon::Hit( trace_t &traceHit, Activity nHitActivity, bool b
 
 		if ( ToBaseCombatCharacter( pHitEntity ) )
 		{
-			gamestats->Event_WeaponHit( pPlayer, !bIsSecondary, GetClassname(), info );
+			gamestats->Event_WeaponHit( pPlayer, true, GetClassname(), info );
 		}
 	}
 
@@ -180,7 +174,7 @@ void CVanceBludgeonWeapon::Hit( trace_t &traceHit, Activity nHitActivity, bool b
 	ImpactEffect( traceHit );
 }
 
-Activity CVanceBludgeonWeapon::ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBasePlayer *pOwner )
+void CVanceBludgeonWeapon::ChooseIntersectionPointAndActivity( trace_t &hitTrace, const Vector &mins, const Vector &maxs, CBasePlayer *pOwner )
 {
 	int			i, j, k;
 	float		distance;
@@ -226,7 +220,7 @@ Activity CVanceBludgeonWeapon::ChooseIntersectionPointAndActivity( trace_t &hitT
 	}
 
 
-	return ACT_VM_HITCENTER;
+	return;
 }
 
 //-----------------------------------------------------------------------------
@@ -284,11 +278,79 @@ void CVanceBludgeonWeapon::ImpactEffect(trace_t& traceHit)
 	UTIL_ImpactTrace(&traceHit, DMG_CLUB);
 }
 
+void CVanceBludgeonWeapon::SwingThink()
+{
+	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
+	if (!pOwner)
+		return;
+
+	Vector swingStart = pOwner->Weapon_ShootPosition();
+	Vector forward;
+
+	QAngle AngForward = pOwner->GetAbsAngles();
+	if (m_bSwingSwitch)
+	{
+		AngForward[YAW] -= sk_plr_melee_angle.GetFloat();
+		AngForward[YAW] += sk_plr_melee_angle.GetFloat() * m_flSwing * 2.0f;
+	}
+	else
+	{
+		AngForward[YAW] += sk_plr_melee_angle.GetFloat();
+		AngForward[YAW] -= sk_plr_melee_angle.GetFloat() * m_flSwing * 2.0f;
+	}
+	AngleVectors(AngForward, &forward);
+	Vector swingEnd = swingStart + forward * GetRange();
+
+	SetNextThink(gpGlobals->curtime + sk_plr_melee_swingspeed.GetFloat() / sk_plr_melee_raycount.GetInt());
+
+	m_flSwing += 1.0f / sk_plr_melee_raycount.GetInt();
+
+	trace_t traceHit;
+	UTIL_TraceLine(swingStart, swingEnd, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit);
+	Activity nHitActivity = GetPrimaryAttackActivity();
+
+	CTakeDamageInfo triggerInfo(GetOwner(), GetOwner(), GetDamageForActivity(nHitActivity), DMG_CLUB);
+	triggerInfo.SetDamagePosition(traceHit.startpos);
+	triggerInfo.SetDamageForce(forward);
+	TraceAttackToTriggers(triggerInfo, traceHit.startpos, traceHit.endpos, forward);
+	
+	// -------------------------
+	//	Miss
+	// -------------------------
+	if (traceHit.fraction == 1.0f)
+	{
+		// We want to test the first swing again
+		Vector testEnd = swingStart + forward * GetRange();
+
+		// See if we happened to hit water
+		ImpactWater(swingStart, testEnd);
+
+		if(vance_melee_debug.GetBool())
+			DebugDrawLine(swingStart, swingEnd, 255, 255, 0, false, 5.0f);
+	}
+	else
+	{
+		if(m_hHitEnt != traceHit.m_pEnt)
+			Hit(traceHit, nHitActivity);
+		m_hHitEnt = traceHit.m_pEnt;
+
+		if(vance_melee_debug.GetBool())
+			DebugDrawLine(swingStart, swingEnd, 255, 0, 0, false, 5.0f);
+	}
+
+	if (m_flSwing >= 1.0f)
+	{
+		m_hHitEnt = NULL;
+		m_flSwing = 0.0f;
+		SetThink(NULL);
+	}
+}
+
 //------------------------------------------------------------------------------
 // Purpose : Starts the swing of the weapon and determines the animation
 // Input   : bIsSecondary - is this a secondary attack?
 //------------------------------------------------------------------------------
-void CVanceBludgeonWeapon::Swing( int bIsSecondary )
+void CVanceBludgeonWeapon::Swing()
 {
 	trace_t traceHit;
 
@@ -306,70 +368,14 @@ void CVanceBludgeonWeapon::Swing( int bIsSecondary )
 
 	Vector swingEnd = swingStart + forward * GetRange();
 	UTIL_TraceLine( swingStart, swingEnd, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit );
-	Activity nHitActivity = ACT_VM_HITCENTER;
+	Activity nHitActivity = GetPrimaryAttackActivity();
 
-	// Like bullets, bludgeon traces have to trace against triggers.
-	CTakeDamageInfo triggerInfo( GetOwner(), GetOwner(), GetDamageForActivity( nHitActivity ), DMG_CLUB );
-	triggerInfo.SetDamagePosition( traceHit.startpos );
-	triggerInfo.SetDamageForce( forward );
-	TraceAttackToTriggers( triggerInfo, traceHit.startpos, traceHit.endpos, forward );
+	m_iPrimaryAttacks++;
 
-	if ( traceHit.fraction == 1.0 )
-	{
-		float bludgeonHullRadius = 1.732f * BLUDGEON_HULL_DIM;  // hull is +/- 16, so use cuberoot of 2 to determine how big the hull is from center to the corner point
+	gamestats->Event_WeaponFired(pOwner, true, GetClassname());
 
-		// Back off by hull "radius"
-		swingEnd -= forward * bludgeonHullRadius;
-
-		UTIL_TraceHull( swingStart, swingEnd, g_bludgeonMins, g_bludgeonMaxs, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit );
-		if ( traceHit.fraction < 1.0 && traceHit.m_pEnt )
-		{
-			Vector vecToTarget = traceHit.m_pEnt->GetAbsOrigin() - swingStart;
-			VectorNormalize( vecToTarget );
-
-			float dot = vecToTarget.Dot( forward );
-
-			// YWB:  Make sure they are sort of facing the guy at least...
-			if ( dot < 0.70721f )
-			{
-				// Force amiss
-				traceHit.fraction = 1.0f;
-			}
-			else
-			{
-				nHitActivity = ChooseIntersectionPointAndActivity( traceHit, g_bludgeonMins, g_bludgeonMaxs, pOwner );
-			}
-		}
-	}
-
-	if ( !bIsSecondary )
-	{
-		m_iPrimaryAttacks++;
-	} 
-	else 
-	{
-		m_iSecondaryAttacks++;
-	}
-
-	gamestats->Event_WeaponFired( pOwner, !bIsSecondary, GetClassname() );
-
-	// -------------------------
-	//	Miss
-	// -------------------------
-	if ( traceHit.fraction == 1.0f )
-	{
-		nHitActivity = bIsSecondary ? ACT_VM_MISSCENTER2 : ACT_VM_MISSCENTER;
-
-		// We want to test the first swing again
-		Vector testEnd = swingStart + forward * GetRange();
-		
-		// See if we happened to hit water
-		ImpactWater( swingStart, testEnd );
-	}
-	else
-	{
-		Hit( traceHit, nHitActivity, bIsSecondary ? true : false );
-	}
+	SetThink(&CVanceBludgeonWeapon::SwingThink);
+	SetNextThink(gpGlobals->curtime);
 
 	// Send the anim
 	SendWeaponAnim( nHitActivity );

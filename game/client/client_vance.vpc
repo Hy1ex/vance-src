@@ -34,7 +34,6 @@ $Project "Client (VANCE)"
 
 			$File	"vance\weapons\c_weapon_hacktool.cpp"
 			$File	"vance\weapons\c_weapon_sniper.cpp"
-			$File	"$SRCDIR\game\shared\vance\weapons\weapon_akms.cpp"
 			$File	"vance\rendering\deferred_screenspace_effects.cpp"
 			$File	"vance\rendering\deferred_screenspace_effects.h"
 			$File	"vance\rendering\deferred_screenspace_effects_order.cpp"
@@ -65,6 +64,9 @@ $Project "Client (VANCE)"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.h"
 			$File	"$SRCDIR\game\shared\vance\vance_shareddefs.h"
+			
+			$File	"$SRCDIR\game\shared\vance\weapons\weapon_akms.cpp"
+			$File	"$SRCDIR\game\shared\vance\weapons\weapon_melee.cpp"
 		}
 		
 		$Folder	"HL2 DLL"

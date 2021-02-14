@@ -76,7 +76,6 @@ $Project "Server (VANCE)"
 			$File	"vance\weapons\weapon_357.cpp"
 			$File	"vance\weapons\weapon_ar2.cpp"
 			$File	"vance\weapons\weapon_ar2.h"
-			$File	"$SRCDIR\game\shared\vance\weapons\weapon_akms.cpp"
 			$File	"vance\weapons\weapon_crossbow.cpp"
 			$File	"vance\weapons\weapon_frag.cpp"
 			$File	"vance\weapons\weapon_rpg.cpp"
@@ -100,6 +99,9 @@ $Project "Server (VANCE)"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.h"
 			$File	"$SRCDIR\game\shared\vance\vance_shareddefs.h"
+			
+			$File	"$SRCDIR\game\shared\vance\weapons\weapon_akms.cpp"
+			$File	"$SRCDIR\game\shared\vance\weapons\weapon_melee.cpp"
 		}
 
 		$Folder	"HL2 DLL"

@@ -619,14 +619,7 @@ void CVanceMachineGun::ItemPostFrame(void)
 #endif
 
 // HACKHACK: need to put entire VanceBludgeonWeapon here later. this is a stub
-#ifndef GAME_DLL
-class C_VanceBludgeonWeapon : public CBaseVanceWeapon
-{
-public:
-	DECLARE_CLASS(C_VanceBludgeonWeapon, CBaseVanceWeapon);
-	DECLARE_CLIENTCLASS();
-};
-
+#ifdef CLIENT_DLL
 IMPLEMENT_CLIENTCLASS_DT(C_VanceBludgeonWeapon, DT_VanceBludgeonWeapon, CVanceBludgeonWeapon)
 END_RECV_TABLE()
 #endif
