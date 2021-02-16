@@ -1,14 +1,15 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
+// $NoKeywords: $
+//
 //=============================================================================//
-
 #include "cbase.h"
 #include "ammodef.h"
 #include "AI_Hint.h"
 #include "AI_Navigator.h"
-#include "npc_Assassin.h"
+#include "npc_assassin.h"
 #include "game.h"
 #include "npcevent.h"
 #include "engine/IEngineSound.h"
@@ -20,145 +21,36 @@
 #include "ai_motor.h"
 #include "ai_squadslot.h"
 #include "ai_squad.h"
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
-ConVar	sk_assassin_health("sk_assassin_health", "150");
-ConVar	g_debug_assassin("g_debug_assassin", "0");
-
-//=========================================================
-// Anim Events	
-//=========================================================
-#define	ASSASSIN_AE_FIRE_PISTOL_RIGHT	1
-#define	ASSASSIN_AE_FIRE_PISTOL_LEFT	2
-#define	ASSASSIN_AE_KICK_HIT			3
-
-int AE_ASSASIN_FIRE_PISTOL_RIGHT;
-int AE_ASSASIN_FIRE_PISTOL_LEFT;
-int AE_ASSASIN_KICK_HIT;
-
-//=========================================================
-// Assassin activities
-//=========================================================
-int ACT_ASSASSIN_FLIP_LEFT;
-int ACT_ASSASSIN_FLIP_RIGHT;
-int ACT_ASSASSIN_FLIP_BACK;
-int ACT_ASSASSIN_FLIP_FORWARD;
-int ACT_ASSASSIN_PERCH;
-
-//=========================================================
-// Flip types
-//=========================================================
-enum
-{
-	FLIP_LEFT,
-	FLIP_RIGHT,
-	FLIP_FORWARD,
-	FLIP_BACKWARD,
-	NUM_FLIP_TYPES,
-};
-
-//=========================================================
-// Private conditions
-//=========================================================
-enum Assassin_Conds
-{
-	COND_ASSASSIN_ENEMY_TARGETTING_ME = LAST_SHARED_CONDITION,
-};
-
-//=========================================================
-// Assassin schedules
-//=========================================================
-enum
-{
-	SCHED_ASSASSIN_FIND_VANTAGE_POINT = LAST_SHARED_SCHEDULE,
-	SCHED_ASSASSIN_EVADE,
-	SCHED_ASSASSIN_STALK_ENEMY,
-	SCHED_ASSASSIN_LUNGE,
-	SCHED_ASSASSIN_TAKE_COVER,
-	SCHED_ASSASSIN_FIRE_PISTOLS,
-	SCHED_ASSASSIN_FLANK_COVER,
-	SCHED_ASSASSIN_ESTABLISH_LOS,
-};
-
-//=========================================================
-// Assassin tasks
-//=========================================================
-enum
-{
-	TASK_ASSASSIN_GET_PATH_TO_VANTAGE_POINT = LAST_SHARED_TASK,
-	TASK_ASSASSIN_EVADE,
-	TASK_ASSASSIN_SET_EYE_STATE,
-	TASK_ASSASSIN_LUNGE,
-	TASK_ASSASSIN_BEGIN_FLANK,
-	TASK_ASSASSIN_FLANK_COVER,
-};
+#include "movevars_shared.h"
 
 
-//-----------------------------------------------------------------------------
-// Purpose: Class Constructor
-//-----------------------------------------------------------------------------
-CNPC_Assassin::CNPC_Assassin(void)
-{
-}
 
-//-----------------------------------------------------------------------------
 
-LINK_ENTITY_TO_CLASS(npc_assassin, CNPC_Assassin);
 
-#if 0
-//---------------------------------------------------------
-// Custom Client entity
-//---------------------------------------------------------
-IMPLEMENT_SERVERCLASS_ST(CNPC_Assassin, DT_NPC_Assassin)
-END_SEND_TABLE()
+LINK_ENTITY_TO_CLASS(npc_assassin, CNPC_HAssassin);
 
-#endif
+BEGIN_DATADESC(CNPC_HAssassin)
+DEFINE_FIELD(m_flLastShot, FIELD_TIME),
+DEFINE_FIELD(m_flDiviation, FIELD_FLOAT),
 
-//---------------------------------------------------------
-// Save/Restore
-//---------------------------------------------------------
-BEGIN_DATADESC(CNPC_Assassin)
-DEFINE_FIELD(m_nNumFlips, FIELD_INTEGER),
-DEFINE_FIELD(m_nLastFlipType, FIELD_INTEGER),
-DEFINE_FIELD(m_flNextFlipTime, FIELD_TIME),
-DEFINE_FIELD(m_flNextLungeTime, FIELD_TIME),
-DEFINE_FIELD(m_flNextShotTime, FIELD_TIME),
-DEFINE_FIELD(m_bEvade, FIELD_BOOLEAN),
-DEFINE_FIELD(m_bAggressive, FIELD_BOOLEAN),
-DEFINE_FIELD(m_bBlinkState, FIELD_BOOLEAN),
-DEFINE_FIELD(m_pEyeSprite, FIELD_CLASSPTR),
-DEFINE_FIELD(m_pEyeTrail, FIELD_CLASSPTR),
-DEFINE_FIELD(m_nShotCount, FIELD_INTEGER),
+DEFINE_FIELD(m_flNextJump, FIELD_TIME),
+DEFINE_FIELD(m_vecJumpVelocity, FIELD_VECTOR),
+
+DEFINE_FIELD(m_flNextGrenadeCheck, FIELD_TIME),
+DEFINE_FIELD(m_vecTossVelocity, FIELD_VECTOR),
+DEFINE_FIELD(m_fThrowGrenade, FIELD_BOOLEAN),
+
+DEFINE_FIELD(m_iTargetRanderamt, FIELD_INTEGER),
+DEFINE_FIELD(m_iFrustration, FIELD_INTEGER),
+
+DEFINE_FIELD(m_iAmmoType, FIELD_INTEGER),
+
 END_DATADESC()
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//
-//
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::Precache(void)
-{
-	PrecacheModel("models/fassassin/fassassin.mdl");
-
-	PrecacheScriptSound("Weapon_Pistol.NPC_Single");
-	PrecacheScriptSound("Zombie.AttackHit");
-	PrecacheScriptSound("Assassin.AttackMiss");
-	PrecacheScriptSound("NPC_Assassin.Footstep");
-
-	PrecacheModel("sprites/redglow1.vmt");
-
-	BaseClass::Precache();
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//
-//
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::Spawn(void)
+//=========================================================
+// Spawn
+//=========================================================
+void CNPC_HAssassin::Spawn()
 {
 	Precache();
 
@@ -167,346 +59,357 @@ void CNPC_Assassin::Spawn(void)
 	SetHullType(HULL_HUMAN);
 	SetHullSizeNormal();
 
+
+	SetNavType(NAV_GROUND);
 	SetSolid(SOLID_BBOX);
 	AddSolidFlags(FSOLID_NOT_STANDABLE);
 	SetMoveType(MOVETYPE_STEP);
-	SetBloodColor(BLOOD_COLOR_RED);
-
+	m_bloodColor = BLOOD_COLOR_RED;
+	ClearEffects();
 	m_iHealth = sk_assassin_health.GetFloat();
-	m_flFieldOfView = 0.1;
+	m_flFieldOfView = VIEW_FIELD_WIDE; // indicates the width of this monster's forward view cone ( as a dotproduct result )
 	m_NPCState = NPC_STATE_NONE;
-	m_nShotCount = 0;
+
+	m_HackedGunPos = Vector(0, 24, 48);
+
+	m_iTargetRanderamt = 20;
+	SetRenderColor(255, 255, 255, 20);
+	m_nRenderMode = kRenderTransTexture;
 
 	CapabilitiesClear();
-	CapabilitiesAdd(bits_CAP_MOVE_CLIMB | bits_CAP_MOVE_GROUND | bits_CAP_MOVE_JUMP);
-	CapabilitiesAdd(bits_CAP_SQUAD | bits_CAP_AIM_GUN | bits_CAP_INNATE_RANGE_ATTACK1 | bits_CAP_INNATE_RANGE_ATTACK2 | bits_CAP_INNATE_MELEE_ATTACK1);
-
-	//Turn on our guns
-	SetBodygroup(1, 1);
-
-	int attachment = LookupAttachment("Eye");
-
-	// Start up the eye glow
-	m_pEyeSprite = CSprite::SpriteCreate("sprites/redglow1.vmt", GetLocalOrigin(), false);
-
-	if (m_pEyeSprite != NULL)
-	{
-		m_pEyeSprite->SetAttachment(this, attachment);
-		m_pEyeSprite->SetTransparency(kRenderTransAdd, 255, 255, 255, 200, kRenderFxNone);
-		m_pEyeSprite->SetScale(0.25f);
-	}
-
-	// Start up the eye trail
-	m_pEyeTrail = CSpriteTrail::SpriteTrailCreate("sprites/bluelaser1.vmt", GetLocalOrigin(), false);
-
-	if (m_pEyeTrail != NULL)
-	{
-		m_pEyeTrail->SetAttachment(this, attachment);
-		m_pEyeTrail->SetTransparency(kRenderTransAdd, 255, 0, 0, 200, kRenderFxNone);
-		m_pEyeTrail->SetStartWidth(8.0f);
-		m_pEyeTrail->SetLifeTime(0.75f);
-	}
+	CapabilitiesAdd(bits_CAP_MOVE_GROUND);
+	CapabilitiesAdd(bits_CAP_INNATE_RANGE_ATTACK1 | bits_CAP_INNATE_RANGE_ATTACK2 | bits_CAP_INNATE_MELEE_ATTACK1);
 
 	NPCInit();
-
-	m_bEvade = false;
-	m_bAggressive = false;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Returns true if a reasonable jumping distance
-// Input  :
-// Output :
-//-----------------------------------------------------------------------------
-bool CNPC_Assassin::IsJumpLegal(const Vector &startPos, const Vector &apex, const Vector &endPos) const
+//=========================================================
+// Precache - precaches all resources this monster needs
+//=========================================================
+void CNPC_HAssassin::Precache()
 {
-	const float MAX_JUMP_RISE = 256.0f;
-	const float MAX_JUMP_DISTANCE = 256.0f;
-	const float MAX_JUMP_DROP = 512.0f;
+	m_iAmmoType = GetAmmoDef()->Index("9mmRound");
 
-	return BaseClass::IsJumpLegal(startPos, apex, endPos, MAX_JUMP_RISE, MAX_JUMP_DROP, MAX_JUMP_DISTANCE);
+	PrecacheModel("models/fassassin/fassassin.mdl");
+
+	UTIL_PrecacheOther("npc_handgrenade");
+
+	PrecacheScriptSound("HAssassin.Shot");
+	PrecacheScriptSound("HAssassin.Beamsound");
+	PrecacheScriptSound("HAssassin.Footstep");
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flDot - 
-//			flDist - 
-// Output : int CNPC_Assassin::MeleeAttack1Conditions
-//-----------------------------------------------------------------------------
-int CNPC_Assassin::MeleeAttack1Conditions(float flDot, float flDist)
+int CNPC_HAssassin::GetSoundInterests(void)
 {
-	if (flDist > 84)
-		return COND_TOO_FAR_TO_ATTACK;
-
-	if (flDot < 0.7f)
-		return 0;
-
-	if (GetEnemy() == NULL)
-		return 0;
-
-	return COND_CAN_MELEE_ATTACK1;
+	return	SOUND_WORLD |
+		SOUND_COMBAT |
+		SOUND_PLAYER |
+		SOUND_DANGER;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flDot - 
-//			flDist - 
-// Output : int CNPC_Assassin::RangeAttack1Conditions
-//-----------------------------------------------------------------------------
-int CNPC_Assassin::RangeAttack1Conditions(float flDot, float flDist)
+Class_T	CNPC_HAssassin::Classify(void)
 {
-	if (GetEnemy() == NULL)
-		return COND_NONE;
-
-	if (gpGlobals->curtime < m_flNextAttack)
-		return COND_NONE;
-
-
-	if (flDist < 84)
-		return COND_TOO_CLOSE_TO_ATTACK;
-
-	if (flDist > 1024)
-		return COND_TOO_FAR_TO_ATTACK;
-
-	if (flDot < 0.5f)
-		return COND_NOT_FACING_ATTACK;
-
-	if (HasCondition(COND_WEAPON_SIGHT_OCCLUDED))
-		return COND_NONE;
-
-	return COND_CAN_RANGE_ATTACK1;
+	return CLASS_MILITARY;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flDot - 
-//			flDist - 
-// Output : int CNPC_Assassin::RangeAttack1Conditions
-//-----------------------------------------------------------------------------
-int CNPC_Assassin::RangeAttack2Conditions(float flDot, float flDist)
+//=========================================================
+// CheckMeleeAttack1 - jump like crazy if the enemy gets too close. 
+//=========================================================
+int CNPC_HAssassin::MeleeAttack1Conditions(float flDot, float flDist)
 {
-	if (m_flNextLungeTime > gpGlobals->curtime)
-		return 0;
-
-	float lungeRange = GetSequenceMoveDist(SelectWeightedSequence((Activity)ACT_ASSASSIN_FLIP_FORWARD));
-
-	if (flDist < lungeRange * 0.25f)
-		return COND_TOO_CLOSE_TO_ATTACK;
-
-	if (flDist > lungeRange * 1.5f)
-		return COND_TOO_FAR_TO_ATTACK;
-
-	if (flDot < 0.75f)
-		return COND_NOT_FACING_ATTACK;
-
-	if (GetEnemy() == NULL)
-		return 0;
-
-	// Check for a clear path
-	trace_t	tr;
-	UTIL_TraceHull(GetAbsOrigin(), GetEnemy()->GetAbsOrigin(), GetHullMins(), GetHullMaxs(), MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &tr);
-
-	if (tr.fraction == 1.0f || tr.m_pEnt == GetEnemy())
-		return COND_CAN_RANGE_ATTACK2;
-
-	return 0;
-}
-
-bool CNPC_Assassin::InnateWeaponLOSCondition(const Vector &ownerPos, const Vector &targetPos, bool bSetConditions)
-{
-
-	// --------------------
-	// Check for occlusion
-	// --------------------
-	// Base class version assumes innate weapon position is at eye level
-	Vector barrelPos = Weapon_ShootPosition();
-	trace_t tr;
-
-	CBaseEntity *pTargetEnt = GetEnemy();
-	if (pTargetEnt == NULL)
-		return false;
-
-	AI_TraceLine(barrelPos, pTargetEnt->WorldSpaceCenter() + Vector(0, 0, 16), MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
-
-
-	//if (GunHasLOS(pTargetEnt->WorldSpaceCenter()) == false)
-	//return false;
-
-	if (tr.fraction == 1.0)
+	if (m_flNextJump < gpGlobals->curtime && (flDist <= 128 || HasMemory(MEMORY_BADJUMP)) && GetEnemy() != NULL)
 	{
-		//DevMsg(1, "Weapon free to fire\n");
-		return true;
-	}
-
-	CBaseEntity *pBE = tr.m_pEnt;
-	CBaseCombatCharacter *pBCC = ToBaseCombatCharacter(pBE);
-	if (pBE == GetEnemy())
-	{
-		return true;
-	}
-	else if (pBCC)
-	{
-		if (IRelationType(pBCC) == D_HT)
-		{
-			return true;
-		}
-		else if (bSetConditions)
-		{
-			//DevMsg(1, "Weapon blocked by friend\n");
-			SetCondition(COND_WEAPON_BLOCKED_BY_FRIEND);
-		}
-	}
-	else if (bSetConditions)
-	{
-		//DevMsg(1, "Weapon occluded\n");
-		SetCondition(COND_WEAPON_SIGHT_OCCLUDED);
-		SetEnemyOccluder(pBE);
-	}
-
-	return BaseClass::InnateWeaponLOSCondition(ownerPos, targetPos, bSetConditions);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : hand - 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::FirePistol(int hand)
-{
-	//if (m_flNextShotTime > gpGlobals->curtime)
-	//	return;
-
-	//m_flNextShotTime = gpGlobals->curtime + random->RandomFloat(0.05f, 0.15f);
-	m_nShotCount--;
-
-	Vector	muzzlePos;
-	QAngle	muzzleAngle;
-
-	const char *handName = (hand) ? "LeftMuzzle" : "RightMuzzle";
-
-	GetAttachment(handName, muzzlePos, muzzleAngle);
-
-	Vector	muzzleDir;
-
-	if (GetEnemy() == NULL)
-	{
-		AngleVectors(muzzleAngle, &muzzleDir);
-	}
-	else
-	{
-		muzzleDir = GetEnemy()->BodyTarget(muzzlePos) - muzzlePos;
-		VectorNormalize(muzzleDir);
-	}
-
-	int bulletType = GetAmmoDef()->Index("Pistol");
-
-	FireBullets(1, muzzlePos, muzzleDir, VECTOR_CONE_5DEGREES, 1024, bulletType, 2);
-
-	UTIL_MuzzleFlash(muzzlePos, muzzleAngle, 0.5f, 1);
-
-	CPASAttenuationFilter filter(this);
-	EmitSound(filter, entindex(), "Weapon_Pistol.NPC_Single");
-}
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-void CNPC_Assassin::HandleAnimEvent(animevent_t *pEvent)
-{
-
-	if (pEvent->event == ASSASSIN_AE_FIRE_PISTOL_RIGHT)
-	{
-		FirePistol(0);
-		return;
-	}
-
-	if (pEvent->event == ASSASSIN_AE_FIRE_PISTOL_LEFT)
-	{
-		FirePistol(1);
-		return;
-	}
-
-	if (pEvent->event == ASSASSIN_AE_KICK_HIT)
-	{
-		Vector	attackDir = BodyDirection2D();
-		Vector	attackPos = WorldSpaceCenter() + (attackDir * 64.0f);
-
 		trace_t	tr;
-		UTIL_TraceHull(WorldSpaceCenter(), attackPos, -Vector(8, 8, 8), Vector(8, 8, 8), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr);
 
-		if ((tr.m_pEnt != NULL) && (tr.DidHitWorld() == false))
+		Vector vecMin = Vector(random->RandomFloat(0, -64), random->RandomFloat(0, -64), 0);
+		Vector vecMax = Vector(random->RandomFloat(0, 64), random->RandomFloat(0, 64), 160);
+
+		Vector vecDest = GetAbsOrigin() + Vector(random->RandomFloat(-64, 64), random->RandomFloat(-64, 64), 160);
+
+		UTIL_TraceHull(GetAbsOrigin() + Vector(0, 0, 36), GetAbsOrigin() + Vector(0, 0, 36), vecMin, vecMax, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
+
+		//NDebugOverlay::Box( GetAbsOrigin() + Vector( 0, 0, 36 ), vecMin, vecMax, 0,0, 255, 0, 2.0 );
+
+		if (tr.startsolid || tr.fraction < 1.0)
 		{
-			if (tr.m_pEnt->m_takedamage != DAMAGE_NO)
-			{
-				CTakeDamageInfo info(this, this, 5, DMG_CLUB);
-				CalculateMeleeDamageForce(&info, (tr.endpos - tr.startpos), tr.endpos);
-				tr.m_pEnt->TakeDamage(info);
+			return COND_TOO_CLOSE_TO_ATTACK;
+		}
 
-				CBasePlayer	*pPlayer = ToBasePlayer(tr.m_pEnt);
+		float flGravity = sv_gravity.GetFloat();
 
-				if (pPlayer != NULL)
-				{
-					//Kick the player angles
-					pPlayer->ViewPunch(QAngle(-30, 40, 10));
-				}
+		float time = sqrt(160 / (0.5 * flGravity));
+		float speed = flGravity * time / 160;
+		m_vecJumpVelocity = (vecDest - GetAbsOrigin()) * speed;
 
-				EmitSound("Zombie.AttackHit");
-				//EmitSound( "Assassin.AttackHit" );
-			}
+		return COND_CAN_MELEE_ATTACK1;
+	}
+
+	if (flDist > 128)
+		return COND_TOO_FAR_TO_ATTACK;
+
+	return COND_NONE;
+}
+
+//=========================================================
+// CheckRangeAttack1  - drop a cap in their ass
+//
+//=========================================================
+int CNPC_HAssassin::RangeAttack1Conditions(float flDot, float flDist)
+{
+	if (!HasCondition(COND_ENEMY_OCCLUDED) && flDist > 64 && flDist <= 2048)
+	{
+		trace_t	tr;
+
+		Vector vecSrc = GetAbsOrigin() + m_HackedGunPos;
+
+		// verify that a bullet fired from the gun will hit the enemy before the world.
+		UTIL_TraceLine(vecSrc, GetEnemy()->BodyTarget(vecSrc), MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
+
+		if (tr.fraction == 1.0 || tr.m_pEnt == GetEnemy())
+		{
+			return COND_CAN_RANGE_ATTACK1;
+		}
+	}
+
+	return COND_NONE;
+}
+
+//=========================================================
+// CheckRangeAttack2 - toss grenade is enemy gets in the way and is too close. 
+//=========================================================
+int CNPC_HAssassin::RangeAttack2Conditions(float flDot, float flDist)
+{
+	m_fThrowGrenade = false;
+	if (!FBitSet(GetEnemy()->GetFlags(), FL_ONGROUND))
+	{
+		// don't throw grenades at anything that isn't on the ground!
+		return COND_NONE;
+	}
+
+	// don't get grenade happy unless the player starts to piss you off
+	if (m_iFrustration <= 2)
+		return COND_NONE;
+
+	if (m_flNextGrenadeCheck < gpGlobals->curtime && !HasCondition(COND_ENEMY_OCCLUDED) && flDist <= 512)
+	{
+		Vector vTossPos;
+		QAngle vAngles;
+
+		GetAttachment("grenadehand", vTossPos, vAngles);
+
+		Vector vecToss = VecCheckThrow(this, vTossPos, GetEnemy()->WorldSpaceCenter(), flDist, 0.5); // use dist as speed to get there in 1 second
+
+		if (vecToss != vec3_origin)
+		{
+			m_vecTossVelocity = vecToss;
+
+			// throw a hand grenade
+			m_fThrowGrenade = TRUE;
+
+			return COND_CAN_RANGE_ATTACK2;
+		}
+	}
+
+	return COND_NONE;
+}
+
+//=========================================================
+// StartTask
+//=========================================================
+void CNPC_HAssassin::StartTask(const Task_t* pTask)
+{
+	switch (pTask->iTask)
+	{
+	case TASK_RANGE_ATTACK2:
+		if (!m_fThrowGrenade)
+		{
+			TaskComplete();
 		}
 		else
 		{
-			EmitSound("Assassin.AttackMiss");
-			//EmitSound( "Assassin.AttackMiss" );
+			BaseClass::StartTask(pTask);
+		}
+		break;
+	case TASK_ASSASSIN_FALL_TO_GROUND:
+		m_flWaitFinished = gpGlobals->curtime + 2.0f;
+		break;
+	default:
+		BaseClass::StartTask(pTask);
+		break;
+	}
+}
+
+
+//=========================================================
+// RunTask 
+//=========================================================
+void CNPC_HAssassin::RunTask(const Task_t* pTask)
+{
+	switch (pTask->iTask)
+	{
+	case TASK_ASSASSIN_FALL_TO_GROUND:
+		GetMotor()->SetIdealYawAndUpdate(GetEnemyLKP());
+
+		if (IsSequenceFinished())
+		{
+			if (GetAbsVelocity().z > 0)
+			{
+				SetActivity(ACT_ASSASSIN_FLY_UP);
+			}
+			else if (HasCondition(COND_SEE_ENEMY))
+			{
+				SetActivity(ACT_ASSASSIN_FLY_ATTACK);
+				SetCycle(0);
+			}
+			else
+			{
+				SetActivity(ACT_ASSASSIN_FLY_DOWN);
+				SetCycle(0);
+			}
+
+			ResetSequenceInfo();
 		}
 
-		return;
+		if (GetFlags() & FL_ONGROUND)
+		{
+			TaskComplete();
+		}
+		else if (gpGlobals->curtime > m_flWaitFinished || GetAbsVelocity().z == 0.0)
+		{
+			// I've waited two seconds and haven't hit the ground. Try to force it.
+			trace_t trace;
+			UTIL_TraceEntity(this, GetAbsOrigin(), GetAbsOrigin() - Vector(0, 0, 1), MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &trace);
+
+			if (trace.DidHitWorld())
+			{
+				SetGroundEntity(trace.m_pEnt);
+			}
+			else
+			{
+				// Try again in a couple of seconds.
+				m_flWaitFinished = gpGlobals->curtime + 2.0f;
+			}
+		}
+		break;
+	default:
+		BaseClass::RunTask(pTask);
+		break;
 	}
-
-	BaseClass::HandleAnimEvent(pEvent);
 }
 
-int CNPC_Assassin::GetSoundInterests(void)
+//=========================================================
+// GetSchedule - Decides which type of schedule best suits
+// the monster's current state and conditions. Then calls
+// monster's member function to get a pointer to a schedule
+// of the proper type.
+//=========================================================
+int CNPC_HAssassin::SelectSchedule(void)
 {
-	return	SOUND_WORLD | SOUND_COMBAT | SOUND_PLAYER | SOUND_DANGER | SOUND_PHYSICS_DANGER | SOUND_BULLET_IMPACT | SOUND_MOVE_AWAY;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Return true if this NPC can hear the specified sound
-//-----------------------------------------------------------------------------
-bool CNPC_Assassin::QueryHearSound(CSound *pSound)
-{
-	if (pSound->SoundContext() & SOUND_CONTEXT_COMBINE_ONLY)
-		return true;
-
-	if (pSound->SoundContext() & SOUND_CONTEXT_EXCLUDE_COMBINE)
-		return false;
-
-	return BaseClass::QueryHearSound(pSound);
-}
-
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-int CNPC_Assassin::SelectSchedule(void)
-{
-
 	switch (m_NPCState)
 	{
 	case NPC_STATE_IDLE:
 	case NPC_STATE_ALERT:
 	{
-		if (HasCondition(COND_HEAR_DANGER))
-			return SCHED_TAKE_COVER_FROM_BEST_SOUND;
+		if (HasCondition(COND_HEAR_DANGER) || HasCondition(COND_HEAR_COMBAT))
+		{
+			if (HasCondition(COND_HEAR_DANGER))
+				return SCHED_TAKE_COVER_FROM_BEST_SOUND;
 
-		if (HasCondition(COND_HEAR_COMBAT))
-			return SCHED_INVESTIGATE_SOUND;
+			else
+				return SCHED_INVESTIGATE_SOUND;
+		}
 	}
 	break;
 
 	case NPC_STATE_COMBAT:
 	{
-		int nSched = SelectSchedObject();
-		if (nSched != SCHED_NONE)
-			return nSched;
+		// dead enemy
+		if (HasCondition(COND_ENEMY_DEAD))
+		{
+			// call base class, all code to handle dead enemies is centralized there.
+			return BaseClass::SelectSchedule();
+		}
+
+		// flying?
+		if (GetMoveType() == MOVETYPE_FLYGRAVITY)
+		{
+			if (GetFlags() & FL_ONGROUND)
+			{
+				//Msg( "landed\n" );
+				// just landed
+				SetMoveType(MOVETYPE_STEP);
+				return SCHED_ASSASSIN_JUMP_LAND;
+			}
+			else
+			{
+				//Msg("jump\n");
+				// jump or jump/shoot
+				if (m_NPCState == NPC_STATE_COMBAT)
+					return SCHED_ASSASSIN_JUMP;
+				else
+					return SCHED_ASSASSIN_JUMP_ATTACK;
+			}
+		}
+
+		if (HasCondition(COND_HEAR_DANGER))
+		{
+			return SCHED_TAKE_COVER_FROM_BEST_SOUND;
+		}
+
+		if (HasCondition(COND_LIGHT_DAMAGE))
+		{
+			m_iFrustration++;
+		}
+		if (HasCondition(COND_HEAVY_DAMAGE))
+		{
+			m_iFrustration++;
+		}
+
+		// jump player!
+		if (HasCondition(COND_CAN_MELEE_ATTACK1))
+		{
+			//Msg( "melee attack 1 - jump player!\n");
+			return SCHED_MELEE_ATTACK1;
+		}
+
+		// throw grenade
+		if (HasCondition(COND_CAN_RANGE_ATTACK2))
+		{
+			//Msg( "range attack 2 - throw grenade\n");
+			return SCHED_RANGE_ATTACK2;
+		}
+
+		// spotted
+		if (HasCondition(COND_SEE_ENEMY) && HasCondition(COND_ENEMY_FACING_ME))
+		{
+			//Msg("exposed - spotted\n");
+			m_iFrustration++;
+			return SCHED_ASSASSIN_EXPOSED;
+		}
+
+		// can attack
+		if (HasCondition(COND_CAN_RANGE_ATTACK1))
+		{
+			//Msg( "range attack 1 - can attack\n" );
+			m_iFrustration = 0;
+			return SCHED_RANGE_ATTACK1;
+		}
+
+		if (HasCondition(COND_SEE_ENEMY))
+		{
+			//Msg( "face - combat\n");
+			return SCHED_COMBAT_FACE;
+		}
+
+		// new enemy
+		if (HasCondition(COND_NEW_ENEMY))
+		{
+			//Msg( "take cover - new enemy\n");
+			return SCHED_TAKE_COVER_FROM_ENEMY;
+		}
+
+		//Msg ( "stand\n"); //ALERT( at_console, "stand\n");
+		return SCHED_ALERT_STAND;
 	}
 	break;
 	}
@@ -514,1154 +417,434 @@ int CNPC_Assassin::SelectSchedule(void)
 	return BaseClass::SelectSchedule();
 }
 
-int CNPC_Assassin::SelectSchedObject()
+//=========================================================
+// HandleAnimEvent - catches the monster-specific messages
+// that occur when tagged animation frames are played.
+//
+// Returns number of events handled, 0 if none.
+//=========================================================
+void CNPC_HAssassin::HandleAnimEvent(animevent_t* pEvent)
 {
-	//Check health 
-	/*
-	float healthperc = (float)GetHealth() / GetMaxHealth();
-	healthperc = clamp(healthperc, 0.0f, 1.0f);
-	Vector vecEnemy = GetEnemy()->GetAbsOrigin();
-	float flDist = (vecEnemy - GetAbsOrigin()).Length();
-
-	bool IsClosest = true;
-	if (m_pSquad)
+	switch (pEvent->event)
 	{
-	if (m_pSquad->GetSquadMemberNearestTo(vecEnemy) != this)
-	IsClosest = false;
-	}
-	*/
-
-	CScheduleObject ShootGun;
-	ShootGun.m_iSchedType = SCHED_ASSASSIN_FIRE_PISTOLS;
-	//ShootGun.m_iSchedType = SCHED_RANGE_ATTACK1;
-	ShootGun.m_bCondition = HasCondition(COND_CAN_RANGE_ATTACK1) && (!HasCondition(COND_ASSASSIN_ENEMY_TARGETTING_ME) || !HasCondition(COND_LIGHT_DAMAGE));
-	ShootGun.m_bSquadslot = OccupyStrategySlotRange(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2);
-	ShootGun.m_fSchedPriority = 10.0f;
-
-	CScheduleObject Kick;
-	Kick.m_iSchedType = SCHED_MELEE_ATTACK1;
-	Kick.m_bCondition = HasCondition(COND_CAN_MELEE_ATTACK1);
-	Kick.m_fSchedPriority = 20.0f;
-
-	CScheduleObject Lunge;
-	Lunge.m_iSchedType = SCHED_ASSASSIN_LUNGE;
-	Lunge.m_bCondition = HasCondition(COND_CAN_RANGE_ATTACK2);
-	Lunge.m_fSchedPriority = 15.0f;
-
-
-	CScheduleObject EstablishLOS;
-	EstablishLOS.m_iSchedType = SCHED_ASSASSIN_ESTABLISH_LOS;
-	EstablishLOS.m_bCondition = !HasCondition(COND_SEE_ENEMY) || HasCondition(COND_WEAPON_SIGHT_OCCLUDED);
-	EstablishLOS.m_bSquadslot = OccupyStrategySlotRange(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2);
-	EstablishLOS.m_fSchedPriority = 12.0f;
-
-	CScheduleObject FaceEnemy;
-	FaceEnemy.m_iSchedType = SCHED_COMBAT_FACE;
-	FaceEnemy.m_bCondition = HasCondition(COND_SEE_ENEMY) && !HasCondition(COND_CAN_RANGE_ATTACK1) && gpGlobals->curtime > m_flNextAttack;
-	FaceEnemy.m_fSchedPriority = 5.0f;
-
-
-	CScheduleObject TakeCover;
-	TakeCover.m_iSchedType = SCHED_ASSASSIN_TAKE_COVER;
-	TakeCover.m_bCondition = !HasMemory(bits_MEMORY_INCOVER) || HasCondition(COND_SEE_ENEMY);
-	TakeCover.m_fSchedPriority = (HasCondition(COND_LIGHT_DAMAGE) || HasCondition(COND_HEAVY_DAMAGE)) ? 15.0f : 5.0f;
-
-	CScheduleObject Evade;
-	Evade.m_iSchedType = SCHED_ASSASSIN_EVADE;
-	Evade.m_bCondition = HasCondition(COND_SEE_ENEMY) && m_nNumFlips <= 0;
-	Evade.m_fSchedPriority = 10.0f;
-
-	CScheduleObject FindVantagePoint;
-	FindVantagePoint.m_iSchedType = SCHED_ASSASSIN_FIND_VANTAGE_POINT;
-	FindVantagePoint.m_bSquadslot = !HasCondition(COND_SEE_ENEMY);
-	FindVantagePoint.m_fSchedPriority = 15.0f;
-
-	CScheduleObject TakeFlankCover;
-	TakeFlankCover.m_iSchedType = SCHED_ASSASSIN_FLANK_COVER;
-	TakeFlankCover.m_bCondition = !HasCondition(COND_SEE_ENEMY);
-	TakeFlankCover.m_fSchedPriority = random->RandomFloat(9.0f, 12.0f);
-
-
-	int FinalSched = SCHED_NONE;
-	int SchedPriority = 0;
-
-
-	struct GoalTable
+	case ASSASSIN_AE_SHOOT1:
+		Shoot();
+		break;
+	case ASSASSIN_AE_TOSS1:
 	{
-		bool GoalSet;
-		CScheduleObject * GoalArray;
-		int ArraySize;
-	};
+		Vector vTossPos;
+		QAngle vAngles;
 
-	CScheduleObject GoalEngageEnemy[] = { ShootGun, Kick, Lunge };
-	CScheduleObject GoalSeekEnemy[] = { EstablishLOS, FindVantagePoint };
-	CScheduleObject GoalEvadeEnemy[] = { TakeCover, Evade, };
+		GetAttachment("grenadehand", vTossPos, vAngles);
 
-	bool CanSeek = m_flNextAttack < gpGlobals->curtime;
-
-	GoalTable AvailableGoals[] =
-	{
-		true, GoalEngageEnemy, ARRAYSIZE(GoalEngageEnemy),
-		CanSeek, GoalSeekEnemy, ARRAYSIZE(GoalSeekEnemy),
-		true, GoalEvadeEnemy, ARRAYSIZE(GoalEvadeEnemy),
-	};
-
-
-	for (int i = 0; i < ARRAYSIZE(AvailableGoals); i++)
-	{
-
-		if (AvailableGoals[i].GoalSet == true)
+		CBaseEntity* pGrenade = CBaseEntity::Create("npc_grenade_frag", vTossPos, vec3_angle);
+		if (pGrenade)
 		{
-
-			for (int v = 0; v < AvailableGoals[i].ArraySize; v++)
-			{
-				CScheduleObject GoalSched = AvailableGoals[i].GoalArray[v];
-
-				if (GoalSched.m_bCondition && GoalSched.m_fSchedPriority > SchedPriority && GoalSched.m_bSquadslot)
-				{
-					SchedPriority = GoalSched.m_fSchedPriority;
-					FinalSched = GoalSched.m_iSchedType;
-				}
-			}
+			pGrenade->SetAbsVelocity(m_vecTossVelocity);
 		}
 
-		if (FinalSched > 0)
-		{
-			break;
-		}
+		m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
+		m_fThrowGrenade = FALSE;
+		// !!!LATER - when in a group, only try to throw grenade if ordered.
 	}
-
-	return FinalSched;
-
-	/*
-	for (CScheduleObject n : Schedules)
+	break;
+	case ASSASSIN_AE_JUMP:
 	{
-	if (n.m_pCondition == true && n.m_fSchedPriority > SchedPriority)
-	{
-	FinalSched = n.m_iSchedType;
-	SchedPriority = n.m_fSchedPriority;
+		SetMoveType(MOVETYPE_FLYGRAVITY);
+		SetGroundEntity(NULL);
+		SetAbsVelocity(m_vecJumpVelocity);
+		m_flNextJump = gpGlobals->curtime + 3.0;
 	}
+	return;
+	default:
+		BaseClass::HandleAnimEvent(pEvent);
+		break;
 	}
-	*/
-}
-
-int CNPC_Assassin::SelectFailSchedule(int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode)
-{
-	if (failedSchedule == SCHED_ASSASSIN_FIND_VANTAGE_POINT)
-	{
-		float flDistToEnemy = (GetEnemy()->GetAbsOrigin() - GetAbsOrigin()).Length();
-		if (HasCondition(COND_SEE_ENEMY))
-		{
-			if (OccupyStrategySlotRange(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2) && flDistToEnemy <= 128.0f)
-			{
-				return SCHED_ASSASSIN_LUNGE;
-			}
-		}
-
-		return SCHED_ASSASSIN_ESTABLISH_LOS;
-
-	}
-
-	return BaseClass::SelectFailSchedule(failedSchedule, failedTask, taskFailCode);
 }
 
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::AimGun(void)
+
+//=========================================================
+// Shoot
+//=========================================================
+void CNPC_HAssassin::Shoot(void)
 {
+	Vector vForward, vRight, vUp;
+	Vector vecShootOrigin;
+	QAngle vAngles;
 
-	// Aim at our target
-	if (GetEnemy())
+	if (GetEnemy() == NULL)
 	{
-		Vector vecShootOrigin;
+		return;
+	}
 
-		vecShootOrigin = Weapon_ShootPosition();
-		Vector vecShootDir;
+	GetAttachment("guntip", vecShootOrigin, vAngles);
 
-		// Aim where it is
-		vecShootDir = GetShootEnemyDir(vecShootOrigin, false);
+	Vector vecShootDir = GetShootEnemyDir(vecShootOrigin);
 
-		SetAim(vecShootDir);
+	if (m_flLastShot + 2 < gpGlobals->curtime)
+	{
+		m_flDiviation = 0.10;
 	}
 	else
 	{
-		RelaxAim();
+		m_flDiviation -= 0.01;
+		if (m_flDiviation < 0.02)
+			m_flDiviation = 0.02;
 	}
+	m_flLastShot = gpGlobals->curtime;
+
+	AngleVectors(GetAbsAngles(), &vForward, &vRight, &vUp);
+
+	Vector	vecShellVelocity = vRight * random->RandomFloat(40, 90) + vUp * random->RandomFloat(75, 200) + vForward * random->RandomFloat(-40, 40);
+	//EjectShell(GetAbsOrigin() + vUp * 32 + vForward * 12, vecShellVelocity, GetAbsAngles().y, 0);
+	FireBullets(1, vecShootOrigin, vecShootDir, Vector(m_flDiviation, m_flDiviation, m_flDiviation), 2048, m_iAmmoType); // shoot +-8 degrees
+
+	//NDebugOverlay::Line( vecShootOrigin, vecShootOrigin + vecShootDir * 2048, 255, 0, 0, true, 2.0 );
+
+	CPASAttenuationFilter filter(this);
+	EmitSound(filter, entindex(), "HAssassin.Shot");
+
+	DoMuzzleFlash();
+
+	VectorAngles(vecShootDir, vAngles);
+	SetPoseParameter("shoot", vecShootDir.x);
+
+	m_cAmmoLoaded--;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::PrescheduleThink(void)
+//=========================================================
+//=========================================================
+int CNPC_HAssassin::TranslateSchedule(int scheduleType)
 {
+	//Msg( "Frustation: %d\n", m_iFrustration );
+	switch (scheduleType)
+	{
+	case SCHED_TAKE_COVER_FROM_ENEMY:
+
+		if (m_iHealth > 30)
+			return SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY1;
+		else
+			return SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY2;
+
+	case SCHED_TAKE_COVER_FROM_BEST_SOUND:
+		return SCHED_ASSASSIN_TAKE_COVER_FROM_BEST_SOUND;
+	case SCHED_FAIL:
+
+		if (m_NPCState == NPC_STATE_COMBAT)
+			return SCHED_ASSASSIN_FAIL;
+
+		break;
+	case SCHED_ALERT_STAND:
+
+		if (m_NPCState == NPC_STATE_COMBAT)
+			return SCHED_ASSASSIN_HIDE;
+
+		break;
+	case SCHED_CHASE_ENEMY:
+		return SCHED_ASSASSIN_HUNT;
+
+	case SCHED_MELEE_ATTACK1:
+
+		if (GetFlags() & FL_ONGROUND)
+		{
+			if (m_flNextJump > gpGlobals->curtime)
+			{
+				// can't jump yet, go ahead and fail
+				return SCHED_ASSASSIN_FAIL;
+			}
+			else
+			{
+				return SCHED_ASSASSIN_JUMP;
+			}
+		}
+		else
+		{
+			return SCHED_ASSASSIN_JUMP_ATTACK;
+		}
+	}
+
+	return BaseClass::TranslateSchedule(scheduleType);
+}
+
+//=========================================================
+// RunAI
+//=========================================================
+void CNPC_HAssassin::RunAI(void)
+{
+	BaseClass::RunAI();
+
+	// always visible if moving
+	// always visible is not on hard
+	if (g_iSkillLevel != SKILL_HARD || GetEnemy() == NULL || m_lifeState == LIFE_DEAD || GetActivity() == ACT_RUN || GetActivity() == ACT_WALK || !(GetFlags() & FL_ONGROUND))
+		m_iTargetRanderamt = 255;
+	else
+		m_iTargetRanderamt = 20;
+
+	CPASAttenuationFilter filter(this);
+
+	if (GetRenderColor().a > m_iTargetRanderamt)
+	{
+		if (GetRenderColor().a == 255)
+		{
+			EmitSound(filter, entindex(), "HAssassin.Beamsound");
+		}
+
+		SetRenderColorA(max(GetRenderColor().a - 50, m_iTargetRanderamt));
+		m_nRenderMode = kRenderTransTexture;
+	}
+	else if (GetRenderColor().a < m_iTargetRanderamt)
+	{
+		SetRenderColorA(min(GetRenderColor().a + 50, m_iTargetRanderamt));
+		if (GetRenderColor().a == 255)
+			m_nRenderMode = kRenderNormal;
+	}
+
 	if (GetActivity() == ACT_RUN || GetActivity() == ACT_WALK)
 	{
-		CPASAttenuationFilter filter(this);
-
 		static int iStep = 0;
 		iStep = !iStep;
 		if (iStep)
 		{
-			EmitSound(filter, entindex(), "NPC_Assassin.Footstep");
-		}
-	}
-
-	if (m_flNextAttack > gpGlobals->curtime)
-	{
-		m_nNumFlips = random->RandomInt(1, 2);
-	}
-}
-
-// Purpose: Translate base class activities into combot activites
-//-----------------------------------------------------------------------------
-Activity CNPC_Assassin::NPC_TranslateActivity(Activity eNewActivity)
-{
-
-	if (eNewActivity == ACT_IDLE || eNewActivity == ACT_CROUCH)
-	{
-		if (m_NPCState == NPC_STATE_COMBAT || m_NPCState == NPC_STATE_ALERT)
-		{
-			return (Activity)ACT_ASSASSIN_PERCH;
-		}
-	}
-
-	if (eNewActivity == ACT_ASSASSIN_FLIP_FORWARD)
-	{
-		m_flNextLungeTime = gpGlobals->curtime + 2.0f;
-		m_nLastFlipType = FLIP_FORWARD;
-	}
-
-
-
-	return BaseClass::NPC_TranslateActivity(eNewActivity);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : right - 
-// Output : Returns true on success, false on failure.
-//-----------------------------------------------------------------------------
-bool CNPC_Assassin::CanFlip(int flipType, Activity &activity, const Vector *avoidPosition)
-{
-	Vector		testDir;
-	Activity	act = ACT_INVALID;
-
-	switch (flipType)
-	{
-	case FLIP_RIGHT:
-		GetVectors(NULL, &testDir, NULL);
-		act = NPC_TranslateActivity((Activity)ACT_ASSASSIN_FLIP_RIGHT);
-		break;
-
-	case FLIP_LEFT:
-		GetVectors(NULL, &testDir, NULL);
-		testDir.Negate();
-		act = NPC_TranslateActivity((Activity)ACT_ASSASSIN_FLIP_LEFT);
-		break;
-
-	case FLIP_FORWARD:
-		GetVectors(&testDir, NULL, NULL);
-		act = NPC_TranslateActivity((Activity)ACT_ASSASSIN_FLIP_FORWARD);
-		break;
-
-	case FLIP_BACKWARD:
-		GetVectors(&testDir, NULL, NULL);
-		testDir.Negate();
-		act = NPC_TranslateActivity((Activity)ACT_ASSASSIN_FLIP_BACK);
-		break;
-
-	default:
-		assert(0); //NOTENOTE: Invalid flip type
-		activity = ACT_INVALID;
-		return false;
-		break;
-	}
-
-	// Make sure we don't flip towards our avoidance position/
-	if (avoidPosition != NULL)
-	{
-		Vector	avoidDir = (*avoidPosition) - GetAbsOrigin();
-		VectorNormalize(avoidDir);
-
-		if (DotProduct(avoidDir, testDir) > 0.0f)
-			return false;
-	}
-
-	int seq = SelectWeightedSequence(act);
-
-	// Find out the length of this sequence
-	float	testDist = GetSequenceMoveDist(seq);
-
-	// Find the resulting end position from the sequence's movement
-	Vector	endPos = GetAbsOrigin() + (testDir * testDist);
-
-	trace_t	tr;
-
-	if ((flipType != FLIP_BACKWARD) && (avoidPosition != NULL))
-	{
-		UTIL_TraceLine((*avoidPosition), endPos, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
-
-		if (tr.fraction == 1.0f)
-			return false;
-	}
-
-	/*
-	UTIL_TraceHull( GetAbsOrigin(), endPos, NAI_Hull::Mins(m_eHull) + Vector( 0, 0, StepHeight() ), NAI_Hull::Maxs(m_eHull), MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &tr );
-
-	// See if we're hit an obstruction in that direction
-	if ( tr.fraction < 1.0f )
-	{
-	if ( g_debug_assassin.GetBool() )
-	{
-	NDebugOverlay::BoxDirection( GetAbsOrigin(), NAI_Hull::Mins(m_eHull) + Vector( 0, 0, StepHeight() ), NAI_Hull::Maxs(m_eHull) + Vector( testDist, 0, StepHeight() ), testDir, 255, 0, 0, true, 2.0f );
-	}
-
-	return false;
-	}
-
-	#define NUM_STEPS 2
-
-	float	stepLength = testDist / NUM_STEPS;
-
-	for ( int i = 1; i <= NUM_STEPS; i++ )
-	{
-	endPos = GetAbsOrigin() + ( testDir * (stepLength*i) );
-
-	// Also check for a cliff edge
-	UTIL_TraceHull( endPos, endPos - Vector( 0, 0, StepHeight() * 4.0f ), NAI_Hull::Mins(m_eHull) + Vector( 0, 0, StepHeight() ), NAI_Hull::Maxs(m_eHull), MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &tr );
-
-	if ( tr.fraction == 1.0f )
-	{
-	if ( g_debug_assassin.GetBool() )
-	{
-	NDebugOverlay::BoxDirection( endPos, NAI_Hull::Mins(m_eHull) + Vector( 0, 0, StepHeight() ), NAI_Hull::Maxs(m_eHull) + Vector( StepHeight() * 4.0f, 0, StepHeight() ), Vector(0,0,-1), 255, 0, 0, true, 2.0f );
-	}
-
-	return false;
-	}
-	}
-
-	if ( g_debug_assassin.GetBool() )
-	{
-	NDebugOverlay::BoxDirection( GetAbsOrigin(), NAI_Hull::Mins(m_eHull) + Vector( 0, 0, StepHeight() ), NAI_Hull::Maxs(m_eHull) + Vector( testDist, 0, StepHeight() ), testDir, 0, 255, 0, true, 2.0f );
-	}
-	*/
-
-	AIMoveTrace_t moveTrace;
-	GetMoveProbe()->TestGroundMove(GetAbsOrigin(), endPos, MASK_NPCSOLID, AITGM_DEFAULT, &moveTrace);
-
-	if (moveTrace.fStatus != AIMR_OK)
-		return false;
-
-	// Return the activity to use
-	activity = (Activity)act;
-
-	return true;
-}
-
-//---------------------------------------------------------
-// Purpose: 
-//---------------------------------------------------------
-void CNPC_Assassin::StartTask(const Task_t *pTask)
-{
-	switch (pTask->iTask)
-	{
-	case TASK_ASSASSIN_SET_EYE_STATE:
-	{
-		SetEyeState((eyeState_t)((int)pTask->flTaskData));
-		TaskComplete();
-	}
-	break;
-
-	case TASK_ASSASSIN_EVADE:
-	{
-		Activity flipAct = ACT_INVALID;
-
-		const Vector *avoidPos = (GetEnemy() != NULL) ? &(GetEnemy()->GetAbsOrigin()) : NULL;
-
-		for (int i = FLIP_LEFT; i < NUM_FLIP_TYPES; i++)
-		{
-			if (CanFlip(i, flipAct, avoidPos))
-			{
-				// Don't flip back to where we just were
-				if (((i == FLIP_LEFT) && (m_nLastFlipType == FLIP_RIGHT)) ||
-					((i == FLIP_RIGHT) && (m_nLastFlipType == FLIP_LEFT)) ||
-					((i == FLIP_FORWARD) && (m_nLastFlipType == FLIP_BACKWARD)) ||
-					((i == FLIP_BACKWARD) && (m_nLastFlipType == FLIP_FORWARD)))
-				{
-					flipAct = ACT_INVALID;
-					continue;
-				}
-
-				m_nNumFlips--;
-				ResetIdealActivity(flipAct);
-				m_flNextFlipTime = gpGlobals->curtime + 2.0f;
-				m_nLastFlipType = i;
-				break;
-			}
-		}
-
-		if (flipAct == ACT_INVALID)
-		{
-			m_nNumFlips = 0;
-			m_nLastFlipType = -1;
-			m_flNextFlipTime = gpGlobals->curtime + 2.0f;
-			TaskFail("Unable to find flip evasion direction!\n");
-		}
-	}
-	break;
-
-	case TASK_ASSASSIN_GET_PATH_TO_VANTAGE_POINT:
-	{
-		assert(GetEnemy() != NULL);
-		if (GetEnemy() == NULL)
-			break;
-
-		Vector	goalPos;
-
-		CHintCriteria	hint;
-
-		// Find a disadvantage node near the player, but away from ourselves
-
-		Vector VecEnemyOrigin = GetEnemy()->GetAbsOrigin();
-
-		hint.AddIncludePosition(GetAbsOrigin(), 640);
-		hint.SetHintType(HINT_TACTICAL_ENEMY_DISADVANTAGED);
-		//hint.AddExcludePosition(GetAbsOrigin(), 256);
-		hint.AddExcludePosition(VecEnemyOrigin, 128);
-
-		if ((m_pSquad != NULL) && (m_pSquad->NumMembers() > 1))
-		{
-			AISquadIter_t iter;
-			for (CAI_BaseNPC *pSquadMember = m_pSquad->GetFirstMember(&iter); pSquadMember; pSquadMember = m_pSquad->GetNextMember(&iter))
-			{
-				if (pSquadMember == NULL)
-					continue;
-
-				hint.AddExcludePosition(pSquadMember->GetAbsOrigin(), 128);
-			}
-		}
-
-		hint.SetFlag(bits_HINT_NODE_NEAREST);
-
-		CAI_Hint *pHint = CAI_HintManager::FindHint(this, GetEnemy()->GetAbsOrigin(), hint);
-
-		if (pHint == NULL)
-		{
-			TaskFail("Unable to find vantage point!\n");
-			break;
-		}
-
-		pHint->GetPosition(this, &goalPos);
-
-		AI_NavGoal_t goal(goalPos);
-
-		//Try to run directly there
-		if (GetNavigator()->SetGoal(goal) == false)
-		{
-			TaskFail("Unable to find path to vantage point!\n");
-			break;
-		}
-
-		TaskComplete();
-	}
-	break;
-
-	case TASK_RANGE_ATTACK1:
-	{
-		m_nShotCount = random->RandomInt(4, 6);
-	}
-	break;
-
-	case TASK_ASSASSIN_BEGIN_FLANK:
-	{
-		if (IsInSquad() && GetSquad()->NumMembers() > 1)
-		{
-			// Flank relative to the other shooter in our squad.
-			// If there's no other shooter, just flank relative to any squad member.
-			AISquadIter_t iter;
-			CAI_BaseNPC *pNPC = GetSquad()->GetFirstMember(&iter);
-			while (pNPC == this)
-			{
-				pNPC = GetSquad()->GetNextMember(&iter);
-			}
-
-			m_vSavePosition = pNPC->GetAbsOrigin();
-		}
-		else
-		{
-			// Flank relative to our current position.
-			m_vSavePosition = GetAbsOrigin();
-		}
-
-		//DevMsg(1, "Began flanking\n");
-
-		TaskComplete();
-		break;
-	}
-
-	case TASK_ASSASSIN_FLANK_COVER:
-	{
-
-		if (!GetEnemy())
-		{
-			TaskFail(FAIL_NO_ENEMY);
-			return;
-		}
-
-
-		Vector vecEnemy = GetEnemies()->LastSeenPosition(GetEnemy());
-		Vector vecEnemyEye = vecEnemy + GetEnemy()->GetViewOffset();
-
-		//float flDist = (vecSquadmate - GetAbsOrigin()).Length();
-		float flMinRange = 320;
-		float flMaxRange = 1024;
-
-		Vector posLos;
-		bool found = false;
-
-		if (!found)
-		{
-			FlankType_t eFlankType = FLANKTYPE_ARC;
-			Vector vecFlankRefPos = m_vSavePosition;
-			float flFlankParam = pTask->flTaskData;
-
-			if (GetTacticalServices()->FindLos(vecEnemy, vecEnemyEye, flMinRange, flMaxRange, 1.0, eFlankType, vecFlankRefPos, flFlankParam, &posLos))
-			{
-				found = true;
-			}
-		}
-
-		if (!found)
-		{
-			TaskFail(FAIL_NO_SHOOT);
-		}
-
-
-		Vector coverPos;
-
-		if (FindCoverPosInRadius(GetEnemy(), posLos, 192.0f, &coverPos))
-		{
-			AI_NavGoal_t goal(coverPos, ACT_RUN, AIN_HULL_TOLERANCE);
-			GetNavigator()->SetGoal(goal);
-
-			m_vInterruptSavePosition = coverPos;
-
-			m_flMoveWaitFinished = gpGlobals->curtime; //+ pTask->flTaskData;
-		}
-		else
-		{
-			// no coverwhatsoever.
-			TaskFail(FAIL_NO_COVER);
-		}
-	}
-
-	break;
-
-	case TASK_WALK_PATH:
-	case TASK_RUN_PATH:
-		// grunt no longer assumes he is covered if he moves
-		Forget(bits_MEMORY_INCOVER);
-		BaseClass::StartTask(pTask);
-		break;
-
-	default:
-		BaseClass::StartTask(pTask);
-		break;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//
-//
-//-----------------------------------------------------------------------------
-float CNPC_Assassin::MaxYawSpeed(void)
-{
-	switch (GetActivity())
-	{
-	case ACT_TURN_LEFT:
-	case ACT_TURN_RIGHT:
-		return 160;
-		break;
-	case ACT_RUN:
-		return 900;
-		break;
-	case ACT_RANGE_ATTACK1:
-		return 0;
-		break;
-	default:
-		return 60;
-		break;
-	}
-}
-
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-void CNPC_Assassin::RunTask(const Task_t *pTask)
-{
-	switch (pTask->iTask)
-	{
-	case TASK_ASSASSIN_EVADE:
-
-		AutoMovement();
-
-		if (IsActivityFinished())
-		{
-			TaskComplete();
-		}
-
-		break;
-
-	case TASK_RANGE_ATTACK1:
-
-		if (m_nShotCount > 0)
-		{
-			// DevMsg("ACT_RANGE_ATTACK1\n");
-			ResetIdealActivity(ACT_RANGE_ATTACK1);
-			m_flLastAttackTime = gpGlobals->curtime;
-		}
-
-		if (m_nShotCount <= 0)
-		{
-			DevMsg("Out of shots!\n");
-			m_flNextAttack = gpGlobals->curtime + random->RandomFloat(1.25f, 1.75f);
-			TaskComplete();
-		}
-
-		if (GetTaskInterrupt() > 0)
-		{
-			m_flNextAttack = gpGlobals->curtime + random->RandomFloat(1.25f, 1.75f);
-			TaskInterrupt();
-		}
-		break;
-
-	case TASK_ASSASSIN_FLANK_COVER:
-	{
-		//		CBaseEntity *pEnemy = GetEnemy();
-
-		//CBaseEntity *pEnemy = GetEnemy();
-		if (!GetEnemy())
-		{
-			TaskFail(FAIL_NO_ENEMY);
-			return;
-		}
-
-		if (GetTaskInterrupt() > 0)
-		{
-			ClearTaskInterrupt();
-
-			Vector vecEnemy = GetEnemies()->LastSeenPosition(GetEnemy());
-
-			AI_NavGoal_t goal(m_vInterruptSavePosition, ACT_RUN, AIN_HULL_TOLERANCE);
-
-			GetNavigator()->SetGoal(goal, AIN_CLEAR_TARGET);
-			GetNavigator()->SetArrivalDirection(vecEnemy - goal.dest);
-		}
-		else
-			TaskInterrupt();
-	}
-	break;
-
-	default:
-		BaseClass::RunTask(pTask);
-		break;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Get shoot position of BCC at an arbitrary position
-// Input  :
-// Output :
-//-----------------------------------------------------------------------------
-Vector CNPC_Assassin::Weapon_ShootPosition()
-{
-	/*
-	Vector	muzzlePos;
-	QAngle	muzzleAngle;
-
-
-	const char *handName = "RightMuzzle";
-
-	GetAttachment(handName, muzzlePos, muzzleAngle);
-
-	return muzzlePos;
-	*/
-
-	return GetAbsOrigin() + Vector(0, 0, 36);
-}
-
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-bool CNPC_Assassin::FValidateHintType(CAI_Hint *pHint)
-{
-	switch (pHint->HintType())
-	{
-	case HINT_TACTICAL_ENEMY_DISADVANTAGED:
-	{
-		Vector	hintPos;
-		pHint->GetPosition(this, &hintPos);
-
-		// Verify that we can see the target from that position
-		hintPos += GetViewOffset();
-
-		trace_t	tr;
-		UTIL_TraceLine(hintPos, GetEnemy()->BodyTarget(hintPos, true), MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
-
-		// Check for seeing our target at the new location
-		if ((tr.fraction == 1.0f) || (tr.m_pEnt != GetEnemy()))
-			return false;
-
-		if (GetEnemy() && fabs(GetEnemy()->GetAbsOrigin().z - hintPos.z) < 128)
-		{
-			return false;
-		}
-
-		if (m_pSquad)
-		{
-			if (m_pSquad->SquadMemberInRange(hintPos, 256.0f))
-			{
-				return false;
-			}
-		}
-
-		return true;
-		break;
-	}
-
-	default:
-		return false;
-		break;
-	}
-
-	return FALSE;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : const Vector
-//-----------------------------------------------------------------------------
-const Vector &CNPC_Assassin::GetViewOffset(void)
-{
-	static Vector eyeOffset = Vector(0, 0, 24.0f);
-
-	//FIXME: Use eye attachment?
-	// If we're crouching, offset appropriately
-	/*
-	if ((GetActivity() == ACT_ASSASSIN_PERCH) ||
-	(GetActivity() == ACT_RANGE_ATTACK1))
-	{
-	eyeOffset = Vector(0, 0, 24.0f);
-	}
-	else
-	{
-	eyeOffset = BaseClass::GetViewOffset();
-	}
-	*/
-
-	return eyeOffset;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : Vector
-//-----------------------------------------------------------------------------
-Vector CNPC_Assassin::EyePosition(void)
-{
-
-	return GetAbsOrigin() + Vector(0, 0, 24);
-
-	/*
-	Vector m_EyePos;
-	GetAttachment( "eyes", m_EyePos );
-	return m_EyePos;
-	*/
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::OnScheduleChange(void)
-{
-	//TODO: Change eye state?
-
-	BaseClass::OnScheduleChange();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : state - 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::SetEyeState(eyeState_t state)
-{
-	//Must have a valid eye to affect
-	if ((m_pEyeSprite == NULL) || (m_pEyeTrail == NULL))
-		return;
-
-	//Set the state
-	switch (state)
-	{
-	default:
-	case ASSASSIN_EYE_SEE_TARGET: //Fade in and scale up
-		m_pEyeSprite->SetColor(255, 0, 0);
-		m_pEyeSprite->SetBrightness(164, 0.1f);
-		m_pEyeSprite->SetScale(0.4f, 0.1f);
-
-		m_pEyeTrail->SetColor(255, 0, 0);
-		m_pEyeTrail->SetScale(8.0f);
-		m_pEyeTrail->SetBrightness(164);
-
-		break;
-
-	case ASSASSIN_EYE_SEEKING_TARGET: //Ping-pongs
-
-		//Toggle our state
-		m_bBlinkState = !m_bBlinkState;
-		m_pEyeSprite->SetColor(255, 128, 0);
-
-		if (m_bBlinkState)
-		{
-			//Fade up and scale up
-			m_pEyeSprite->SetScale(0.25f, 0.1f);
-			m_pEyeSprite->SetBrightness(164, 0.1f);
-		}
-		else
-		{
-			//Fade down and scale down
-			m_pEyeSprite->SetScale(0.2f, 0.1f);
-			m_pEyeSprite->SetBrightness(64, 0.1f);
-		}
-
-		break;
-
-	case ASSASSIN_EYE_DORMANT: //Fade out and scale down
-		m_pEyeSprite->SetScale(0.5f, 0.5f);
-		m_pEyeSprite->SetBrightness(64, 0.5f);
-
-		m_pEyeTrail->SetScale(2.0f);
-		m_pEyeTrail->SetBrightness(64);
-		break;
-
-	case ASSASSIN_EYE_DEAD: //Fade out slowly
-		m_pEyeSprite->SetColor(255, 0, 0);
-		m_pEyeSprite->SetScale(0.1f, 5.0f);
-		m_pEyeSprite->SetBrightness(0, 5.0f);
-
-		m_pEyeTrail->SetColor(255, 0, 0);
-		m_pEyeTrail->SetScale(0.1f);
-		m_pEyeTrail->SetBrightness(0);
-		break;
-
-	case ASSASSIN_EYE_ACTIVE:
-		m_pEyeSprite->SetColor(255, 0, 0);
-		m_pEyeSprite->SetScale(0.1f);
-		m_pEyeSprite->SetBrightness(0);
-		break;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::GatherEnemyConditions(CBaseEntity *pEnemy)
-{
-	ClearCondition(COND_ASSASSIN_ENEMY_TARGETTING_ME);
-
-	BaseClass::GatherEnemyConditions(pEnemy);
-
-	// See if we're being targetted specifically
-	if (HasCondition(COND_ENEMY_FACING_ME))
-	{
-		Vector	enemyDir = GetAbsOrigin() - pEnemy->GetAbsOrigin();
-		VectorNormalize(enemyDir);
-
-		Vector	enemyBodyDir;
-		CBasePlayer	*pPlayer = ToBasePlayer(pEnemy);
-
-		if (pPlayer != NULL)
-		{
-			enemyBodyDir = pPlayer->BodyDirection3D();
-		}
-		else
-		{
-			AngleVectors(pEnemy->GetAbsAngles(), &enemyBodyDir);
-		}
-
-		float	enemyDot = DotProduct(enemyBodyDir, enemyDir);
-
-		//FIXME: Need to refine this a bit
-		if (enemyDot > 0.97f)
-		{
-			SetCondition(COND_ASSASSIN_ENEMY_TARGETTING_ME);
+			EmitSound(filter, entindex(), "HAssassin.Footstep");
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::BuildScheduleTestBits(void)
-{
-	SetNextThink(gpGlobals->curtime + 0.05);
+AI_BEGIN_CUSTOM_NPC(monster_human_assassin, CNPC_HAssassin)
 
-	//Don't allow any modifications when scripted
-	if (m_NPCState == NPC_STATE_SCRIPT)
-		return;
+DECLARE_TASK(TASK_ASSASSIN_FALL_TO_GROUND)
 
-	if (IsCurSchedule(SCHED_ASSASSIN_FIND_VANTAGE_POINT))
-	{
-		if ((HasCondition(COND_LIGHT_DAMAGE) || HasCondition(COND_HEAVY_DAMAGE)) && HasCondition(COND_SEE_ENEMY))
-		{
-			SetCustomInterruptCondition(COND_SEE_ENEMY);
-		}
-	}
-
-	//Become interrupted if we're targetted when shooting an enemy
-	/*
-	if (IsCurSchedule(SCHED_RANGE_ATTACK1))
-	{
-	SetCustomInterruptCondition(COND_ASSASSIN_ENEMY_TARGETTING_ME);
-	}
-	*/
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &info - 
-//-----------------------------------------------------------------------------
-void CNPC_Assassin::Event_Killed(const CTakeDamageInfo &info)
-{
-	BaseClass::Event_Killed(info);
-
-	// Turn off the eye
-	SetEyeState(ASSASSIN_EYE_DEAD);
-
-	// Turn off the pistols
-	SetBodygroup(1, 0);
-
-	// Spawn her guns
-}
-
-//-----------------------------------------------------------------------------
-//
-// Schedules
-//
-//-----------------------------------------------------------------------------
-
-AI_BEGIN_CUSTOM_NPC(npc_assassin, CNPC_Assassin)
-
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLIP_LEFT)
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLIP_RIGHT)
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLIP_BACK)
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLIP_FORWARD)
-DECLARE_ACTIVITY(ACT_ASSASSIN_PERCH)
-
-//Adrian: events go here
-DECLARE_ANIMEVENT(AE_ASSASIN_FIRE_PISTOL_RIGHT)
-DECLARE_ANIMEVENT(AE_ASSASIN_FIRE_PISTOL_LEFT)
-DECLARE_ANIMEVENT(AE_ASSASIN_KICK_HIT)
-
-DECLARE_TASK(TASK_ASSASSIN_GET_PATH_TO_VANTAGE_POINT)
-DECLARE_TASK(TASK_ASSASSIN_EVADE)
-DECLARE_TASK(TASK_ASSASSIN_SET_EYE_STATE)
-DECLARE_TASK(TASK_ASSASSIN_LUNGE)
-DECLARE_TASK(TASK_ASSASSIN_BEGIN_FLANK)
-DECLARE_TASK(TASK_ASSASSIN_FLANK_COVER)
-
-
-DECLARE_CONDITION(COND_ASSASSIN_ENEMY_TARGETTING_ME)
+DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_UP)
+DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_ATTACK)
+DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_DOWN)
 
 //=========================================================
-// ASSASSIN_STALK_ENEMY
+// AI Schedules Specific to this monster
 //=========================================================
 
-DEFINE_SCHEDULE
-(
-SCHED_ASSASSIN_STALK_ENEMY,
-
-"	Tasks"
-"		TASK_STOP_MOVING						0"
-"		TASK_PLAY_SEQUENCE_FACE_ENEMY			ACTIVITY:ACT_ASSASSIN_PERCH"
-"		TASK_WAIT					1.2"
-"	"
-"	Interrupts"
-"		COND_ASSASSIN_ENEMY_TARGETTING_ME"
-"		COND_CAN_RANGE_ATTACK1"
-"		COND_SEE_ENEMY"
-"		COND_LIGHT_DAMAGE"
-"		COND_HEAVY_DAMAGE"
-)
-
 //=========================================================
-// > ASSASSIN_FIND_VANTAGE_POINT
+// Enemy exposed assasin's cover
 //=========================================================
 
-DEFINE_SCHEDULE
-(
-SCHED_ASSASSIN_FIND_VANTAGE_POINT,
-
-"	Tasks"
-"		TASK_SET_FAIL_SCHEDULE					SCHEDULE:SCHED_ASSASSIN_ESTABLISH_LOS"
-"		TASK_STOP_MOVING						0"
-"		TASK_ASSASSIN_GET_PATH_TO_VANTAGE_POINT	0"
-"		TASK_RUN_PATH							0"
-"		TASK_WAIT_FOR_MOVEMENT					0"
-"		TASK_SET_SCHEDULE						SCHEDULE:SCHED_COMBAT_FACE"
-"	"
-"	Interrupts"
-
-"		COND_LIGHT_DAMAGE"
-"		COND_HEAVY_DAMAGE"
-"		COND_CAN_MELEE_ATTACK1"
-"		COND_CAN_MELEE_ATTACK2"
-"		COND_TASK_FAILED"
-)
-
 //=========================================================
-// Assassin needs to avoid the player
+// > SCHED_ASSASSIN_EXPOSED
 //=========================================================
 DEFINE_SCHEDULE
 (
-SCHED_ASSASSIN_EVADE,
+	SCHED_ASSASSIN_EXPOSED,
 
-"	Tasks"
-"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_TAKE_COVER"
-"		TASK_STOP_MOVING			0"
-"		TASK_ASSASSIN_EVADE			0"
-"	"
-"	Interrupts"
-"		COND_TASK_FAILED"
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_RANGE_ATTACK1		0"
+	"		TASK_SET_FAIL_SCHEDULE	SCHEDULE:SCHED_ASSASSIN_JUMP"
+	"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_TAKE_COVER_FROM_ENEMY"
+	"	"
+	"	Interrupts"
+	"	COND_CAN_MELEE_ATTACK1"
+
 )
 
 //=========================================================
-// Assassin needs to avoid the player
+// > SCHED_ASSASSIN_JUMP
 //=========================================================
 DEFINE_SCHEDULE
 (
-SCHED_ASSASSIN_LUNGE,
+	SCHED_ASSASSIN_JUMP,
 
-"	Tasks"
-"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_TAKE_COVER"
-"		TASK_STOP_MOVING			0"
-"		TASK_FACE_ENEMY				0"
-"		TASK_PLAY_SEQUENCE			ACTIVITY:ACT_ASSASSIN_FLIP_FORWARD"
-"	"
-"	Interrupts"
-"		COND_TASK_FAILED"
-)
-
-DEFINE_SCHEDULE
-(
-SCHED_ASSASSIN_TAKE_COVER,
-
-"	Tasks"
-"		TASK_STOP_MOVING				0"
-"		TASK_WAIT					0.2"
-"		TASK_FIND_FAR_NODE_COVER_FROM_ENEMY 320.0"
-"		TASK_RUN_PATH				0"
-"		TASK_WAIT_FOR_MOVEMENT		0"
-"		TASK_WAIT_FACE_ENEMY		0.5"
-"		TASK_REMEMBER				MEMORY:INCOVER"
-"		TASK_SET_SCHEDULE			SCHEDULE:SCHED_COMBAT_FACE"
-"	"
-"	Interrupts"
-"		COND_CAN_MELEE_ATTACK1"
-"		COND_CAN_MELEE_ATTACK2"
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_PLAY_SEQUENCE		ACTIVITY:ACT_HOP"
+	"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_JUMP_ATTACK"
+	"	"
+	"	Interrupts"
 )
 
 //=========================================================
-// SCHED_COMBINE_RANGE_ATTACK1
+// > SCHED_ASSASSIN_JUMP_ATTACK
 //=========================================================
 DEFINE_SCHEDULE
 (
-SCHED_ASSASSIN_FIRE_PISTOLS,
+	SCHED_ASSASSIN_JUMP_ATTACK,
 
-"	Tasks"
-"		TASK_STOP_MOVING				0"
-"		TASK_FACE_ENEMY					0"
-"		TASK_WAIT_RANDOM				0.3" //.3
-"		TASK_RANGE_ATTACK1				0"
-//"		TASK_COMBINE_IGNORE_ATTACKS		0.5"
-//"		TASK_SET_SCHEDULE				SCHEDULE:SCHED_COMBINE_POST_FIRE"
-""
-"	Interrupts"
-"		COND_NEW_ENEMY"
-"		COND_ENEMY_DEAD"
-"		COND_HEAVY_DAMAGE"
-"		COND_LIGHT_DAMAGE"
-"		COND_CAN_MELEE_ATTACK1"
-"		COND_CAN_MELEE_ATTACK2"
-"		COND_WEAPON_BLOCKED_BY_FRIEND"
-"		COND_TOO_CLOSE_TO_ATTACK"
-"		COND_GIVE_WAY"
-"		COND_HEAR_DANGER"
-"		COND_HEAR_MOVE_AWAY"
-""
-// Enemy_Occluded				Don't interrupt on this.  Means
-//								comibine will fire where player was after
-//								he has moved for a little while.  Good effect!!
-// WEAPON_SIGHT_OCCLUDED		Don't block on this! Looks better for railings, etc.
+	"	Tasks"
+	"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_JUMP_LAND"
+	"		TASK_ASSASSIN_FALL_TO_GROUND	0"
+	"	"
+	"	Interrupts"
 )
 
+//=========================================================
+// > SCHED_ASSASSIN_JUMP_LAND
+//=========================================================
 DEFINE_SCHEDULE
 (
-SCHED_ASSASSIN_FLANK_COVER,
+	SCHED_ASSASSIN_JUMP_LAND,
 
-"	Tasks"
-"		TASK_SET_FAIL_SCHEDULE					SCHEDULE:SCHED_ASSASSIN_TAKE_COVER"
-"		TASK_ANNOUNCE_ATTACK				3"
-"		TASK_STOP_MOVING						0"
-"		TASK_ASSASSIN_BEGIN_FLANK					0"
-"		TASK_SET_TOLERANCE_DISTANCE				96"
-"		TASK_SET_ROUTE_SEARCH_TIME				1"	// Spend 1 second trying to build a path if stuck"
-"		TASK_ASSASSIN_FLANK_COVER				60"
-"		TASK_RUN_PATH							0"
-"		TASK_WAIT_FOR_MOVEMENT					0"
-"		TASK_FACE_ENEMY							0"
-""
-"	Interrupts"
-"		COND_NEW_ENEMY"
-//"		COND_CAN_RANGE_ATTACK1"
-//"		COND_CAN_RANGE_ATTACK2"
-"		COND_CAN_MELEE_ATTACK1"
-"		COND_CAN_MELEE_ATTACK2"
-"		COND_ENEMY_DEAD"
-//"		COND_ENEMY_UNREACHABLE"
-"		COND_TOO_CLOSE_TO_ATTACK"
-"		COND_LOST_ENEMY"
-"		COND_HEAR_DANGER"
-"		COND_HEAR_MOVE_AWAY"
+	"	Tasks"
+	"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_EXPOSED"
+	"		TASK_SET_ACTIVITY			ACTIVITY:ACT_IDLE"
+	"		TASK_REMEMBER				MEMORY:CUSTOM1"
+	"		TASK_FIND_NODE_COVER_FROM_ENEMY		0"
+	"		TASK_RUN_PATH						0"
+	"		TASK_FORGET					MEMORY:CUSTOM1"
+	"		TASK_WAIT_FOR_MOVEMENT				0"
+	"		TASK_REMEMBER				MEMORY:INCOVER"
+	"		TASK_FACE_ENEMY				0"
+	"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_RANGE_ATTACK1"
+
+	"	"
+	"	Interrupts"
 )
 
+//=========================================================
+// Fail Schedule
+//=========================================================
+
+//=========================================================
+// > SCHED_ASSASSIN_FAIL
+//=========================================================
 DEFINE_SCHEDULE
 (
-SCHED_ASSASSIN_ESTABLISH_LOS,
+	SCHED_ASSASSIN_FAIL,
 
-"	Tasks "
-"		TASK_SET_FAIL_SCHEDULE			SCHEDULE:SCHED_FAIL_ESTABLISH_LINE_OF_FIRE"
-"		TASK_SET_TOLERANCE_DISTANCE		48"
-"		TASK_GET_PATH_TO_ENEMY_LKP_LOS	0"
-"		TASK_RUN_PATH					0"
-"		TASK_WAIT_FOR_MOVEMENT			0"
-"		TASK_SET_SCHEDULE				SCHEDULE:SCHED_COMBAT_FACE"
-"	"
-"	Interrupts "
-"		COND_NEW_ENEMY"
-"		COND_ENEMY_DEAD"
-//"		COND_CAN_RANGE_ATTACK1"
-//"		COND_CAN_RANGE_ATTACK2"
-"		COND_CAN_MELEE_ATTACK1"
-"		COND_CAN_MELEE_ATTACK2"
-"		COND_HEAR_DANGER"
-"		COND_HEAR_MOVE_AWAY"
-"		COND_HEAVY_DAMAGE"
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_SET_ACTIVITY		ACTIVITY:ACT_IDLE"
+	"		TASK_WAIT_FACE_ENEMY	2"
+	"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_CHASE_ENEMY"
+	"	"
+	"	Interrupts"
+	"		COND_LIGHT_DAMAGE"
+	"		COND_HEAVY_DAMAGE"
+	"		COND_CAN_RANGE_ATTACK1"
+	"		COND_CAN_RANGE_ATTACK2"
+	"		COND_CAN_MELEE_ATTACK1"
+	"		COND_HEAR_DANGER"
+	"		COND_HEAR_PLAYER"
 )
 
+
+
+
+//=========================================================
+// > SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY1
+//=========================================================
+DEFINE_SCHEDULE
+(
+	SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY1,
+
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_WAIT				0.2"
+	"		TASK_SET_FAIL_SCHEDULE	SCHEDULE:SCHED_RANGE_ATTACK1"
+	"		TASK_FIND_COVER_FROM_ENEMY 0"
+	"		TASK_RUN_PATH 0"
+	"		TASK_WAIT_FOR_MOVEMENT 0"
+	"		TASK_REMEMBER			MEMORY:INCOVER"
+	"		TASK_FACE_ENEMY			0"
+	"	"
+	"	Interrupts"
+	"	COND_CAN_MELEE_ATTACK1"
+	"	COND_NEW_ENEMY"
+	"	COND_HEAR_DANGER"
+
+)
+
+//=========================================================
+// > SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY2
+//=========================================================
+DEFINE_SCHEDULE
+(
+	SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY2,
+
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_WAIT				0.2"
+	"		TASK_FACE_ENEMY			0"
+	"		TASK_RANGE_ATTACK1		0"
+	"		TASK_SET_FAIL_SCHEDULE	SCHEDULE:SCHED_RANGE_ATTACK1"
+	"		TASK_FIND_COVER_FROM_ENEMY 0"
+	"		TASK_RUN_PATH 0"
+	"		TASK_WAIT_FOR_MOVEMENT 0"
+	"		TASK_REMEMBER			MEMORY:INCOVER"
+	"		TASK_FACE_ENEMY			0"
+	"	"
+	"	Interrupts"
+	"	COND_CAN_MELEE_ATTACK1"
+	"	COND_NEW_ENEMY"
+	"	COND_HEAR_DANGER"
+
+)
+
+
+
+//=========================================================
+// hide from the loudest sound source
+//=========================================================
+
+//=========================================================
+// > SCHED_ASSASSIN_TAKE_COVER_FROM_BEST_SOUND
+//=========================================================
+DEFINE_SCHEDULE
+(
+	SCHED_ASSASSIN_TAKE_COVER_FROM_BEST_SOUND,
+
+	"	Tasks"
+	"		TASK_SET_FAIL_SCHEDULE	SCHEDULE:SCHED_MELEE_ATTACK1"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_FIND_COVER_FROM_BEST_SOUND	0"
+	"		TASK_RUN_PATH			0"
+	"		TASK_WAIT_FOR_MOVEMENT	0"
+	"		TASK_REMEMBER			MEMORY:INCOVER"
+	"		TASK_TURN_LEFT			179"
+	"	"
+	"	Interrupts"
+	"	COND_NEW_ENEMY"
+
+)
+
+//=========================================================
+// > SCHED_ASSASSIN_HIDE
+//=========================================================
+DEFINE_SCHEDULE
+(
+	SCHED_ASSASSIN_HIDE,
+
+	"	Tasks"
+	"		TASK_STOP_MOVING		0"
+	"		TASK_SET_ACTIVITY		ACTIVITY:ACT_IDLE"
+	"		TASK_WAIT				2.0"
+	"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_CHASE_ENEMY"
+
+	"	Interrupts"
+	"		COND_NEW_ENEMY"
+	"		COND_SEE_ENEMY"
+	"		COND_SEE_FEAR"
+	"		COND_LIGHT_DAMAGE"
+	"		COND_HEAVY_DAMAGE"
+	"		COND_PROVOKED"
+	"		COND_HEAR_DANGER"
+)
+
+//=========================================================
+// > SCHED_ASSASSIN_HUNT
+//=========================================================
+DEFINE_SCHEDULE
+(
+	SCHED_ASSASSIN_HUNT,
+
+	"	Tasks"
+	"		TASK_STOP_MOVING			0"
+	"		TASK_SET_FAIL_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY2"
+	"		TASK_GET_PATH_TO_ENEMY		0"
+	"		TASK_RUN_PATH				0"
+	"		TASK_WAIT_FOR_MOVEMENT		0"
+
+	"	Interrupts"
+	"		COND_NEW_ENEMY"
+	"		COND_CAN_RANGE_ATTACK1"
+	"		COND_HEAR_DANGER"
+)
 
 AI_END_CUSTOM_NPC()

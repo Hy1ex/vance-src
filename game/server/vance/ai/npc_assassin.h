@@ -12,92 +12,101 @@
 #endif
 
 #include "ai_basenpc.h"
-#include "Sprite.h"
-#include "SpriteTrail.h"
 #include "soundent.h"
 
-//Eye states
-enum eyeState_t
+ConVar sk_assassin_health("sk_assassin_health", "50");
+
+//=========================================================
+// monster-specific schedule types
+//=========================================================
+enum
 {
-	ASSASSIN_EYE_SEE_TARGET = 0,		//Sees the target, bright and big
-	ASSASSIN_EYE_SEEKING_TARGET,	//Looking for a target, blinking (bright)
-	ASSASSIN_EYE_ACTIVE,			//Actively looking
-	ASSASSIN_EYE_DORMANT,			//Not active
-	ASSASSIN_EYE_DEAD,				//Completely invisible
+	SCHED_ASSASSIN_EXPOSED = LAST_SHARED_SCHEDULE,// cover was blown.
+	SCHED_ASSASSIN_JUMP,	// fly through the air
+	SCHED_ASSASSIN_JUMP_ATTACK,	// fly through the air and shoot
+	SCHED_ASSASSIN_JUMP_LAND, // hit and run away
+	SCHED_ASSASSIN_FAIL,
+	SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY1,
+	SCHED_ASSASSIN_TAKE_COVER_FROM_ENEMY2,
+	SCHED_ASSASSIN_TAKE_COVER_FROM_BEST_SOUND,
+	SCHED_ASSASSIN_HIDE,
+	SCHED_ASSASSIN_HUNT,
 };
 
+Activity ACT_ASSASSIN_FLY_UP;
+Activity ACT_ASSASSIN_FLY_ATTACK;
+Activity ACT_ASSASSIN_FLY_DOWN;
+
 //=========================================================
+// monster-specific tasks
 //=========================================================
-class CNPC_Assassin : public CAI_BaseNPC
+
+enum
 {
+	TASK_ASSASSIN_FALL_TO_GROUND = LAST_SHARED_TASK + 1, // falling and waiting to hit ground
+};
+
+
+//=========================================================
+// Monster's Anim Events Go Here
+//=========================================================
+#define		ASSASSIN_AE_SHOOT1	1
+#define		ASSASSIN_AE_TOSS1	2
+#define		ASSASSIN_AE_JUMP	3
+
+
+#define MEMORY_BADJUMP	bits_MEMORY_CUSTOM1
+
+class CNPC_HAssassin : public CAI_BaseNPC
+{
+	DECLARE_CLASS(CNPC_HAssassin, CAI_BaseNPC);
+
 public:
-	DECLARE_CLASS(CNPC_Assassin, CAI_BaseNPC);
-	// DECLARE_SERVERCLASS();
+	void Spawn(void);
+	void Precache(void);
+
+	int  TranslateSchedule(int scheduleType);
+
+	void HandleAnimEvent(animevent_t* pEvent);
+	float MaxYawSpeed() { return 360.0f; }
+
+	void Shoot(void);
+
+	int  MeleeAttack1Conditions(float flDot, float flDist);
+	int	 RangeAttack1Conditions(float flDot, float flDist);
+	int	 RangeAttack2Conditions(float flDot, float flDist);
+
+	int	 SelectSchedule(void);
+
+	void RunTask(const Task_t* pTask);
+	void StartTask(const Task_t* pTask);
+
+	Class_T	Classify(void);
+
+	int GetSoundInterests(void);
+
+	void RunAI(void);
+
+	float m_flLastShot;
+	float m_flDiviation;
+
+	float m_flNextJump;
+	Vector m_vecJumpVelocity;
+
+	float m_flNextGrenadeCheck;
+	Vector	m_vecTossVelocity;
+	bool	m_fThrowGrenade;
+
+	int		m_iTargetRanderamt;
+
+	int		m_iFrustration;
+
+	int		m_iAmmoType;
+
+public:
 	DECLARE_DATADESC();
-
-	CNPC_Assassin(void);
-
-	Class_T		Classify(void)			{ return CLASS_COMBINE; }
-	virtual float	HearingSensitivity(void) { return 1.0; };
-	int				GetSoundInterests(void);
-	virtual bool	QueryHearSound(CSound *pSound);
-
-	int			SelectSchedule(void);
-	int			SelectSchedObject();
-	virtual int		SelectFailSchedule(int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode);
-	int			MeleeAttack1Conditions(float flDot, float flDist);
-	int			RangeAttack1Conditions(float flDot, float flDist);
-	int			RangeAttack2Conditions(float flDot, float flDist);
-	virtual bool	InnateWeaponLOSCondition(const Vector &ownerPos, const Vector &targetPos, bool bSetConditions);
-	virtual float	InnateRange1MinRange(void) { return 0.0f; }
-	virtual float	InnateRange1MaxRange(void) { return 724 * 12; }
-
-	void		Precache(void);
-	void		Spawn(void);
-	virtual void	AimGun(void);
-	void		PrescheduleThink(void);
-	Activity	NPC_TranslateActivity(Activity eNewActivity);
-	void		HandleAnimEvent(animevent_t *pEvent);
-	void		StartTask(const Task_t *pTask);
-	void		RunTask(const Task_t *pTask);
-	void		OnScheduleChange(void);
-	void		GatherEnemyConditions(CBaseEntity *pEnemy);
-	void		BuildScheduleTestBits(void);
-	void		Event_Killed(const CTakeDamageInfo &info);
-	Vector		Weapon_ShootPosition();
-	bool		FValidateHintType(CAI_Hint *pHint);
-	bool		IsJumpLegal(const Vector &startPos, const Vector &apex, const Vector &endPos) const;
-
-	float		GetJumpGravity() const		{ return 4.0f; } //4.0
-	float		GetMaxJumpSpeed() const { return 640.0f; }
-	//bool		MovementCost(int moveType, const Vector &vecStart, const Vector &vecEnd, float *pCost);
-
-	float		MaxYawSpeed(void);
-
-	const Vector &GetViewOffset(void);
-	Vector		EyePosition(void);
-
-private:
-
-	void		SetEyeState(eyeState_t state);
-	void		FirePistol(int hand);
-	bool		CanFlip(int flipType, Activity &activity, const Vector *avoidPosition);
-
-	int			m_nNumFlips;
-	int			m_nLastFlipType;
-	float		m_flNextFlipTime;	//Next earliest time the assassin can flip again
-	float		m_flNextLungeTime;
-	float		m_flNextShotTime;
-	int			m_nShotCount;
-
-	bool		m_bEvade;
-	bool		m_bAggressive;		// Sets certain state, including whether or not her eye is visible
-	bool		m_bBlinkState;
-
-	CSprite				*m_pEyeSprite;
-	CSpriteTrail		*m_pEyeTrail;
-
 	DEFINE_CUSTOM_AI;
+
 };
 
 
