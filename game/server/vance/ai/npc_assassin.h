@@ -33,9 +33,6 @@ enum
 	SCHED_ASSASSIN_HUNT,
 };
 
-Activity ACT_ASSASSIN_FLY_UP;
-Activity ACT_ASSASSIN_FLY_ATTACK;
-Activity ACT_ASSASSIN_FLY_DOWN;
 
 //=========================================================
 // monster-specific tasks
@@ -51,8 +48,10 @@ enum
 // Monster's Anim Events Go Here
 //=========================================================
 #define		ASSASSIN_AE_SHOOT1	1
-#define		ASSASSIN_AE_TOSS1	2
-#define		ASSASSIN_AE_JUMP	3
+#define		ASSASSIN_AE_SHOOT2	2
+#define		ASSASSIN_AE_KICK	3
+#define		ASSASSIN_AE_GRENADE	4
+#define		ASSASSIN_AE_JUMP	5
 
 
 #define MEMORY_BADJUMP	bits_MEMORY_CUSTOM1
@@ -70,7 +69,7 @@ public:
 	void HandleAnimEvent(animevent_t* pEvent);
 	float MaxYawSpeed() { return 360.0f; }
 
-	void Shoot(void);
+	void Shoot(int hand);
 
 	int  MeleeAttack1Conditions(float flDot, float flDist);
 	int	 RangeAttack1Conditions(float flDot, float flDist);

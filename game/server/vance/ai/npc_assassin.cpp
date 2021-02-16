@@ -22,6 +22,8 @@
 #include "ai_squadslot.h"
 #include "ai_squad.h"
 #include "movevars_shared.h"
+#include "basegrenade_shared.h"
+#include "grenade_frag.h"
 
 
 
@@ -70,6 +72,8 @@ void CNPC_HAssassin::Spawn()
 	m_flFieldOfView = VIEW_FIELD_WIDE; // indicates the width of this monster's forward view cone ( as a dotproduct result )
 	m_NPCState = NPC_STATE_NONE;
 
+	SetBodygroup(1, 1);
+
 	m_HackedGunPos = Vector(0, 24, 48);
 
 	m_iTargetRanderamt = 20;
@@ -88,7 +92,7 @@ void CNPC_HAssassin::Spawn()
 //=========================================================
 void CNPC_HAssassin::Precache()
 {
-	m_iAmmoType = GetAmmoDef()->Index("9mmRound");
+	m_iAmmoType = GetAmmoDef()->Index("Pistol");
 
 	PrecacheModel("models/fassassin/fassassin.mdl");
 
@@ -195,7 +199,7 @@ int CNPC_HAssassin::RangeAttack2Conditions(float flDot, float flDist)
 		Vector vTossPos;
 		QAngle vAngles;
 
-		GetAttachment("grenadehand", vTossPos, vAngles);
+		GetAttachment("RightHand", vTossPos, vAngles);
 
 		Vector vecToss = VecCheckThrow(this, vTossPos, GetEnemy()->WorldSpaceCenter(), flDist, 0.5); // use dist as speed to get there in 1 second
 
@@ -254,16 +258,16 @@ void CNPC_HAssassin::RunTask(const Task_t* pTask)
 		{
 			if (GetAbsVelocity().z > 0)
 			{
-				SetActivity(ACT_ASSASSIN_FLY_UP);
+				SetActivity(ACT_GLIDE);
 			}
 			else if (HasCondition(COND_SEE_ENEMY))
 			{
-				SetActivity(ACT_ASSASSIN_FLY_ATTACK);
+				SetActivity(ACT_GLIDE);
 				SetCycle(0);
 			}
 			else
 			{
-				SetActivity(ACT_ASSASSIN_FLY_DOWN);
+				SetActivity(ACT_LAND);
 				SetCycle(0);
 			}
 
@@ -428,19 +432,27 @@ void CNPC_HAssassin::HandleAnimEvent(animevent_t* pEvent)
 	switch (pEvent->event)
 	{
 	case ASSASSIN_AE_SHOOT1:
-		Shoot();
+		Shoot(1);
 		break;
-	case ASSASSIN_AE_TOSS1:
+	case ASSASSIN_AE_SHOOT2:
+		Shoot(2);
+		break;
+	case ASSASSIN_AE_GRENADE:
 	{
 		Vector vTossPos;
 		QAngle vAngles;
 
-		GetAttachment("grenadehand", vTossPos, vAngles);
+		GetAttachment("RightHand", vTossPos, vAngles);
 
-		CBaseEntity* pGrenade = CBaseEntity::Create("npc_grenade_frag", vTossPos, vec3_angle);
+		CBaseGrenade* pGrenade = Fraggrenade_Create(vTossPos, vAngles, vec3_origin, AngularImpulse(Vector(random->RandomFloat(-30.0f,30.0f), random->RandomFloat(-30.0f, 30.0f), random->RandomFloat(-30.0f, 30.0f))), this, 3.0f, true);
+
 		if (pGrenade)
 		{
-			pGrenade->SetAbsVelocity(m_vecTossVelocity);
+			IPhysicsObject* pPhys = pGrenade->VPhysicsGetObject();
+			if (pPhys)
+			{
+				pPhys->SetVelocityInstantaneous(&m_vecTossVelocity, NULL);
+			}
 		}
 
 		m_flNextGrenadeCheck = gpGlobals->curtime + 6;// wait six seconds before even looking again to see if a grenade can be thrown.
@@ -467,7 +479,7 @@ void CNPC_HAssassin::HandleAnimEvent(animevent_t* pEvent)
 //=========================================================
 // Shoot
 //=========================================================
-void CNPC_HAssassin::Shoot(void)
+void CNPC_HAssassin::Shoot(int hand)
 {
 	Vector vForward, vRight, vUp;
 	Vector vecShootOrigin;
@@ -478,7 +490,18 @@ void CNPC_HAssassin::Shoot(void)
 		return;
 	}
 
-	GetAttachment("guntip", vecShootOrigin, vAngles);
+	switch (hand)
+	{
+	case 1:
+		GetAttachment("leftHand", vecShootOrigin, vAngles);
+		break;
+	case 2:
+		GetAttachment("RightHand", vecShootOrigin, vAngles);
+		break;
+	default:
+		GetAttachment("RightHand", vecShootOrigin, vAngles);
+		break;
+	}
 
 	Vector vecShootDir = GetShootEnemyDir(vecShootOrigin);
 
@@ -615,9 +638,6 @@ AI_BEGIN_CUSTOM_NPC(monster_human_assassin, CNPC_HAssassin)
 
 DECLARE_TASK(TASK_ASSASSIN_FALL_TO_GROUND)
 
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_UP)
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_ATTACK)
-DECLARE_ACTIVITY(ACT_ASSASSIN_FLY_DOWN)
 
 //=========================================================
 // AI Schedules Specific to this monster
@@ -654,7 +674,7 @@ DEFINE_SCHEDULE
 
 	"	Tasks"
 	"		TASK_STOP_MOVING		0"
-	"		TASK_PLAY_SEQUENCE		ACTIVITY:ACT_HOP"
+	"		TASK_PLAY_SEQUENCE		ACTIVITY:ACT_JUMP"
 	"		TASK_SET_SCHEDULE		SCHEDULE:SCHED_ASSASSIN_JUMP_ATTACK"
 	"	"
 	"	Interrupts"
