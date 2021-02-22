@@ -1224,8 +1224,12 @@ void CViewRender::DrawSky(const CViewSetup& view)
 		0,	// body
 		0  // hitboxset
 	);*/
+
 	m_SkydomeEntity->SetAbsOrigin(view.origin);
+	CMatRenderContextPtr pRenderContext(materials);
+	pRenderContext->OverrideDepthEnable(true, false);
 	m_SkydomeEntity->DrawModel(STUDIO_RENDER);
+	pRenderContext->OverrideDepthEnable(false, true);
 }
 
 
@@ -1552,7 +1556,9 @@ void CViewRender::ProcessGlobals(const CViewSetup& view)
 	
 	Vector vFwd;
 	AngleVectors(view.angles, &vFwd);
-	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar, g_pCSMLight->CurrentTime(), matView, matPerspective, matViewInv, matProjInv);
+	QUEUE_FIRE(CommitCommonData, view.origin, vFwd, view.zNear, view.zFar,
+		(g_pCSMLight != 0) ? g_pCSMLight->CurrentTime() : 0.0f, // HACKHACK: csmlight probably shouldnt store current time of the whole map
+		matView, matPerspective, matViewInv, matProjInv);
 
 	GetLightingManager()->SetRenderConstants(matPerspective, view);
 }
@@ -1565,7 +1571,7 @@ void CViewRender::PushGBufferRT(bool firstPush)
 
 	if (firstPush)
 	{
-		pRenderContext->ClearColor4ub(0, 255, 0, 255); // full red channel because of roughness channel of MRAO buffer
+		pRenderContext->ClearColor4ub(0, 0, 0, 255);
 		pRenderContext->ClearBuffers(true, true);
 	}
 	pRenderContext.SafeRelease();
