@@ -2,7 +2,6 @@
 #include "view.h"
 #include "c_bobmodel.h"
 
-
 C_BobModel::C_BobModel()
 	: m_bDirty( false )
 	, m_angIdle( vec3_angle )
@@ -120,16 +119,16 @@ bool C_BobModel::GetTransforms( Vector &pos, QAngle &ang )
 	MatrixBuildRotationAboutAxis( u, m_angOrientation.z, rot );
 	ConcatTransforms( rot, mat, tmp );
 
-	MatrixAngles( tmp, ang, pos );
+	MatrixAngles( tmp, ang );
 
-	
+	/*
 	Vector tmpPos(vec3_origin);
 	tmpPos += pos.x * MainViewForward();
 	tmpPos += pos.y * MainViewRight();
 	tmpPos += pos.z * MainViewUp();
 
 	pos = tmpPos;
-
+	*/
 	return true;
 }
 
