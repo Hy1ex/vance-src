@@ -109,14 +109,10 @@ void CSSAO::Init(void)
 	PrecacheMaterial("shaders/ssao_bilateraly");
 	PrecacheMaterial("shaders/ssgi_combine");
 
-	materials->BeginRenderTargetAllocation();
-
 	m_Normal.Init("_rt_Normals", TEXTURE_GROUP_RENDER_TARGET);
 	m_SSAO.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFB");
 	m_SSAOX.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFBX");
 	m_SSAOY.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSAOFBY");
-
-	materials->EndRenderTargetAllocation();
 
 	m_SSAO_Mat.Init(materials->FindMaterial("shaders/ssgi", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_SSAO_BilateralX.Init(materials->FindMaterial("shaders/ssao_bilateralx", TEXTURE_GROUP_PIXEL_SHADERS, true));
@@ -378,8 +374,6 @@ void CBloom::Init(void)
 	PrecacheMaterial("shaders/bloom_combine");
 	PrecacheMaterial("shaders/bloom_downsample");
 
-	materials->BeginRenderTargetAllocation();
-
 	m_BloomDS.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_BloomDS");
 	m_BloomDS1.InitRenderTarget(ScreenWidth() / 4, ScreenHeight() / 4, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_BloomDS1");
 	m_BloomDS2.InitRenderTarget(ScreenWidth() / 8, ScreenHeight() / 8, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_BloomDS2");
@@ -387,8 +381,6 @@ void CBloom::Init(void)
 
 	m_BloomFB0.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_BloomFB0");
 	m_BloomFB1.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA16161616F, MATERIAL_RT_DEPTH_NONE, false, "_rt_BloomFB1");
-
-	materials->EndRenderTargetAllocation();
 
 	m_BloomSample.Init(materials->FindMaterial("shaders/bloom_sample", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_GaussianX.Init(materials->FindMaterial("shaders/bloom_gaussianx", TEXTURE_GROUP_PIXEL_SHADERS, true));
@@ -514,13 +506,9 @@ void CSSR::Init(void)
 	PrecacheMaterial("shaders/SSR");
 	PrecacheMaterial("shaders/ssr_add");
 
-	materials->BeginRenderTargetAllocation();
-
 	m_SSR.InitRenderTarget(ScreenWidth() / 2, ScreenHeight() / 2, RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSR");
 	m_SSRX.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSRX");
 	m_SSRY.InitRenderTarget(ScreenWidth(), ScreenHeight(), RT_SIZE_DEFAULT, IMAGE_FORMAT_RGBA8888, MATERIAL_RT_DEPTH_NONE, false, "_rt_SSRY");
-
-	materials->EndRenderTargetAllocation();
 
 	m_SSR_Mat.Init(materials->FindMaterial("shaders/SSR", TEXTURE_GROUP_PIXEL_SHADERS, true));
 	m_SSR_Add.Init(materials->FindMaterial("shaders/ssr_add", TEXTURE_GROUP_PIXEL_SHADERS, true));

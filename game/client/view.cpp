@@ -379,6 +379,18 @@ void CViewRender::Init( void )
 		flags,
 		0);
 
+	// Init all IScreenSpaceEffects
+	g_pScreenSpaceEffects->InitScreenSpaceEffects();
+
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_unsharp");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_fxaa");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_waterfx");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_bloom");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_tonemap");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssao");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssr");
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_volumetrics");
+
 	materials->EndRenderTargetAllocation();
 }
 
@@ -402,18 +414,6 @@ void CViewRender::LevelInit( void )
 	// Clear our overlay materials
 	m_ScreenOverlayMaterial.Init( NULL );
 
-	// Init all IScreenSpaceEffects
-	g_pScreenSpaceEffects->InitScreenSpaceEffects( );
-
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_unsharp");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_fxaa");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_waterfx");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_bloom");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_tonemap");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssao");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_ssr");
-	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_volumetrics");
-
 	model_t* skyModel = (model_t*)engine->LoadModel("models/dev/skydome.mdl");
 	
 	m_SkydomeEntity = new C_BaseAnimating;
@@ -429,7 +429,14 @@ void CViewRender::LevelInit( void )
 //-----------------------------------------------------------------------------
 void CViewRender::LevelShutdown( void )
 {
-	g_pScreenSpaceEffects->ShutdownScreenSpaceEffects( );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called at shutdown
+//-----------------------------------------------------------------------------
+void CViewRender::Shutdown( void )
+{
+	g_pScreenSpaceEffects->ShutdownScreenSpaceEffects();
 
 	g_pScreenSpaceEffects->EnableScreenSpaceEffect("vance_unsharp");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_fxaa");
@@ -439,13 +446,7 @@ void CViewRender::LevelShutdown( void )
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_ssao");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_ssr");
 	g_pScreenSpaceEffects->DisableScreenSpaceEffect("vance_volumetrics");
-}
 
-//-----------------------------------------------------------------------------
-// Purpose: Called at shutdown
-//-----------------------------------------------------------------------------
-void CViewRender::Shutdown( void )
-{
 	m_TranslucentSingleColor.Shutdown( );
 	m_ModulateSingleColor.Shutdown( );
 	m_ScreenOverlayMaterial.Shutdown();
