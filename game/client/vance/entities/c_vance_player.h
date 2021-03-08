@@ -42,6 +42,8 @@ public:
 
 protected:
 
+	void				AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate = false);
+
 	virtual void		CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
 	virtual void		CalcViewModelView(const Vector& eyeOrigin, const QAngle& eyeAngles);
 

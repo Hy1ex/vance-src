@@ -94,8 +94,10 @@ private:
 #endif
 
 	// View-bobbing and swaying.
-	float m_flBobResult;
-	float m_flBobDifference;
+	float m_flSideTiltResult;
+	float m_flSideTiltDifference;
+	float m_flForwardOffsetResult;
+	float m_flForwardOffsetDifference;
 
 	// Wall collision thingy like in tarkov and stuff
 	float m_flCurrentDistance;

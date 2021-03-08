@@ -15,6 +15,9 @@
 #include "view.h"
 
 ConVar cl_viewpunch_power("cl_viewpunch_power", "0.4", 0, "", true, 0.0f, true, 1.0f);
+ConVar cl_viewbob_speed("cl_viewbob_speed", "10");
+ConVar cl_viewbob_height("cl_viewbob_height", "5");
+ConVar cl_viewbob_viewmodel_add("cl_viewbob_viewmodel_add", "0.1");
 
 extern void	FormatViewModelAttachment(Vector& vOrigin, bool bInverse);
 
@@ -256,6 +259,33 @@ Vector C_VancePlayer::GetAutoaimVector(float flScale)
 	return	forward;
 }
 
+void C_VancePlayer::AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate)
+{
+	static float bobtime, lastbobtime;
+	float cycle;
+
+	//Find the speed of the player
+	float speed = GetLocalVelocity().Length2D();
+
+	speed = clamp(speed, -320, 320);
+
+	float bob_offset = 1.0f - RemapVal(speed, 0, 320, 0.0f, 1.0f);
+	bob_offset *= bob_offset;
+	bob_offset = 1.0f - bob_offset;
+
+	// since bobtime and lastbobtime are static, it will add more to the values on every function call
+	// this should prevent it
+	if (calculate)
+	{
+		bobtime += (gpGlobals->curtime - lastbobtime) * bob_offset * cl_viewbob_speed.GetFloat();
+		lastbobtime = gpGlobals->curtime;
+	}
+
+	cycle = bobtime;
+
+	eyeOrigin.z += abs(sin(cycle)) * cl_viewbob_height.GetFloat() * bob_offset;
+}
+
 void C_VancePlayer::CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov)
 {
 	if (!prediction->InPrediction())
@@ -293,6 +323,8 @@ void C_VancePlayer::CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 	eyeOrigin += vSmoothOffset;
 	m_flObserverChaseDistance = 0.0;
 
+	AddViewBob(eyeOrigin, eyeAngles, true);
+
 	// calc current FOV
 	fov = GetFOV();
 }
@@ -308,6 +340,10 @@ void C_VancePlayer::CalcViewModelView(const Vector& eyeOrigin, const QAngle& eye
 		QAngle punchedAngle;
 		VectorAdd(eyeAngles, m_Local.m_vecPunchAngle * (1.0f - cl_viewpunch_power.GetFloat()), punchedAngle);
 
-		vm->CalcViewModelView(this, eyeOrigin, punchedAngle);
+		Vector bobOffset = vec3_origin;
+		QAngle blah;
+		AddViewBob(bobOffset, blah);
+
+		vm->CalcViewModelView(this, eyeOrigin + bobOffset * cl_viewbob_viewmodel_add.GetFloat(), punchedAngle);
 	}
 }

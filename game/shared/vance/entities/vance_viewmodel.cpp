@@ -51,7 +51,8 @@ END_PREDICTION_DATA()
 ConVar cl_vm_sway( "cl_vm_sway", "1.0" );
 ConVar cl_vm_sway_rate( "cl_vm_sway_rate", "1.0" );
 ConVar cl_vm_sway_wiggle_rate( "cl_vm_sway_wiggle_rate", "1.0" );
-ConVar cl_vm_sway_tilt( "cl_vm_sway_tilt", "180.0" );
+ConVar cl_vm_sway_tilt( "cl_vm_sway_tilt", "280.0" );
+ConVar cl_vm_sway_offset( "cl_vm_sway_offset", "5.0" );
 ConVar cl_vm_sway_jump_velocity_division( "cl_vm_sway_jump_velocity_division", "24.0" );
 #endif
 
@@ -64,9 +65,11 @@ CVanceViewModel::CVanceViewModel()
 	m_iViewModelAddonModelIndex = -1;
 
 	// View-bobbing and swaying.
-	m_flBobResult = 0.0f;
-	m_flBobDifference = 0.0f;
-	
+	m_flSideTiltResult = 0.0f;
+	m_flSideTiltDifference = 0.0f;
+	m_flForwardOffsetResult = 0.0f;
+	m_flForwardOffsetDifference = 0.0f;
+
 	// Wall collision thingy like in tarkov and stuff
 	m_flCurrentDistance = 0.0f;
 	m_flDistanceDifference = 0.0f;
@@ -282,11 +285,21 @@ void CVanceViewModel::AddViewModelBob( CBasePlayer *owner, Vector& eyePosition, 
 	if ( !owner )
 		return;
 
-	float dotRight = RemapVal( DotProduct( owner->GetLocalVelocity(), MainViewRight() ), -cl_vm_sway_tilt.GetFloat(), cl_vm_sway_tilt.GetFloat(), -1.0f, 1.0f ) * 15 * 0.5f;
-	m_flBobResult = Approach( dotRight, m_flBobResult, gpGlobals->frametime * 10.0f * m_flBobDifference );
-	m_flBobDifference = fabs( dotRight - m_flBobResult );
+	float dotForward = RemapVal(DotProduct(owner->GetLocalVelocity(), MainViewForward()), -cl_vm_sway_offset.GetFloat(), cl_vm_sway_offset.GetFloat(), -1.0f, 1.0f);
+	float movement = abs(dotForward) > 0.5f ? cl_vm_sway_offset.GetFloat() : 0;
+	m_flForwardOffsetResult = Approach(movement, m_flForwardOffsetResult, gpGlobals->frametime * 10.0f * m_flForwardOffsetDifference);
+	m_flForwardOffsetDifference = fabs(movement - m_flForwardOffsetResult);
 
-	eyeAngles[ROLL] += m_flBobResult;
+	float dotRight = RemapVal( DotProduct( owner->GetLocalVelocity(), MainViewRight() ), -cl_vm_sway_tilt.GetFloat(), cl_vm_sway_tilt.GetFloat(), -1.0f, 1.0f ) * 15 * 0.5f;
+	m_flSideTiltResult = Approach( dotRight, m_flSideTiltResult, gpGlobals->frametime * 10.0f * m_flSideTiltDifference );
+	m_flSideTiltDifference = fabs( dotRight - m_flSideTiltResult);
+
+	float rollZOffset = -clamp(m_flSideTiltResult, -10, 0) * 0.1f;
+	eyePosition -= MainViewUp() * rollZOffset;
+	eyeAngles[ROLL] += m_flSideTiltResult;
+
+	eyePosition -= MainViewForward() * abs(m_flForwardOffsetResult) * 0.1f;
+	eyePosition -= MainViewUp() * abs(m_flForwardOffsetResult) * 0.075f;
 }
 
 #define LAG_POSITION_COMPENSATION	0.2f
