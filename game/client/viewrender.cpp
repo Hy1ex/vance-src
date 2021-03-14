@@ -1568,6 +1568,7 @@ void CViewRender::PushGBufferRT(bool firstPush)
 	CMatRenderContextPtr pRenderContext(materials);
 	pRenderContext->SetRenderTargetEx(1, m_NormalBuffer);
 	pRenderContext->SetRenderTargetEx(2, m_MRAOBuffer);
+	pRenderContext->SetRenderTargetEx(3, m_AlbedoBuffer);
 
 	if (firstPush)
 	{
@@ -2345,6 +2346,8 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 
 		// Now actually draw the viewmodel
 		DrawViewModels( view, whatToDraw & RENDERVIEW_DRAWVIEWMODEL );
+
+		GetLightingManager()->RenderLights(view);
 
 		DrawUnderwaterOverlay();
 

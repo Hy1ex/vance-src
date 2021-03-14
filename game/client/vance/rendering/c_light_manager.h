@@ -36,6 +36,9 @@ public:
 	void AddLight(volume_light_t* l);
 	bool RemoveLight(volume_light_t* l);
 
+	void AddLight(LightDesc_t* l);
+	bool RemoveLight(LightDesc_t* l);
+
 	volume_light_t* GetLight(int l) { return m_hVolumetricLights[l]; };
 	int GetLightNumber(volume_light_t*l) { return m_hVolumetricLights.Find(l); };
 
@@ -45,7 +48,8 @@ public:
 	int CountLight() { return m_hVolumetricLights.Count(); };
 
 	void PrepareShadowLights();
-	
+
+	void RenderLights(const CViewSetup& view);
 	void RenderVolumetrics(const CViewSetup &view);
 
 	void CommitLights();
@@ -61,8 +65,11 @@ public:
 private:
 	void RebuildVolumetricMesh();
 	CUtlVector< volume_light_t* > m_hVolumetricLights;
+	CUtlVector< LightDesc_t* > m_hLights;
 	CMaterialReference m_matVolumetricsMaterial;
+	CMaterialReference m_matLightMaterial;
 	IMesh* m_meshViewVolumetrics;
+	IMesh* m_meshLightCube;
 
 	VMatrix m_matScreenToWorld;
 	Vector m_vecViewOrigin;

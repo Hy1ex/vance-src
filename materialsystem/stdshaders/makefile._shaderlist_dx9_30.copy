@@ -43,3 +43,5 @@ vance_scope_vs30.fxc-----vance_scope_vs30
 lpreview1_ps2x.fxc-----lpreview1_ps30
 depthwrite_ps2x.fxc-----depthwrite_ps30
 passthru_vs20.fxc-----passthru_vs30
+light_mesh_ps30.fxc-----light_mesh_ps30
+light_mesh_vs30.fxc-----light_mesh_vs30

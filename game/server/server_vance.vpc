@@ -87,6 +87,8 @@ $Project "Server (VANCE)"
 			$File	"vance\entities\func_recharge.cpp"
 			$File	"vance\entities\vance_player.cpp"
 			$File	"vance\entities\vance_player.h"
+			$File	"vance\entities\lights_deferred.cpp"
+			$File	"vance\entities\lights_deferred.h"
 			
 			$File	"$SRCDIR\game\shared\vance\weapons\vance_baseweapon_shared.cpp"
 			$File	"$SRCDIR\game\shared\vance\weapons\vance_baseweapon_shared.h"

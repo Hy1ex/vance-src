@@ -194,7 +194,7 @@ struct PS_OUTPUT
 	float4 MainOut : COLOR0;
 	float4 Normal : COLOR1;
 	float4 MRAO : COLOR2;
-	float4 Masks : COLOR3;
+	float4 Albedo : COLOR3;
 };
 
 #if LIGHTING_PREVIEW == 2
@@ -617,7 +617,7 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	output.MainOut = FinalOutput(float4(result.rgb, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w);
 	output.Normal = float4(worldSpaceNormal.xyz, 1.0f);
 	output.MRAO = float4(0.0f, 1.0f, 1.0f, 1.0f);
-	output.Masks = float4(1.0f, 0.0f, 0.0f, 0.0f);
+    output.Albedo = float4(baseColor.xyz, 1.0f);
 	return output;
 
 #endif

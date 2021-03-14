@@ -498,6 +498,7 @@ private:
 	ITexture*			m_DepthBuffer;
 	ITexture*			m_NormalBuffer;
 	ITexture*			m_MRAOBuffer;
+	ITexture*			m_AlbedoBuffer;
 
 	Vector			m_vecLastFacing;
 	float			m_flCheapWaterStartDistance;

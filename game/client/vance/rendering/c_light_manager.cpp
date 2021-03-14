@@ -6,6 +6,7 @@
 #include "mathlib/vmatrix.h"
 #include "materialsystem/imaterialvar.h"
 #include "c_light_manager.h"
+#include "engine/ivdebugoverlay.h"
 
 CON_COMMAND(deferred_lights_count, "Get amount of deferred light sources")
 {
@@ -36,6 +37,179 @@ static void MatrixSourceToDeviceSpace(VMatrix& m)
 	m.SetBasisVectors(-y, z, -x);
 }
 
+float DistanceAtWhichBrightnessIsLessThan(LightDesc_t const& light, float flAmount)
+{
+	float bright = light.m_Color.Length();
+	if (bright > 0.0)
+	{
+		flAmount /= light.m_Color.Length();
+
+		// calculate terms for quadratic equation
+		float a = flAmount * light.m_Attenuation2;
+		float b = flAmount * light.m_Attenuation1;
+		float c = flAmount * light.m_Attenuation0 - 1;
+
+		float r0, r1;
+		if (SolveQuadratic(a, b, c, r0, r1))
+		{
+			float rslt = MAX(0, MAX(r0, r1));
+#ifdef _DEBUG
+			if (rslt > 0.0)
+			{
+				float fltest = 1.0 / (m_Attenuation0 + rslt * m_Attenuation1 + rslt * rslt * m_Attenuation2);
+				Assert(fabs(fltest - flAmount) < 0.1);
+			}
+#endif
+			return rslt;
+		}
+	}
+	return 0;
+}
+
+#define APPLYSIGN( posneg, incr ) ( ( posneg ) ? ( incr ) : ( - ( incr ) ) )
+
+static int s_CubeIndices[] = {
+	5, 4, 6,												// front
+	6, 7, 5,
+	4, 0, 2,												// rside
+	2, 6, 4,
+	2, 0, 1,												// back
+	1, 3, 2,
+	1, 0, 4,												// top
+	4, 5, 1,
+	6, 2, 3,												// bot
+	3, 7, 6,
+	5, 7, 3,												// lside
+	3, 1, 5
+};
+
+static int s_PyramidIndices[] = {
+	1, 0, 4, // top
+	
+	2, 3, 4, // bottom
+	
+	3, 1, 4, // right
+	
+	0, 2, 4, // right
+
+	0, 1, 3, // end cap
+	3, 2, 0
+};
+
+static int DrawWorldSpaceLightCube(
+	CMatRenderContextPtr& pRenderContext,
+	LightDesc_t const& light,
+	IMaterial* mat,
+	int nIndex)
+{
+	CMeshBuilder meshBuilder;
+	IMesh* pMesh = pRenderContext->GetDynamicMesh(true);
+	meshBuilder.Begin(pMesh, MATERIAL_TRIANGLES, 8, 6 * 3 * 2 );
+
+	Vector color_intens = light.m_Color;
+	Vector spot_dir = light.m_Direction;
+	float rad = DistanceAtWhichBrightnessIsLessThan(light, 0.01f);
+
+	Vector vecProjectionPlane0 = CrossProduct(spot_dir, Vector(0, 1, 0)) + CrossProduct(spot_dir, Vector(1, 0, 0));
+	vecProjectionPlane0.NormalizeInPlace();
+	Vector vecProjectionPlane1 = CrossProduct(spot_dir, vecProjectionPlane0);
+	Assert(fabs(DotProduct(spot_dir, vecProjectionPlane0)) < 0.01);
+	Assert(fabs(DotProduct(spot_dir, vecProjectionPlane1)) < 0.01);
+	Assert(fabs(DotProduct(vecProjectionPlane0, vecProjectionPlane1)) < 0.01);
+
+	for (int corner = 0; corner < 8; corner++)
+	{
+		Vector vecPnt = light.m_Position;
+		vecPnt.x += APPLYSIGN(corner & 1, rad);
+		vecPnt.y += APPLYSIGN(corner & 2, rad);
+		vecPnt.z += APPLYSIGN(corner & 4, rad);
+
+		meshBuilder.Position3fv(vecPnt.Base());
+		meshBuilder.AdvanceVertex();
+	}
+	// now, output indices
+	for (int i = ARRAYSIZE(s_CubeIndices) - 1; i >= 0; i--)
+	{
+		meshBuilder.FastIndex(s_CubeIndices[i] + nIndex);
+	}
+
+	meshBuilder.End();
+
+	pRenderContext->Bind(mat);
+	pRenderContext->SetLight(0, light);
+	pMesh->Draw();
+
+	return 8;
+}
+
+int DrawWorldSpaceLightPyramid(
+	CMatRenderContextPtr& pRenderContext,
+	LightDesc_t const& light,
+	IMaterial* mat,
+	int nIndex)
+{
+	CMeshBuilder meshBuilder;
+	IMesh* pMesh = pRenderContext->GetDynamicMesh(true);
+	meshBuilder.Begin(pMesh, MATERIAL_TRIANGLES, 5, 6 + 4 * 3);
+
+	Vector color_intens = light.m_Color;
+	Vector spot_dir = light.m_Direction;
+	// now, we need to find two vectors perpendicular to each other and the ray direction
+	Vector vecProjectionPlane0 = CrossProduct(spot_dir, Vector(0, 1, 0)) + CrossProduct(spot_dir, Vector(1, 0, 0));
+	vecProjectionPlane0.NormalizeInPlace();
+	Vector vecProjectionPlane1 = CrossProduct(spot_dir, vecProjectionPlane0);
+	Assert(fabs(DotProduct(spot_dir, vecProjectionPlane0)) < 0.01);
+	Assert(fabs(DotProduct(spot_dir, vecProjectionPlane1)) < 0.01);
+	Assert(fabs(DotProduct(vecProjectionPlane0, vecProjectionPlane1)) < 0.01);
+
+	float dist = DistanceAtWhichBrightnessIsLessThan(light, 0.01f);
+
+	float flSpreadPerDistance = sqrt(1.0 / (light.m_PhiDot * light.m_PhiDot) - 1);
+
+	float flEndRad = 2.0 * dist * flSpreadPerDistance;
+
+	for (int corner = 0; corner < 5; corner++)
+	{
+		Vector vecPnt = light.m_Position;
+		switch (corner)
+		{
+		case 0:
+			vecPnt += dist * spot_dir - flEndRad * vecProjectionPlane0 + flEndRad * vecProjectionPlane1;
+			break;
+
+		case 1:
+			vecPnt += dist * spot_dir + flEndRad * vecProjectionPlane0 + flEndRad * vecProjectionPlane1;
+			break;
+
+		case 2:
+			vecPnt += dist * spot_dir - flEndRad * vecProjectionPlane0 - flEndRad * vecProjectionPlane1;
+			break;
+
+		case 3:
+			vecPnt += dist * spot_dir + flEndRad * vecProjectionPlane0 - flEndRad * vecProjectionPlane1;
+			break;
+		}
+
+		meshBuilder.Position3fv(vecPnt.Base());
+		meshBuilder.AdvanceVertex();
+	}
+
+	// now, output indices
+	for (int i = ARRAYSIZE(s_PyramidIndices) - 1; i >= 0; i--)
+	{
+		meshBuilder.FastIndex(s_PyramidIndices[i] + nIndex);
+	}
+
+	meshBuilder.End();
+
+	pRenderContext->Bind(mat);
+	pRenderContext->SetLight(0, light);
+	pMesh->Draw();
+
+	return 5;
+
+}
+
 void CLightingManager::AddLight(volume_light_t* l)
 {
 	Assert(!m_hVolumetricLights.HasElement(l));
@@ -48,6 +222,18 @@ bool CLightingManager::RemoveLight(volume_light_t* l)
 	return m_hVolumetricLights.FindAndRemove(l);
 }
 
+void CLightingManager::AddLight(LightDesc_t* l)
+{
+	Assert(!m_hLights.HasElement(l));
+
+	m_hLights.AddToTail(l);
+}
+
+bool CLightingManager::RemoveLight(LightDesc_t* l)
+{
+	return m_hLights.FindAndRemove(l);
+}
+
 void CLightingManager::CommitLights()
 {
 }
@@ -55,6 +241,7 @@ void CLightingManager::CommitLights()
 void CLightingManager::FlushLights()
 {
 	m_hVolumetricLights.RemoveAll();
+	m_hLights.RemoveAll();
 }
 
 void CLightingManager::PrepareShadowLights()
@@ -68,6 +255,20 @@ void CLightingManager::PrepareShadowLights()
 	return;
 }
 
+void CLightingManager::RenderLights(const CViewSetup& view)
+{
+	CMatRenderContextPtr pRenderContext(materials);
+
+	FOR_EACH_VEC_FAST(LightDesc_t*, m_hLights, l)
+	{
+		if (l->m_Type == MATERIAL_LIGHT_POINT)
+			DrawWorldSpaceLightCube(pRenderContext, *l, m_matLightMaterial, 0);
+		else if (l->m_Type == MATERIAL_LIGHT_SPOT)
+			DrawWorldSpaceLightPyramid(pRenderContext, *l, m_matLightMaterial, 0);
+	}
+	FOR_EACH_VEC_FAST_END;
+}
+
 void CLightingManager::LevelInitPreEntity()
 {
 	if (!m_matVolumetricsMaterial.IsValid())
@@ -75,6 +276,12 @@ void CLightingManager::LevelInitPreEntity()
 		m_matVolumetricsMaterial.Init(materials->FindMaterial("shaders/light_volumetrics", TEXTURE_GROUP_OTHER));
 		if (m_matVolumetricsMaterial->IsErrorMaterial())
 			Warning("Couldn't find volumetric light material: %s\n", "shaders/light_volumetrics");
+	}
+	if (!m_matLightMaterial.IsValid())
+	{
+		m_matLightMaterial.Init(materials->FindMaterial("shaders/deferred_lights", TEXTURE_GROUP_OTHER));
+		if (m_matLightMaterial->IsErrorMaterial())
+			Warning("Couldn't find volumetric light material: %s\n", "shaders/deferred_lights");
 	}
 
 	FlushLights();
@@ -188,20 +395,7 @@ void CLightingManager::RebuildVolumetricMesh()
 	Vector3DMultiplyPositionProjective(proj2world, Vector(1, -1, 0), nearPlane[1]);
 	Vector3DMultiplyPositionProjective(proj2world, Vector(1, 1, 0), nearPlane[2]);
 	Vector3DMultiplyPositionProjective(proj2world, Vector(-1, 1, 0), nearPlane[3]);
-	/*
-	DebugDrawLine( farPlane[ 0 ], farPlane[ 1 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 1 ], farPlane[ 2 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 2 ], farPlane[ 3 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 3 ], farPlane[ 0 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( nearPlane[ 0 ], nearPlane[ 1 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( nearPlane[ 1 ], nearPlane[ 2 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( nearPlane[ 2 ], nearPlane[ 3 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( nearPlane[ 3 ], nearPlane[ 0 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 0 ], nearPlane[ 0 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 1 ], nearPlane[ 1 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 2 ], nearPlane[ 2 ], 0, 0, 255, true, -1 );
-	DebugDrawLine( farPlane[ 3 ], nearPlane[ 3 ], 0, 0, 255, true, -1 );
-	*/
+
 	const Vector vecDirections[3] = {
 		(farPlane[0] - vec3_origin),
 		(farPlane[1] - farPlane[0]),

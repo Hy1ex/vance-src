@@ -379,6 +379,14 @@ void CViewRender::Init( void )
 		flags,
 		0);
 
+	m_AlbedoBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_Albedo",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGB888,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0);
+
 	// Init all IScreenSpaceEffects
 	g_pScreenSpaceEffects->InitScreenSpaceEffects();
 

@@ -101,3 +101,6 @@ depthwrite_ps2x.fxc
 //depthwrite_vs20.fxc
 
 passthru_vs20.fxc
+
+light_mesh_ps30.fxc
+light_mesh_vs30.fxc

@@ -78,7 +78,7 @@ float3 DoPBRLight(float3 vWorldPos, float3 vWorldNormal, float3 albedo, float3 v
     float3 r = reflect(-V, N);
     float3 L = Li;
     float3 centerToRay = (dot(L, r) * r) - L;
-    float3 closestPoint = L + centerToRay * saturate(16.0f / length(centerToRay));
+    float3 closestPoint = L + centerToRay * saturate(4.0f / length(centerToRay));
     L = normalize(closestPoint);
 
     float3 metallic = clamp(metallness, 0.0f, 0.9f);

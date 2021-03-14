@@ -65,6 +65,8 @@ $Project "Shaders (VANCE)"
 		$File	"light_volumetrics.cpp"
 		$File	"vance_scope_dx9.cpp"
 		$File	"deferred/IDeferredExt.cpp"
+
+		$File	"vance/light_mesh.cpp"
 		
 		-$File	"example_model_dx9.cpp"
 		-$File	"example_model_dx9_helper.cpp"
