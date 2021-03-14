@@ -16,6 +16,7 @@ uniform float3		g_viewPos		: register( c7 );
 uniform float4x4	g_ViewInv : register(c8);
 uniform float4x4 g_ProjInv : register(c12);
 uniform float4x4 g_View : register(c16);
+uniform float4x4 g_Proj : register(c20);
 
 #define g_Radius g_Params.x
 #define g_TemporalThreshold g_Params.y
@@ -32,6 +33,11 @@ uniform float4x4 g_View : register(c16);
 float LinearizeDepth(float d, float f, float n)
 {
     return n * f / (f + d * (n - f));
+}
+
+float2 ClipToScreen(float2 UV)
+{
+    return float2(UV.x * 0.5f + 0.5f, -UV.y * 0.5f + 0.5f);
 }
 
 float readDepth(in float2 coord)  
@@ -65,6 +71,12 @@ float3 readPos(in float2 coord)
 float3 readNormal(in float2 coord)
 {
     float3 normal = tex2D(NormalSamp, float2(coord.x + g_resolution.x / 2.0f, coord.y + g_resolution.y / 2.0f)).rgb;
+    return normal;
+}
+
+float3 readViewNormal(in float2 coord)
+{
+    float3 normal = readNormal(coord);
     float4 viewNormal = mul(float4(normal.xyz, 0.0f), g_View);
     viewNormal.z = -viewNormal.z;
     return viewNormal;
@@ -173,6 +185,35 @@ float3x3 GetRotationMatrix(float3 surfaceNormal, float3 randomNormal)
     return float3x3(tangent, bitangent, surfaceNormal);
 }
 
+float3x3 GetTBN(in float3 n)
+{
+    float3 t;
+    float3 b;
+    float3 c1 = cross(n, float3(0.0, 0.0, 1.0));
+    float3 c2 = cross(n, float3(0.0, 1.0, 0.0));
+    if (length(c1) > length(c2))
+        t = c1;
+    else
+        t = c2;
+    t = normalize(t);
+    b = normalize(cross(n, t));
+    return float3x3(t, b, n);
+}
+
+float3 WorldToView(in float3 position)
+{
+    float4 viewPos = mul(float4(position, 1.0f), g_View);
+    return viewPos.xyz;
+}
+
+float2 WorldToUV(in float3 position)
+{
+    float3 viewPos = WorldToView(position);
+    float4 Proj = mul(float4(viewPos, 1.0f), g_Proj);
+    Proj.xyz /= Proj.w;
+    return ClipToScreen(Proj.xy);
+}
+
 // [ Jimenez et al. 2016, "Practical Realtime Strategies for Accurate Indirect Occlusion" ]
 float3 AOMultiBounce( float3 BaseColor, float AO )
 {
@@ -182,20 +223,15 @@ float3 AOMultiBounce( float3 BaseColor, float AO )
     return max( AO, ( ( AO * a + b ) * AO + c ) * AO );
 }
 
-float3 spherical_kernel(float2 uv, float index)
+float3 spherical_kernel(float2 uv, float index, int maxsamples)
 {
-    // Uniformaly distributed points
-    // http://mathworld.wolfram.com/SpherePointPicking.html
-    
-    float u = interleaved1d(float2(0, index / g_samples)) * 2 - 1;
-    float theta = interleaved1d(float2(1, index / g_samples)) * PI * 2;
-    float u2 = sqrt(1 - u * u);
-    float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
-    // Adjustment for distance distribution.
-    float l = index / min(g_samples, 32);
-    float3 result = v * lerp(0.1, 1.0, l * l);
-    result.z = abs(result.z);
-    return result;
+    float u1 = interleaved1d(float2(0, index / maxsamples)) * 2 - 1;
+    float u1p = u1 * PI;
+    float u2 = interleaved1d(float2(1, index / maxsamples)) * 2 - 1;
+    float u2p = u2 * PI;
+    float3 v = float3(cos(u1p), sin(u2p), 1);
+    v = normalize(v);
+    return v;
 
 }
 
@@ -224,29 +260,28 @@ float4 main( VS_OUTPUT IN ) : COLOR0
     float depth = readDepth(IN.texCoord);
     float3 worldPos = readPos(IN.texCoord);
     float3 normal = readNormal(IN.texCoord);
-    float3 position = float3(float2(IN.texCoord.x, IN.texCoord.y), depth.x);
+    float3 position = worldPos;
 
 	float radius_depth = radius;
     float result = 1.0;
-	[unroll(32)]
-    for(int i=0; i < samples; i++) 
+	[unroll(8)]
+    for (int i = 0; i < samples; i++) 
 	{
-        float3 curr_sphere = spherical_kernel(IN.texCoord, i);
-        curr_sphere.z = curr_sphere.z;
+        float3 curr_sphere = spherical_kernel(IN.texCoord, i, samples);
         curr_sphere = mul(curr_sphere, GetRotationMatrix(normal, random));
         
         float3 ray = radius_depth * curr_sphere;
 	    float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
+        
+        float2 rayUV = WorldToUV(hemi_ray).xy;
 
-        float occ_depth = readDepth(saturate(hemi_ray.xy)).x + bias;
-        float3 occ_normal = readNormal(saturate(hemi_ray.xy)).xyz;
-        float distance = abs(position.z - occ_depth);
+        float occ_depth = readDepth(saturate(rayUV.xy)).x + bias;
+        float3 occ_normal = readViewNormal(saturate(rayUV.xy)).xyz;
+        float distance = abs(depth - occ_depth);
         float distanceCheck = smoothstep(0.0, 1.0, area / (distance));
         float occ_angle = saturate(1.0f - dot(occ_normal, normal));
-        float3 occ_gi = readColor(saturate(hemi_ray.xy)).xyz;
         occ_angle *= occ_angle;
-        result -= (1.0f - step(position.z, occ_depth) * length(curr_sphere)) * g_Strength * distanceCheck * distanceCheck * step(0.15f, dot(curr_sphere, normal)) * occ_angle;
-        //result = min(result, 1.0f - ((1.0f - step(position.z, occ_depth) * length(curr_sphere)) * g_Strength * distanceCheck * distanceCheck * step(0.15f, dot(curr_sphere, normal)) * occ_angle));
+        result -= (1.0f - step(depth, occ_depth) * length(curr_sphere)) * g_Strength * distanceCheck * distanceCheck * step(0.15f, dot(curr_sphere, normal)) * occ_angle;
     }
 
     return float4(result.xxx + falloff, 1);

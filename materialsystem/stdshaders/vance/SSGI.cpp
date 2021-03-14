@@ -15,7 +15,7 @@
 #include "tier0/memdbgon.h"
 
 static ConVar r_post_ssgi_bias("r_post_ssao_bias", "0.001");
-static ConVar r_post_ssgi_radius("r_post_ssao_radius", "0.05");
+static ConVar r_post_ssgi_radius("r_post_ssao_radius", "5");
 static ConVar r_post_ssgi_fallof("r_post_ssao_fallof", "0.0");
 static ConVar r_post_ssgi_area("r_post_ssao_area", "0.005");
 static ConVar r_post_ssgi_strength("r_post_ssao_strength", "0.175");
@@ -140,6 +140,7 @@ SHADER_DRAW
 		pShaderAPI->SetPixelShaderConstant(8, GetDeferredExt()->m_matViewInv.Base(), 4);
 		pShaderAPI->SetPixelShaderConstant(12, GetDeferredExt()->m_matProjInv.Base(), 4);
 		pShaderAPI->SetPixelShaderConstant(16, GetDeferredExt()->m_matView.Base(), 4);
+		pShaderAPI->SetPixelShaderConstant(20, GetDeferredExt()->m_matProj.Base(), 4);
 
 		BindTexture(SHADER_SAMPLER0, DEPTHBUFFER);
 		BindTexture(SHADER_SAMPLER1, FRAMEBUFFER);
