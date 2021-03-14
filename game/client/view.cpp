@@ -306,7 +306,8 @@ void CViewRender::Init( void )
 
 	m_TranslucentSingleColor.Init( "debug/debugtranslucentsinglecolor", TEXTURE_GROUP_OTHER );
 	m_ModulateSingleColor.Init( "engine/modulatesinglecolor", TEXTURE_GROUP_OTHER );
-	
+	m_SkydomeMaterial.Init("shaders/skydome", TEXTURE_GROUP_MODEL);
+
 	extern CMaterialReference g_material_WriteZ;
 	g_material_WriteZ.Init( "engine/writez", TEXTURE_GROUP_OTHER );
 
@@ -328,8 +329,6 @@ void CViewRender::Init( void )
 	if (depthOld)
 		flags = depthOld->GetFlags();
 	
-	m_SkydomeEntity = NULL;
-
 	int iW, iH;
 	materials->GetBackBufferDimensions(iW, iH);
 	materials->BeginRenderTargetAllocation();
@@ -421,15 +420,6 @@ void CViewRender::LevelInit( void )
 
 	// Clear our overlay materials
 	m_ScreenOverlayMaterial.Init( NULL );
-
-	model_t* skyModel = (model_t*)engine->LoadModel("models/dev/skydome.mdl");
-	
-	m_SkydomeEntity = new C_BaseAnimating;
-	m_SkydomeEntity->InitializeAsClientEntity(NULL, RENDER_GROUP_OPAQUE_ENTITY_HUGE);
-
-	m_SkydomeEntity->SetModelPointer(skyModel);
-
-	m_SkydomeEntity->AddEffects(EF_NOINTERP | EF_NOSHADOW | EF_NORECEIVESHADOW);
 }
 
 //-----------------------------------------------------------------------------

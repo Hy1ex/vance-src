@@ -493,7 +493,7 @@ private:
 	CMaterialReference	m_ModulateSingleColor;
 	CMaterialReference	m_ScreenOverlayMaterial;
 	CMaterialReference	m_UnderWaterOverlayMaterial;
-	C_BaseEntity*		m_SkydomeEntity; // HACKHACK: i wish there was a better way to do this, but modelrender forced my hand
+	CMaterialReference	m_SkydomeMaterial;
 
 	ITexture*			m_DepthBuffer;
 	ITexture*			m_NormalBuffer;
