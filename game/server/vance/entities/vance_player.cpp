@@ -1549,7 +1549,13 @@ void CVancePlayer::Hit(trace_t& traceHit, Activity nHitActivity, bool bIsSeconda
 
 void CVancePlayer::SetKickTime(CBaseViewModel* pViewModel)
 {
-	m_flKickTime = ((pViewModel ? pViewModel->SequenceDuration() : 0) / 2) / 2 + gpGlobals->curtime + vance_kick_time_adjust.GetFloat();
+	float sequenceDuration = 0.0f;
+	if ( pViewModel )
+	{
+		sequenceDuration = pViewModel->SequenceDuration();
+	}
+
+	m_flKickTime = sequenceDuration / 4 + gpGlobals->curtime + vance_kick_time_adjust.GetFloat();
 }
 
 void CVancePlayer::KickAttack()
