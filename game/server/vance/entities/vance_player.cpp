@@ -282,7 +282,7 @@ void CVancePlayer::EquipSuit(bool bPlayEffects)
 	}
 }
 
-void CVancePlayer::RemoveSuit(void)
+void CVancePlayer::RemoveSuit()
 {
 	bool bHadSuit = IsSuitEquipped();
 
@@ -329,7 +329,7 @@ void CVancePlayer::CreateViewModel(int iViewModel /*= 0*/)
 	}
 }
 
-void CVancePlayer::HandleSpeedChanges(void)
+void CVancePlayer::HandleSpeedChanges()
 {
 	int buttonsChanged = m_afButtonPressed | m_afButtonReleased;
 
@@ -391,7 +391,7 @@ void CVancePlayer::HandleSpeedChanges(void)
 //-----------------------------------------------------------------------------
 // Purpose: Allow pre-frame adjustments on the player
 //-----------------------------------------------------------------------------
-void CVancePlayer::PreThink(void)
+void CVancePlayer::PreThink()
 {
 	if (player_showpredictedposition.GetBool())
 	{
@@ -1120,7 +1120,7 @@ void CVancePlayer::SetBusy( float flBusyEndTime )
 }
 
 // might be better to use PreThink for this
-void CVancePlayer::PostThink(void)
+void CVancePlayer::PostThink()
 {
 	BaseClass::PostThink();
 
@@ -1255,7 +1255,7 @@ void CVancePlayer::PostThink(void)
 	m_pPlayerAnimState->Update();
 }
 
-void CVancePlayer::StartAdmireGlovesAnimation(void)
+void CVancePlayer::StartAdmireGlovesAnimation()
 {
 	MDLCACHE_CRITICAL_SECTION();
 
@@ -1274,7 +1274,7 @@ void CVancePlayer::StartAdmireGlovesAnimation(void)
 	}
 }
 
-void CVancePlayer::Spawn(void)
+void CVancePlayer::Spawn()
 {
 	BaseClass::Spawn();
 
@@ -1314,7 +1314,7 @@ bool CVancePlayer::CanSprint()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::StartSprinting(void)
+void CVancePlayer::StartSprinting()
 {
 	CPASAttenuationFilter filter(this);
 	filter.UsePredictionRules();
@@ -1349,7 +1349,7 @@ void CVancePlayer::StartSprinting(void)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::StopSprinting(void)
+void CVancePlayer::StopSprinting()
 {
 	SetMaxSpeed(VANCE_WALK_SPEED);
 
@@ -1367,14 +1367,14 @@ void CVancePlayer::StopSprinting(void)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::StartWalking(void)
+void CVancePlayer::StartWalking()
 {
 	m_fIsWalking = true;
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::StopWalking(void)
+void CVancePlayer::StopWalking()
 {
 	if (!IsSprinting())
 	{
@@ -1391,7 +1391,7 @@ extern CSuitPowerDevice SuitDeviceFlashlight;
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::SuitPower_Update(void)
+void CVancePlayer::SuitPower_Update()
 {
 	if (SuitPower_ShouldRecharge())
 	{
@@ -1474,7 +1474,7 @@ bool CVancePlayer::ApplyBattery(float powerMultiplier, bool bFlashlightPower /*=
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CVancePlayer::FlashlightTurnOn(void)
+void CVancePlayer::FlashlightTurnOn()
 {
 	if (m_bFlashlightDisabled)
 		return;
@@ -1558,7 +1558,7 @@ void CVancePlayer::SetKickTime(CBaseViewModel* pViewModel)
 	m_flKickTime = ((pViewModel ? pViewModel->SequenceDuration() : 0) / 2) / 2 + gpGlobals->curtime + vance_kick_time_adjust.GetFloat();
 }
 
-void CVancePlayer::KickAttack(void)
+void CVancePlayer::KickAttack()
 {
 	MDLCACHE_CRITICAL_SECTION();
 
@@ -1641,7 +1641,7 @@ void CVancePlayer::KickAttack(void)
 // Purpose: 
 // Output : void CBasePlayer::PlayerUse
 //-----------------------------------------------------------------------------
-void CVancePlayer::PlayerUse(void)
+void CVancePlayer::PlayerUse()
 {
 	// Was use pressed or released?
 	if (!((m_nButtons | m_afButtonPressed | m_afButtonReleased) & IN_USE))
@@ -1747,7 +1747,7 @@ void CVancePlayer::PlayerUse(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CVancePlayer::UpdateClientData(void)
+void CVancePlayer::UpdateClientData()
 {
 	if (m_DmgTake || m_DmgSave || m_bitsHUDDamage != m_bitsDamageType)
 	{
