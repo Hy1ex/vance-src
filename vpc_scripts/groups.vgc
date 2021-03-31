@@ -8,20 +8,10 @@
 // Group definitions //
 ///////////////////////
 
-$Group "gamedlls"
-{
-	"client"
-	"server"
-}
-
 $Group "game"
 {
 	"client"
-	"mathlib"
-	"raytrace"
 	"server"
-	"tier1"
-	"vgui_controls"
 }
 
 $Group "shaders"
