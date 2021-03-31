@@ -100,10 +100,6 @@ ConVar vance_kick_damage_mult_max("kick_damage_mult_max", "1", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_min("kick_force_mult_min", "1", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_max("kick_force_mult_max", "1", FCVAR_CHEAT);
 
-#define BLUDGEON_HULL_DIM		16
-static const Vector g_bludgeonMins(-BLUDGEON_HULL_DIM, -BLUDGEON_HULL_DIM, -BLUDGEON_HULL_DIM);
-static const Vector g_bludgeonMaxs(BLUDGEON_HULL_DIM, BLUDGEON_HULL_DIM, BLUDGEON_HULL_DIM);
-
 LINK_ENTITY_TO_CLASS( vance_player, CVancePlayer );
 PRECACHE_REGISTER( vance_player );
 
@@ -113,8 +109,6 @@ END_DATADESC()
 IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
 	SendPropFloat(SENDINFO(m_flKickAnimLength)),
 END_SEND_TABLE()
-
-static const char *s_pScriptLockContext = "ScriptLockContext";
 
 static void Cmd_UseTourniquet()
 {
@@ -1594,12 +1588,16 @@ void CVancePlayer::KickAttack()
 	triggerInfo.SetDamageForce(triggerInfo.GetDamageForce() * vance_kick_meleedamageforce.GetFloat() * flForceMult);
 	TraceAttackToTriggers(triggerInfo, traceHit.startpos, traceHit.endpos, forward);
 
+	const float bludgeonHullDim = 16;
+	static const Vector bludgeonMins( -bludgeonHullDim, -bludgeonHullDim, -bludgeonHullDim );
+	static const Vector bludgeonMaxs( bludgeonHullDim, bludgeonHullDim, bludgeonHullDim );
+
 	if (traceHit.fraction == 1.0)
 	{
-		float bludgeonHullRadius = 1.732f * BLUDGEON_HULL_DIM;  // Hull is +/- 16, so use cuberoot of 2 to determine how big the hull is from center to the corner point
+		float bludgeonHullRadius = 1.732f * bludgeonHullDim; // Hull is +/- 16, so use cuberoot of 2 to determine how big the hull is from center to the corner point
 		swingEnd -= forward * bludgeonHullRadius;	// Back off by hull "radius"
 
-		UTIL_TraceHull(swingStart, swingEnd, g_bludgeonMins, g_bludgeonMaxs, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit);
+		UTIL_TraceHull( swingStart, swingEnd, bludgeonMins, bludgeonMaxs, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit );
 		if (traceHit.fraction < 1.0 && traceHit.m_pEnt)
 		{
 			Vector vecToTarget = traceHit.m_pEnt->GetAbsOrigin() - swingStart;
