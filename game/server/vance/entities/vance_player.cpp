@@ -35,8 +35,6 @@
 #include "rumble_shared.h"
 #include "interpolatortypes.h"
 #include "ammodef.h"
-#include "nav_mesh.h"
-#include "nav_node.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -88,7 +86,7 @@ ConVar vance_climb_speed("vance_climb_speed", "0.025", FCVAR_CHEAT);
 ConVar vance_climb_checkray_count("vance_climb_checkray_count", "5", FCVAR_CHEAT);
 ConVar vance_climb_checkray_dist("vance_climb_checkray_dist", "64", FCVAR_CHEAT);
 ConVar vance_climb_debug("vance_climb_debug", "0");
-#define CLIMB_TRACE_DIST		(vance_climb_checkray_dist.GetFloat())
+#define CLIMB_TRACE_DIST		vance_climb_checkray_dist.GetFloat()
 #define CLIMB_LERPSPEED			vance_climb_speed.GetFloat();
 
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
@@ -112,19 +110,23 @@ END_SEND_TABLE()
 
 static void Cmd_UseTourniquet()
 {
-	CVancePlayer *pPlayer = (CVancePlayer *)UTIL_GetCommandClient();
-	if (pPlayer)
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
 		pPlayer->UseTourniquet();
+	}
 }
-ConCommand use_tourniquet("use_tourniquet", Cmd_UseTourniquet, "The Player uses an available tourniquet to stop the effects of bleeding.", FCVAR_CLIENTCMD_CAN_EXECUTE);
+ConCommand use_tourniquet( "use_tourniquet", Cmd_UseTourniquet, "The Player uses an available tourniquet to stop the effects of bleeding.", FCVAR_CLIENTCMD_CAN_EXECUTE );
 
 static void Cmd_InjectStim()
 {
-	CVancePlayer *pPlayer = (CVancePlayer *)UTIL_GetCommandClient();
-	if (pPlayer)
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
 		pPlayer->InjectStim();
+	}
 }
-ConCommand inject_stim("inject_stim", Cmd_InjectStim, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE);
+ConCommand inject_stim( "inject_stim", Cmd_InjectStim, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE );
 
 CVancePlayer::CVancePlayer()
 {
@@ -152,45 +154,45 @@ CVancePlayer::~CVancePlayer()
 	}
 }
 
-CVancePlayer* CVancePlayer::Create(edict_t* pEdict)
+CVancePlayer *CVancePlayer::Create( edict_t *pEdict )
 {
 	CHL2_Player::s_PlayerEdict = pEdict;
-	return static_cast<CVancePlayer*>(CreateEntityByName("vance_player"));
+	return static_cast<CVancePlayer *>( CreateEntityByName( "vance_player" ) );
 }
 
 void CVancePlayer::Precache()
 {
 	BaseClass::Precache();
 
-	PrecacheModel(P_PLAYER_ALYX);
-	PrecacheModel(P_PLAYER_HEV);
+	PrecacheModel( P_PLAYER_ALYX );
+	PrecacheModel( P_PLAYER_HEV );
 
-	PrecacheModel(C_ARMS_ALYX);
-	PrecacheModel(C_ARMS_HEV);
+	PrecacheModel( C_ARMS_ALYX );
+	PrecacheModel( C_ARMS_HEV );
 
-	PrecacheModel(V_KICK_ALYX); //SMOD KICK STUFF!
-	PrecacheModel(V_KICK_HEV);
+	PrecacheModel( V_KICK_ALYX ); //SMOD KICK STUFF!
+	PrecacheModel( V_KICK_HEV );
 
-	PrecacheModel("models/weapons/v_stim.mdl");
+	PrecacheModel( "models/weapons/v_stim.mdl" );
 
-	PrecacheScriptSound("HL2Player.KickHit");
-	PrecacheScriptSound("HL2Player.KickMiss");
+	PrecacheScriptSound( "HL2Player.KickHit" );
+	PrecacheScriptSound( "HL2Player.KickMiss" );
 
-	PrecacheScriptSound("HL2Player.AmmoPickup_Suitless");
-	PrecacheScriptSound("HL2Player.PickupWeapon_Suitless");
-	PrecacheScriptSound("HL2Player.FlashLightOn_Suitless");
-	PrecacheScriptSound("HL2Player.FlashLightOff_Suitless");
+	PrecacheScriptSound( "HL2Player.AmmoPickup_Suitless" );
+	PrecacheScriptSound( "HL2Player.PickupWeapon_Suitless" );
+	PrecacheScriptSound( "HL2Player.FlashLightOn_Suitless" );
+	PrecacheScriptSound( "HL2Player.FlashLightOff_Suitless" );
 
-	PrecacheScriptSound("AlyxPlayer.PainHeavy");
+	PrecacheScriptSound( "AlyxPlayer.PainHeavy" );
 
-	PrecacheScriptSound("AlyxPlayer.SprintPain");
-	PrecacheScriptSound("AlyxPlayer.Sprint");
+	PrecacheScriptSound( "AlyxPlayer.SprintPain" );
+	PrecacheScriptSound( "AlyxPlayer.Sprint" );
 
-	PrecacheScriptSound("AlyxPlayer.Jump");
-	PrecacheScriptSound("AlyxPlayer.JumpGear");
-	PrecacheScriptSound("AlyxPlayer.Land");
+	PrecacheScriptSound( "AlyxPlayer.Jump" );
+	PrecacheScriptSound( "AlyxPlayer.JumpGear" );
+	PrecacheScriptSound( "AlyxPlayer.Land" );
 
-	PrecacheScriptSound("AlyxPlayer.Die");
+	PrecacheScriptSound( "AlyxPlayer.Die" );
 }
 
 
@@ -1007,7 +1009,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 
 void CVancePlayer::Heal(int health)
 {
-	SetHealth(clamp(GetHealth() + health, 0, GetMaxHealth()));
+	SetHealth(Clamp(GetHealth() + health, 0, GetMaxHealth()));
 }
 
 static void Cmd_Heal(const CCommand &args)
@@ -1034,31 +1036,35 @@ void CVancePlayer::Damage(int damage)
 	TakeDamage(info);
 }
 
-static void Cmd_Damage(const CCommand &args)
+static void Cmd_Damage( const CCommand &args )
 {
-	if (args.ArgC() < 1 || FStrEq(args.Arg(1), ""))
+	if ( args.ArgC() < 1 || FStrEq( args.Arg( 1 ), "" ) )
 	{
-		Msg("Usage: damage [amount of damage you want to take]\n");
+		Msg( "Usage: damage [amount of damage you want to take]\n" );
 		return;
 	}
 
-	CVancePlayer *pPlayer = (CVancePlayer *)UTIL_GetLocalPlayer();
-	if (pPlayer)
-		pPlayer->Damage(V_atoi(args.Arg(1)));
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
+		pPlayer->Damage( V_atoi( args.Arg( 1 ) ) );
+	}
 }
 ConCommand damage("damage", Cmd_Damage, "Makes the executing Player take damage by a certain amount.", FCVAR_CHEAT);
 
-static void Cmd_Bleed(const CCommand &args)
+static void Cmd_Bleed( const CCommand &args )
 {
-	CVancePlayer *pPlayer = (CVancePlayer *)UTIL_GetLocalPlayer();
-	if (pPlayer)
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
 		pPlayer->Bleed();
+	}
 }
 ConCommand bleed("bleed", Cmd_Bleed, "Makes the executing Player start bleeding.", FCVAR_CHEAT);
 
 void CVancePlayer::Bleed()
 {
-	m_bBleed = true;
+	m_bBleeding = true;
 	m_flNextBleedTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat();
 	m_flBleedEndTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat() + sk_bleed_lifetime.GetFloat();
 }
@@ -1066,7 +1072,7 @@ void CVancePlayer::Bleed()
 void CVancePlayer::UseTourniquet()
 {
 	if (NumTourniquets() != 0 && IsBleeding())
-		m_bBleed = false;
+		m_bBleeding = false;
 }
 
 void CVancePlayer::InjectStim()
@@ -1125,11 +1131,11 @@ void CVancePlayer::PostThink()
 		m_flNextBleedChanceDecay = gpGlobals->curtime + sk_bleed_chance_decay_rate.GetFloat();
 	}
 
-	if (m_bBleed)
+	if (m_bBleeding)
 	{
 		if (gpGlobals->curtime >= m_flBleedEndTime)
 		{
-			m_bBleed = false;
+			m_bBleeding = false;
 		}
 		else if (gpGlobals->curtime >= m_flNextBleedTime)
 		{
@@ -1274,22 +1280,24 @@ void CVancePlayer::Spawn()
 
 	Precache();
 
-	SetModel(GetPlayerWorldModel());
+	SetModel( GetPlayerWorldModel() );
 
-//	CreateViewModel();
-	CreateViewModel(VM_LEGS);
-	CBaseViewModel *pLeg = GetViewModel(VM_LEGS);
-	if (pLeg)
-		pLeg->SetWeaponModel(GetLegsViewModel(), NULL);
+	CreateViewModel( VM_LEGS );
+	CreateViewModel( VM_STIM );
 
-	CreateViewModel(VM_STIM);
-	CBaseViewModel *pStim = GetViewModel(VM_STIM);
-	if (pStim)
-		pStim->SetWeaponModel("models/weapons/v_stim.mdl", NULL);
+	if ( CBaseViewModel *pLegViewModel = GetViewModel( VM_LEGS ) )
+	{
+		pLegViewModel->SetWeaponModel( GetLegsViewModel(), NULL );
+	}
 
-	SetTouch(&CVancePlayer::Touch);
-	SetThink(&CVancePlayer::Think);
-	SetNextThink(gpGlobals->curtime + 0.05f);
+	if ( CBaseViewModel *pStimViewModel = GetViewModel( VM_STIM ) )
+	{
+		pStimViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", NULL );
+	}
+
+	SetTouch( &CVancePlayer::Touch );
+	SetThink( &CVancePlayer::Think );
+	SetNextThink( gpGlobals->curtime + 0.05f );
 }
 
 //-----------------------------------------------------------------------------

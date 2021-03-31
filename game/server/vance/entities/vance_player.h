@@ -17,7 +17,7 @@ extern ConVar sk_max_tourniquets;
 
 enum class ParkourAction
 {
-	None = 0,
+	None,
 	Slide,
 	Climb
 };
@@ -95,7 +95,7 @@ public:
 	inline const char		*GetLegsViewModel() const { return IsSuitEquipped() ? V_KICK_HEV : V_KICK_ALYX; }
 	inline const char		*GetArmsViewModel() const { return IsSuitEquipped() ? C_ARMS_HEV : C_ARMS_ALYX; }
 	
-	inline bool				IsBleeding() const { return m_bBleed; }
+	inline bool				IsBleeding() const { return m_bBleeding; }
 
 	void					UseTourniquet();
 	void					InjectStim();
@@ -133,7 +133,7 @@ private:
 	float		m_flBleedChance;
 	float		m_flNextBleedChanceDecay;
 
-	bool		m_bBleed;
+	bool		m_bBleeding;
 	float		m_flBleedEndTime;
 	float		m_flNextBleedTime;
 
