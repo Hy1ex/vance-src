@@ -18,7 +18,7 @@ $Configuration
 	}
 }
 
-$Project "Server (VANCE)"
+$Project "Server (Vance)"
 {
 	$Folder	"Source Files"
 	{

@@ -18,7 +18,7 @@ $Configuration
 	}
 }
 
-$Project "Client (VANCE)"
+$Project "Client (Vance)"
 {
 	$Folder	"Source Files"
 	{
