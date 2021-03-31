@@ -56,7 +56,7 @@ float DistanceAtWhichBrightnessIsLessThan(LightDesc_t const& light, float flAmou
 #ifdef _DEBUG
 			if (rslt > 0.0)
 			{
-				float fltest = 1.0 / (m_Attenuation0 + rslt * m_Attenuation1 + rslt * rslt * m_Attenuation2);
+				float fltest = 1.0 / (light.m_Attenuation0 + rslt * light.m_Attenuation1 + rslt * rslt * light.m_Attenuation2);
 				Assert(fabs(fltest - flAmount) < 0.1);
 			}
 #endif
