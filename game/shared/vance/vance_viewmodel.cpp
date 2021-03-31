@@ -14,11 +14,11 @@
 #include "prediction.h"
 #include "view.h"
 #include "flashlighteffect.h"
-#include "entities/viewmodel_attachment.h"
+#include "viewmodel_attachment.h"
 
 #include "ivieweffects.h"
 #else
-#include "entities/vance_player.h"
+#include "vance_player.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!

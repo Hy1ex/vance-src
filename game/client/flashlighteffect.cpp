@@ -20,7 +20,7 @@
 #endif // HL2_CLIENT_DLL
 
 #ifdef VANCE
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 #endif
 
 #if defined( _X360 )

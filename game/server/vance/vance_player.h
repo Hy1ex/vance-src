@@ -2,7 +2,7 @@
 #define VANCE_PLAYER_H
 
 #include "hl2_player.h"
-#include "anim/singleplayer_animstate.h"
+#include "singleplayer_animstate.h"
 
 #define P_PLAYER_ALYX	"models/player/alyx.mdl"
 #define P_PLAYER_HEV	"models/player/hev.mdl"

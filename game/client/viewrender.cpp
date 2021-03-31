@@ -78,9 +78,9 @@
 #include "C_Env_Projected_Texture.h"
 
 #include "IDeferredExt.h"
-#include "entities/c_env_global_light.h"
-#include "rendering/c_deferred_common.h"
-#include "rendering/c_light_manager.h"
+#include "c_env_global_light.h"
+#include "c_deferred_common.h"
+#include "c_light_manager.h"
 #include "callqueue.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

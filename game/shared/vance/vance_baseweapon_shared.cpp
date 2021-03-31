@@ -11,12 +11,12 @@
 
 #ifdef GAME_DLL
 #include "globalstate.h"
-#include "entities/vance_player.h"
+#include "vance_player.h"
 #include "gamestats.h"
 #include "ai_condition.h"
 #include "soundent.h"
 #else
-#include "entities/c_vance_player.h"
+#include "c_vance_player.h"
 #include "weapon_selection.h"
 #endif
 

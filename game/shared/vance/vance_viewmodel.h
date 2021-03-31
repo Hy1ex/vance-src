@@ -11,7 +11,7 @@
 #include "utlvector.h"
 #include "baseplayer_shared.h"
 #include "shared_classnames.h"
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 
 #ifdef CLIENT_DLL
 class C_ViewmodelAttachmentModel;

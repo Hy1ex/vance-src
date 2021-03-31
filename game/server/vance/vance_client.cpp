@@ -1,5 +1,5 @@
 #include "cbase.h"
-#include "entities/vance_player.h"
+#include "vance_player.h"
 #include "vance_gamerules.h"
 #include "game.h"
 

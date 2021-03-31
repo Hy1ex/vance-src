@@ -4,7 +4,7 @@
 #define	WEAPON_AR2_H
 
 #include "basegrenade_shared.h"
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 
 class CWeaponAR2 : public CVanceMachineGun
 {

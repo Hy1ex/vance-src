@@ -16,7 +16,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "vance/ai/npc_BaseZombie.h"
+#include "npc_BaseZombie.h"
 #include "player.h"
 #include "game.h"
 #include "ai_network.h"

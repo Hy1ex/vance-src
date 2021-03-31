@@ -9,7 +9,7 @@
 #include "doors.h"
 
 #include "simtimer.h"
-#include "vance/ai/npc_BaseZombie.h"
+#include "npc_BaseZombie.h"
 #include "ai_hull.h"
 #include "ai_navigator.h"
 #include "ai_memory.h"

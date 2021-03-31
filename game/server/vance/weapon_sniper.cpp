@@ -9,8 +9,8 @@
 
 #include "cbase.h"
 #include "npcevent.h"
-#include "weapons/vance_baseweapon_shared.h"
-#include "entities/vance_player.h"
+#include "vance_baseweapon_shared.h"
+#include "vance_player.h"
 #include "basecombatcharacter.h"
 #include "ai_basenpc.h"
 #include "player.h"

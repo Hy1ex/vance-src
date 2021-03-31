@@ -2,7 +2,7 @@
 #define C_BOBMODEL_H
 
 #include "c_baseanimating.h"
-#include "weapons/vance_weapon_parse.h"
+#include "vance_weapon_parse.h"
 #include "baseentity_shared.h"
 
 class C_BobModel : public C_BaseAnimating

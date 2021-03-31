@@ -4,7 +4,7 @@
 //
 //=============================================================================//
 #include "cbase.h"
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 #include "iviewrender_beams.h"
 #include "c_weapon__stubs.h"
 #include "materialsystem/imaterial.h"

@@ -9,8 +9,8 @@
 #include "filesystem.h"
 #include "utlbuffer.h"
 #include "igamesystem.h"
-#include "rendering/deferred_material_passthru.h"
-#include "rendering/deferred_rt.h"
+#include "deferred_material_passthru.h"
+#include "deferred_rt.h"
 #include "materialsystem/imaterialvar.h"
 #include "materialsystem/itexture.h"
 

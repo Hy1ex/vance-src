@@ -14,7 +14,7 @@
 #include "texture_group_names.h"
 #include "tier0/icommandline.h"
 #include "vprof.h"
-#include "rendering/c_light_manager.h"
+#include "c_light_manager.h"
 
 #include "c_env_projectedtexture.h"
 

@@ -6,7 +6,7 @@
 
 #include "cbase.h"
 #include "viewmodel_attachment.h"
-#include "entities/vance_viewmodel.h"
+#include "vance_viewmodel.h"
 #include "hl2_gamerules.h"
 #include "view.h"
 #include "functionproxy.h"

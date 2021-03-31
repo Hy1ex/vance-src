@@ -7,11 +7,11 @@
 
 #include "cbase.h"
 #include "npcevent.h"
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 #ifdef GAME_DLL
 #include "basecombatweapon.h"
 #include "basecombatcharacter.h"
-#include "weapons/vance_bludgeonweapon.h"
+#include "vance_bludgeonweapon.h"
 #endif
 #ifdef CLIENT_DLL
 #include "c_weapon__stubs.h"

@@ -14,7 +14,7 @@
 #include "util_shared.h"
 #include "mathlib/ssemath.h"
 #include "flashlighteffect.h"
-#include "vance/rendering/deferred_material_passthru.h"
+#include "deferred_material_passthru.h"
 
 #define QUEUE_FIRE( functionName, ... ){\
 		CMatRenderContextPtr pRenderContext( materials );\

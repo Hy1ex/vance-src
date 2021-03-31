@@ -1,7 +1,7 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 
 #include "cbase.h"
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 #include "npcevent.h"
 #include "basecombatcharacter.h"
 #include "ai_basenpc.h"

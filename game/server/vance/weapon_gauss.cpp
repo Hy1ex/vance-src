@@ -84,7 +84,7 @@ CWeaponGaussGun::CWeaponGaussGun( void )
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::Precache( void )
 {
-	enginesound->PrecacheSound( "weapons/gauss/chargeloop.wav" );
+	enginesound->PrecacheSound( "gauss/chargeloop.wav" );
 
 	BaseClass::Precache();
 }
@@ -492,7 +492,7 @@ void CWeaponGaussGun::SecondaryAttack( void )
 		if ( m_sndCharge == NULL )
 		{
 			CPASAttenuationFilter filter( this );
-			m_sndCharge	= (CSoundEnvelopeController::GetController()).SoundCreate( filter, entindex(), CHAN_STATIC, "weapons/gauss/chargeloop.wav", ATTN_NORM );
+			m_sndCharge	= (CSoundEnvelopeController::GetController()).SoundCreate( filter, entindex(), CHAN_STATIC, "gauss/chargeloop.wav", ATTN_NORM );
 		}
 
 		assert(m_sndCharge!=NULL);

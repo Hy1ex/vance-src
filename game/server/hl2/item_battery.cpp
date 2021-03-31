@@ -13,7 +13,7 @@
 #include "engine/IEngineSound.h"
 
 #ifdef VANCE
-#include "entities/vance_player.h"
+#include "vance_player.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!

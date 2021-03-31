@@ -8,7 +8,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "weapons/vance_baseweapon_shared.h"
+#include "vance_baseweapon_shared.h"
 
 #ifndef VANCEBLUDGEONWEAPON_H
 #define VANCEBLUDGEONWEAPON_H

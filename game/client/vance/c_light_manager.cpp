@@ -2,7 +2,7 @@
 #include "IDeferredExt.h"
 #include "viewrender.h"
 #include "view_scene.h"
-#include "entities/c_env_global_light.h"
+#include "c_env_global_light.h"
 #include "mathlib/vmatrix.h"
 #include "materialsystem/imaterialvar.h"
 #include "c_light_manager.h"

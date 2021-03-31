@@ -29,7 +29,7 @@
 #include "weapon_physcannon.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "npc_headcrab.h"
-#include "ai/ai_scheduleobject.h"
+#include "ai_scheduleobject.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

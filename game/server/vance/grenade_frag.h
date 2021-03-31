@@ -9,6 +9,8 @@
 #define GRENADE_FRAG_H
 #pragma once
 
+#include "basehlcombatweapon.h"
+
 class CBaseGrenade;
 struct edict_t;
 
