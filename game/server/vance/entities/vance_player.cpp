@@ -104,8 +104,8 @@ ConVar vance_kick_force_mult_max("kick_force_mult_max", "1", FCVAR_CHEAT);
 static const Vector g_bludgeonMins(-BLUDGEON_HULL_DIM, -BLUDGEON_HULL_DIM, -BLUDGEON_HULL_DIM);
 static const Vector g_bludgeonMaxs(BLUDGEON_HULL_DIM, BLUDGEON_HULL_DIM, BLUDGEON_HULL_DIM);
 
-LINK_ENTITY_TO_CLASS( player, CVancePlayer );
-PRECACHE_REGISTER( player );
+LINK_ENTITY_TO_CLASS( vance_player, CVancePlayer );
+PRECACHE_REGISTER( vance_player );
 
 BEGIN_DATADESC( CVancePlayer )
 END_DATADESC()
@@ -156,6 +156,12 @@ CVancePlayer::~CVancePlayer()
 		m_pPlayerAnimState->Release();
 		m_pPlayerAnimState = NULL;
 	}
+}
+
+CVancePlayer* CVancePlayer::Create(edict_t* pEdict)
+{
+	CHL2_Player::s_PlayerEdict = pEdict;
+	return static_cast<CVancePlayer*>(CreateEntityByName("vance_player"));
 }
 
 void CVancePlayer::Precache()

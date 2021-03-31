@@ -91,8 +91,8 @@ ConVar hl2_darkness_flashlight_factor ( "hl2_darkness_flashlight_factor", "1" );
 	#define	HL2_SPRINT_SPEED 320
 #else
 	#define	HL2_WALK_SPEED hl2_walkspeed.GetFloat()
-	#define	VANCE_WALK_SPEED hl2_normspeed.GetFloat()
-	#define	VANCE_SPRINT_SPEED hl2_sprintspeed.GetFloat()
+	#define	HL2_NORM_SPEED hl2_normspeed.GetFloat()
+	#define	HL2_SPRINT_SPEED hl2_sprintspeed.GetFloat()
 #endif
 
 ConVar player_showpredictedposition( "player_showpredictedposition", "0" );
@@ -293,9 +293,7 @@ static ConCommand toggle_duck("toggle_duck", CC_ToggleDuck, "Toggles duck" );
 
 #ifndef HL2MP
 #ifndef PORTAL
-#ifndef VANCE
 LINK_ENTITY_TO_CLASS( player, CHL2_Player );
-#endif
 #endif
 #endif
 
@@ -437,9 +435,6 @@ void CHL2_Player::Precache( void )
 	PrecacheScriptSound( "HL2Player.TrainUse" );
 	PrecacheScriptSound( "HL2Player.Use" );
 	PrecacheScriptSound( "HL2Player.BurnPain" );
-	//vance specific stuff, could put this in CVancePlayer instead but ehhh doesnt really matter since CVancePlayer will call this class's version
-	PrecacheScriptSound("AlyxPlayer.SprintPain");
-	PrecacheScriptSound("AlyxPlayer.Sprint");
 }
 
 //-----------------------------------------------------------------------------
@@ -1213,14 +1208,14 @@ void CHL2_Player::StartSprinting( void )
 		return;
 	}
 
-
 	if( !SuitPower_AddDevice( SuitDeviceSprint ) )
 		return;
-	CPASAttenuationFilter filter(this);
+
+	CPASAttenuationFilter filter( this );
 	filter.UsePredictionRules();
 	EmitSound( filter, entindex(), "HL2Player.SprintStart" );
 
-	SetMaxSpeed( VANCE_SPRINT_SPEED );
+	SetMaxSpeed( HL2_SPRINT_SPEED );
 	m_fIsSprinting = true;
 }
 
@@ -1236,7 +1231,7 @@ void CHL2_Player::StopSprinting( void )
 
 	if( IsSuitEquipped() )
 	{
-		SetMaxSpeed( VANCE_WALK_SPEED );
+		SetMaxSpeed( HL2_NORM_SPEED );
 	}
 	else
 	{
@@ -1280,7 +1275,7 @@ void CHL2_Player::StartWalking( void )
 //-----------------------------------------------------------------------------
 void CHL2_Player::StopWalking( void )
 {
-	SetMaxSpeed( VANCE_WALK_SPEED );
+	SetMaxSpeed( HL2_NORM_SPEED );
 	m_fIsWalking = false;
 }
 

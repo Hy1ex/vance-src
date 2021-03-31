@@ -31,6 +31,8 @@ public:
 	CVancePlayer();
 	~CVancePlayer();
 
+	static CVancePlayer*	Create(edict_t* pEdict);
+
 	virtual void			Spawn(void);
 	virtual void			Precache(void);
 	virtual void			CheatImpulseCommands(int iImpulse);
