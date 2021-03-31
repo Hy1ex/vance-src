@@ -1098,6 +1098,27 @@ void CVancePlayer::InjectStim()
 	}
 }
 
+bool CVancePlayer::GiveTourniquet()
+{
+	if ( m_nNumTourniquets == MaxTourniquets() - 1 )
+	{
+		m_nNumTourniquets += 1;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void CVancePlayer::SetBusy( float flBusyEndTime )
+{
+	Assert( !m_bBusyInAnim ); // we should not already be busy
+
+	m_bBusyInAnim = true;
+	m_flBusyAnimEndTime = flBusyEndTime;
+}
+
 // might be better to use PreThink for this
 void CVancePlayer::PostThink(void)
 {
@@ -1988,51 +2009,13 @@ void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 	SetCycle(0);
 }
 
-ConVar vance_slide_velocity("vance_slide_velocity", "865", FCVAR_CHEAT);
-ConVar vance_slide_distance("vance_slide_distance", "300", FCVAR_CHEAT);
-
 void CVancePlayer::SlideTick()
 {
-#if 0
-	bool bFailedSlide = false;
-	bool bFinishedSlide = false;
-
-//	float fDistanceTravelled = (GetAbsOrigin() - m_vecSlideStartPos).Length();
-
-	Vector vecPosition = vec3_origin;
-
-	
-
-	if (bFailedSlide || bFinishedSlide)
-	{
-		m_ParkourAction = ACTION_NONE;
-		EnableControl(true);
-		if (IsDucking())
-			SetSize(VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
-		else
-			SetSize(VEC_HULL_MIN, VEC_HULL_MAX);
-	}
-#endif
 }
 
 void CVancePlayer::TrySlide()
 {
-#if 0
-	Vector vecYaw;
-	GetVectors(&vecYaw, nullptr, nullptr);
-
-	m_vecSlideDir = vecYaw;
-	m_vecSlideStartPos = GetAbsOrigin();
-
-	Vector vecPathPoints[4];
-
-	SetSize(VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX);
-	EnableControl(false);
-
-	m_ParkourAction = ACTION_SLIDE;
-#else
-	m_ParkourAction = ACTION_NONE;
-#endif
+	m_ParkourAction = ParkourAction::None;
 }
 
 void CVancePlayer::LedgeClimbTick()
@@ -2048,7 +2031,7 @@ void CVancePlayer::LedgeClimbTick()
 
 		m_vecClimbOutVelocity = (m_vecClimbOutVelocity - m_vecClimbDesiredOrigin) * -10;
 
-		m_ParkourAction = ACTION_NONE;
+		m_ParkourAction = ParkourAction::None;
 		m_vecClimbStartOrigin = vec3_origin;
 		m_vecClimbCurrentOrigin = vec3_origin;
 		m_vecClimbDesiredOrigin = vec3_origin;
@@ -2106,7 +2089,7 @@ void CVancePlayer::TryLedgeClimb()
 		m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
 		m_vecClimbStartOrigin = GetAbsOrigin();
 		m_flClimbFraction = 0.0f;
-		m_ParkourAction = ACTION_CLIMB;
+		m_ParkourAction = ParkourAction::Climb;
 
 		// Don't get stuck during this traversal since we'll just be slamming the player origin
 		SetMoveType(MOVETYPE_NOCLIP);
@@ -2155,7 +2138,7 @@ void CVancePlayer::TryLedgeClimb()
 
 void CVancePlayer::Think()
 {
-	if (m_ParkourAction == ACTION_NONE)
+	if (m_ParkourAction == ParkourAction::None)
 	{
 		// If we're on the ground, sprinting, holding the duck key and not sliding already
 		if (GetGroundEntity() && IsSprinting() && (m_nButtons & IN_DUCK))
@@ -2172,14 +2155,14 @@ void CVancePlayer::Think()
 	{
 		switch (m_ParkourAction)
 		{
-		case ACTION_SLIDE:
-			SlideTick();
-			break;
-		case ACTION_CLIMB:
-			LedgeClimbTick();
-			break;
-		default:
-			Warning("%s L%s: SHOULD NOT BE HERE\n", __FILE__, __LINE__);
+			case ParkourAction::Slide:
+				SlideTick();
+				break;
+			case ParkourAction::Climb:
+				LedgeClimbTick();
+				break;
+			default:
+				Warning( "%s L%s: SHOULD NOT BE HERE\n", __FILE__, __LINE__ );
 		}
 	}
 

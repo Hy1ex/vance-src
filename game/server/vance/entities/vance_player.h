@@ -15,12 +15,12 @@
 
 extern ConVar sk_max_tourniquets;
 
-typedef enum
+enum class ParkourAction
 {
-	ACTION_NONE = 0,
-	ACTION_SLIDE,
-	ACTION_CLIMB
-} ParkourAction_t;
+	None = 0,
+	Slide,
+	Climb
+};
 
 class CVancePlayer : public CHL2_Player
 {
@@ -33,8 +33,8 @@ public:
 
 	static CVancePlayer*	Create(edict_t* pEdict);
 
-	virtual void			Spawn(void);
-	virtual void			Precache(void);
+	virtual void			Spawn();
+	virtual void			Precache();
 	virtual void			CheatImpulseCommands(int iImpulse);
 
 	virtual bool			Weapon_CanUse(CBaseCombatWeapon* pWeapon);
@@ -48,35 +48,35 @@ public:
 
 	virtual void			CreateViewModel(int iViewModel = 0);
 
-	void					HandleSpeedChanges(void);
+	void					HandleSpeedChanges();
 
 	void					Heal(int health); // move these to CBasePlayer at some point
 	void					Damage(int damage);
 
 	void					Bleed();
 
-	virtual void 			PreThink(void);
-	virtual void 			PostThink(void);
+	virtual void 			PreThink();
+	virtual void 			PostThink();
 
-	void 					StartAdmireGlovesAnimation(void);
+	void 					StartAdmireGlovesAnimation();
 
 	bool 					CanSprint();
-	void 					StartSprinting(void);
-	void 					StopSprinting(void);
-	void					StartWalking(void);
-	void					StopWalking(void);
+	void 					StartSprinting();
+	void 					StopSprinting();
+	void					StartWalking();
+	void					StopWalking();
 
-	void					SuitPower_Update(void);
+	void					SuitPower_Update();
 	bool					ApplyBattery(float powerMultiplier, bool bFlashlightPower = false);
-	void					FlashlightTurnOn(void);
+	void					FlashlightTurnOn();
 
 	void					Hit(trace_t& traceHit, Activity nHitActivity, bool bIsSecondary);
 	void					SetKickTime(CBaseViewModel* pViewModel);
-	void					KickAttack(void);
+	void					KickAttack();
 	float					GetKickAnimationLength() { return m_flKickAnimLength; }
 
-	virtual void			PlayerUse(void);
-	virtual void			UpdateClientData(void);
+	virtual void			PlayerUse();
+	virtual void			UpdateClientData();
 	virtual void			ItemPostFrame();
 	void					SetAnimation(PLAYER_ANIM playerAnim);
 
@@ -102,26 +102,10 @@ public:
 
 	inline unsigned int		MaxTourniquets() { return sk_max_tourniquets.GetInt(); }
 	inline unsigned int		NumTourniquets() { return m_nNumTourniquets; }
-	bool					GiveTourniquet()
-	{
-		if (m_nNumTourniquets == MaxTourniquets() - 1)
-		{
-			m_nNumTourniquets += 1;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	bool GiveTourniquet();
 
-	inline void				SetBusy(float flBusyEndTime)
-	{
-		Assert(!m_bBusyInAnim); // we should not already be busy
+	void SetBusy( float flBusyEndTime );
 
-		m_bBusyInAnim = true;
-		m_flBusyAnimEndTime = flBusyEndTime;
-	}
 	
 private:
 	bool			m_bBusyInAnim;
@@ -159,7 +143,7 @@ private:
 
 	unsigned int m_nNumTourniquets;
 
-	ParkourAction_t m_ParkourAction;
+	ParkourAction m_ParkourAction;
 	Vector		m_vecClimbDesiredOrigin;
 	Vector		m_vecClimbCurrentOrigin;
 	Vector		m_vecClimbStartOrigin;
