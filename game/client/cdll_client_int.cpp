@@ -148,11 +148,12 @@
 #include "fbxsystem/fbxsystem.h"
 #endif
 
-//Discord RPC
+
+#ifdef VANCE
+// Discord RPC
 #include "discord_rpc.h"
 #include <time.h>
 
-#ifdef VANCE
 #include "IDeferredExt.h"
 #endif
 
@@ -339,9 +340,12 @@ void DispatchHudText( const char *pszName );
 static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display number of particles drawn per frame");
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
+
+#ifdef VANCE
 // Discord RPC
 static ConVar cl_discord_appid("cl_discord_appid", "549012876413632533", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
 static int64_t startTimestamp = time(0);
+#endif
 
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
@@ -851,6 +855,7 @@ bool IsEngineThreaded()
 // Constructor
 //-----------------------------------------------------------------------------
 
+#ifdef VANCE
 //-----------------------------------------------------------------------------
 // Discord RPC
 //-----------------------------------------------------------------------------
@@ -886,6 +891,7 @@ static void HandleDiscordJoinRequest(const DiscordUser* request)
 {
 	// Not implemented
 }
+#endif
 
 CHLClient::CHLClient() 
 {
@@ -1135,6 +1141,8 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 #ifndef _X360
 	HookHapticMessages(); // Always hook the messages
 #endif
+
+#ifdef VANCE
 	// Discord RPC
 	DiscordEventHandlers handlers;
 	memset(&handlers, 0, sizeof(handlers));
@@ -1163,6 +1171,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	}
 
 	ConnectDeferredExt();
+#endif
 
 	return true;
 }
@@ -1243,7 +1252,9 @@ void CHLClient::Shutdown( void )
         g_pAchievementsAndStatsInterface->ReleasePanel();
     }
 
+#ifdef VANCE
 	ShutdownDeferredExt();
+#endif
 
 #ifdef SIXENSE
 	g_pSixenseInput->Shutdown();
@@ -1704,6 +1715,8 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		}
 	}
 #endif
+
+#ifdef VANCE
 	// Discord RPC
 	if (!g_bTextMode)
 	{
@@ -1717,6 +1730,8 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		discordPresence.largeImageKey = "logo";
 		Discord_UpdatePresence(&discordPresence);
 	}
+#endif
+	
 	// Check low violence settings for this map
 	g_RagdollLVManager.SetLowViolence( pMapName );
 
@@ -1807,6 +1822,8 @@ void CHLClient::LevelShutdown( void )
 	StopAllRumbleEffects();
 
 	gHUD.LevelShutdown();
+	
+#ifdef VANCE
 	// Discord RPC
 	if (!g_bTextMode)
 	{
@@ -1819,6 +1836,7 @@ void CHLClient::LevelShutdown( void )
 		discordPresence.largeImageKey = "logo";
 		Discord_UpdatePresence(&discordPresence);
 	}
+#endif
 
 	internalCenterPrint->Clear();
 

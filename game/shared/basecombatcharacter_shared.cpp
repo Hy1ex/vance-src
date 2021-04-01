@@ -8,7 +8,7 @@
 #include "cbase.h"
 #include "ammodef.h"
 
-#if defined(VANCE) && defined(GAME_DLL)
+#if defined( VANCE ) && defined( GAME_DLL )
 #include "vance_player.h"
 #endif
 
@@ -61,11 +61,14 @@ bool CBaseCombatCharacter::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmo
 	{
 		if (!m_hActiveWeapon->Holster(pWeapon))
 			return false;
-		//m_hActiveWeapon->m_pSwitchingTo = pWeapon;
+			
+#ifdef VANCE
 		return true;
+#endif
 	}
 
 	m_hActiveWeapon = pWeapon;
+
 	return pWeapon->Deploy( );
 }
 
@@ -90,7 +93,7 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 		if ( m_hDeployingWeapon || m_hDeployingWeapon.Get() == pWeapon )
 			return false;
 #ifndef CLIENT_DLL
-		if ( ((CVancePlayer *)pPlayer)->IsSpawning() )
+		if ( ( static_cast<CVancePlayer *>( pPlayer ) )->IsSpawning() )
 			return false;
 #endif
 #endif

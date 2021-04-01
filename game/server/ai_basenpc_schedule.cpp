@@ -1752,14 +1752,15 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 	case TASK_RELOAD:
 #ifdef VANCE
 	{
-		Activity reloadAct = TranslateActivity(ACT_GESTURE_RELOAD);
-		AddGesture(reloadAct);
+		Activity reloadAct = TranslateActivity( ACT_GESTURE_RELOAD );
+		AddGesture( reloadAct );
 		TaskComplete();
-#else
-		ResetIdealActivity(ACT_RELOAD);
-#endif
 		break;
 	}
+#else
+		ResetIdealActivity( ACT_RELOAD );
+#endif
+
 	case TASK_SPECIAL_ATTACK1:
 		ResetIdealActivity( ACT_SPECIAL_ATTACK1 );
 		break;

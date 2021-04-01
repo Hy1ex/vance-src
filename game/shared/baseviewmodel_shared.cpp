@@ -398,15 +398,19 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 		if ( !prediction->InPrediction() )
 #endif
 		{
+#ifndef VANCE
 			// add weapon-specific bob 
-			//pWeapon->AddViewmodelBob( this, vmorigin, vmangles );
+			pWeapon->AddViewmodelBob( this, vmorigin, vmangles );
+#endif
 #if defined ( CSTRIKE_DLL )
 			CalcViewModelLag( vmorigin, vmangles, vmangoriginal );
 #endif
 		}
 	}
+#ifndef VANCE
 	// Add model-specific bob even if no weapon associated (for head bob for off hand models)
-	//AddViewModelBob( owner, vmorigin, vmangles );
+	AddViewModelBob( owner, vmorigin, vmangles );
+#endif
 #if !defined ( CSTRIKE_DLL )
 	// This was causing weapon jitter when rotating in updated CS:S; original Source had this in above InPrediction block  07/14/10
 	// Add lag

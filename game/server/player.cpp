@@ -1282,10 +1282,7 @@ int CBasePlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		if (bitsDamage & DMG_BULLET)
 		{
 			if (m_lastDamageAmount > 5)
-			{
 				SetSuitUpdate("!HEV_DMG6", false, SUIT_NEXT_IN_30SEC);	// blood loss detected
-				ClientPrint(this, HUD_PRINTCENTER, "Blood loss detected.");
-			}
 			//else
 			//	SetSuitUpdate("!HEV_DMG0", false, SUIT_NEXT_IN_30SEC);	// minor laceration
 			

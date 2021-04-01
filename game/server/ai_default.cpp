@@ -157,7 +157,7 @@ void CAI_BaseNPC::InitDefaultScheduleSR(void)
 	ADD_DEF_SCHEDULE( "SCHED_SLEEP",					SCHED_SLEEP );
 
 #ifdef VANCE
-	ADD_DEF_SCHEDULE("SCHED_FIRE_AND_RELOAD", SCHED_FIRE_AND_RELOAD);
+	ADD_DEF_SCHEDULE( "SCHED_FIRE_AND_RELOAD", SCHED_FIRE_AND_RELOAD );
 #endif
 }
 
@@ -252,7 +252,7 @@ bool CAI_BaseNPC::LoadDefaultSchedules(void)
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_SLEEP );
 
 #ifdef VANCE
-	AI_LOAD_DEF_SCHEDULE(CAI_BaseNPC,					SCHED_FIRE_AND_RELOAD);
+	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_FIRE_AND_RELOAD );
 #endif
 
 	return true;
@@ -1125,6 +1125,7 @@ AI_DEFINE_SCHEDULE
 	"	Interrupts"
 );
 
+#ifdef VANCE
 AI_DEFINE_SCHEDULE
 (
 	SCHED_FIRE_AND_RELOAD,
@@ -1141,6 +1142,7 @@ AI_DEFINE_SCHEDULE
 	"	Interrupts"
 	"		COND_HEAR_DANGER"
 );
+#endif
 
 //=========================================================
 // 	SCHED_HIDE_AND_RELOAD

@@ -5383,7 +5383,11 @@ float CPropDoorRotating::GetOpenInterval()
 	QAngle vecDestDelta = m_angRotationOpenForward - GetLocalAngles();
 	
 	// divide by speed to get time to reach dest
+#ifdef VANCE
 	return vecDestDelta.Length() / (m_bKickedOpen ? 2.0f * m_flSpeed : m_flSpeed);
+#else
+	return vecDestDelta.Length() / m_flSpeed;
+#endif
 }
 
 

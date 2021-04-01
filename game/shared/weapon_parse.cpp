@@ -463,7 +463,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 		}
 	}
 	
-	flBulletSpeed = (pKeyValuesData->GetFloat("BulletSpeed", 300) * 100) / 2;
-	flBulletSize = pKeyValuesData->GetFloat("BulletSize", 0.0f);
+	flBulletSpeed = ( pKeyValuesData->GetFloat( "BulletSpeed", 300 ) * 100 ) / 2;
+	flBulletSize = pKeyValuesData->GetFloat( "BulletSize", 0.0f );
 }
 

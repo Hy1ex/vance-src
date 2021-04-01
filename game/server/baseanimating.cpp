@@ -207,8 +207,8 @@ BEGIN_DATADESC( CBaseAnimating )
 	DEFINE_OUTPUT( m_OnIgnite, "OnIgnite" ),
 
 #ifdef VANCE
-	DEFINE_KEYFIELD(m_bHackable, FIELD_BOOLEAN, "Hackable"),
-	DEFINE_OUTPUT(m_OnHacked, "OnHacked"),
+	DEFINE_KEYFIELD( m_bHackable, FIELD_BOOLEAN, "Hackable" ),
+	DEFINE_OUTPUT( m_OnHacked, "OnHacked" ),
 #endif
 
 	DEFINE_INPUT( m_fadeMinDist, FIELD_FLOAT, "fademindist" ),

@@ -2420,6 +2420,7 @@ bool CGameMovement::CheckJumpButton( void )
     SetGroundEntity( NULL );
 	
 	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
+#ifdef VANCE
 	CPASAttenuationFilter filter(player);
 	filter.UsePredictionRules();
 	if (random->RandomInt(0, 3) == 0)
@@ -2427,6 +2428,7 @@ bool CGameMovement::CheckJumpButton( void )
 		player->EmitSound(filter, player->entindex(), "AlyxPlayer.Jump");
 	}
 	player->EmitSound(filter, player->entindex(), "AlyxPlayer.JumpGear");
+#endif
 	
 	MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
 
@@ -3981,12 +3983,14 @@ void CGameMovement::PlayerRoughLandingEffects( float fvol )
 
 		// Play step sound for current texture.
 		player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, fvol, true );
+#ifdef VANCE
 		if (fvol > 0.25f)
 		{
 			CPASAttenuationFilter filter(player);
 			filter.UsePredictionRules();
 			player->EmitSound(filter, player->entindex(), "AlyxPlayer.Land");
 		}
+#endif
 		//
 		// Knock the screen around a little bit, temporary effect.
 		//

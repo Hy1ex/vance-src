@@ -1603,6 +1603,7 @@ public:
 typedef CTraceFilterSimpleList CBulletsTraceFilter;
 #endif
 
+#ifdef VANCE
 void CBaseEntity::FireBulletProjectiles(const ProjectileBulletsInfo_t& info)
 {
 	return FireBullets(info); // TEMPORARY until we fix projectile bullets
@@ -1704,6 +1705,7 @@ void CBaseEntity::FireBulletProjectiles(const ProjectileBulletsInfo_t& info)
 		iSeed++;
 	}
 }
+#endif
 
 void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 {
@@ -2352,13 +2354,16 @@ void CBaseEntity::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 //-----------------------------------------------------------------------------
 int CBaseEntity::GetTracerAttachment( void )
 {
-	//int iAttachment = TRACER_DONT_USE_ATTACHMENT;
+#ifdef VANCE
 	int iAttachment = 1;
-
-	/*if ( g_pGameRules->IsMultiplayer() )
+#else
+	int iAttachment = TRACER_DONT_USE_ATTACHMENT;
+	
+	if ( g_pGameRules->IsMultiplayer() )
 	{
 		iAttachment = 1;
-	}*/
+	}
+#endif
 
 	return iAttachment;
 }
