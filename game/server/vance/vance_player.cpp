@@ -837,18 +837,17 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 	m_bitsDamageType |= bitsDamage; // Save this so we can report it to the client
 	m_bitsHUDDamage = -1;  // make sure the damage bits get resent
 
-	#define MASK_CANBLEED (DMG_SLASH|DMG_FALL|DMG_BULLET|DMG_CLUB)
+	#define MASK_CANBLEED ( DMG_SLASH | DMG_FALL | DMG_BULLET | DMG_CLUB )
 
-	bool bFound = true;
-	if (bitsDamage & MASK_CANBLEED)
+	if ( ArmorValue() <= 0 && bitsDamage & MASK_CANBLEED)
 	{
 		m_flLastDamage = gpGlobals->curtime;
 
-		int flChance = random->RandomInt(0, 100);
-		if (flChance <= m_flBleedChance)
+		float chance = random->RandomFloat( 0.0f, 100.0f );
+		if ( chance <= m_flBleedChance )
 		{
 			Bleed();
-			SetSuitUpdate("!HEV_DMG6", false, SUIT_NEXT_IN_30SEC);	// blood loss detected
+			SetSuitUpdate( "!HEV_DMG6", false, SUIT_NEXT_IN_30SEC ); // blood loss detected
 			bitsDamage &= ~MASK_CANBLEED;
 		}
 		else
@@ -857,6 +856,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 		}
 	}
 
+	bool bFound = true;
 	while ((!bTrivial || g_pGameRules->Damage_IsTimeBased(bitsDamage)) && bFound && bitsDamage)
 	{
 		bFound = false;
