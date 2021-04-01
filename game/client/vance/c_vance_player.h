@@ -53,6 +53,9 @@ private:
 	QAngle m_angLastBobAngle;
 	Vector m_vecLastBobPos;
 
+	float m_fBobTime;
+	float m_fLastBobTime;
+
 	float m_flKickAnimLength;
 	QAngle m_vecLagAngles;
 	CInterpolatedVar<QAngle> m_LagAnglesHistory;
