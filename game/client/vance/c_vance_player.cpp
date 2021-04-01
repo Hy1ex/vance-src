@@ -20,7 +20,10 @@ ConVar cl_viewbob_speed( "cl_viewbob_speed", "10" );
 ConVar cl_viewbob_height("cl_viewbob_height", "5");
 ConVar cl_viewbob_viewmodel_add("cl_viewbob_viewmodel_add", "0.1");
 
-extern void	FormatViewModelAttachment(Vector& vOrigin, bool bInverse);
+ConVar cl_flashlight_lag_interp( "cl_flashlight_lag_interp", "0.05", FCVAR_CHEAT );
+extern ConVar r_flashlightfov;
+
+extern void FormatViewModelAttachment( Vector &vOrigin, bool bInverse );
 
 inline C_VancePlayer *ToVancePlayer(C_BaseEntity *pPlayer)
 {
@@ -34,8 +37,6 @@ END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA(C_VancePlayer)
 END_PREDICTION_DATA()
-
-extern ConVar r_flashlightfov;
 
 C_VancePlayer::C_VancePlayer() :
 	m_LagAnglesHistory("C_VancePlayer::CalcFlashlightLag")
@@ -57,8 +58,6 @@ C_VancePlayer::~C_VancePlayer()
 	if (m_pBobViewModel)
 		m_pBobViewModel->Release();
 }
-
-ConVar cl_flashlight_lag_interp("cl_flashlight_lag_interp", "0.05", FCVAR_CHEAT);
 
 void C_VancePlayer::CalcFlashlightLag(Vector& vecForward, Vector& vecRight, Vector& vecUp)
 {
