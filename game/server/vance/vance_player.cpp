@@ -730,8 +730,6 @@ bool CVancePlayer::Weapon_CanUse(CBaseCombatWeapon* pWeapon)
 int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 {
 	int bitsDamage = inputInfo.GetDamageType();
-	float flHealthPrev = m_iHealth;
-
 	CTakeDamageInfo info = inputInfo;
 
 	if (m_debugOverlays & OVERLAY_BUDDHA_MODE && (m_iHealth - info.GetDamage()) <= 0)
@@ -751,7 +749,6 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 	// Early out if there's no damage
 	if (!info.GetDamage() || !IsAlive() || !g_pGameRules->FPlayerCanTakeDamage(this, info.GetAttacker(), inputInfo) || GetFlags() & FL_GODMODE)
 		return 0;
-
 
 	float flBonus = 0.2;
 	float flRatio = 1.0;
@@ -839,7 +836,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 
 	#define MASK_CANBLEED ( DMG_SLASH | DMG_FALL | DMG_BULLET | DMG_CLUB )
 
-	if ( ArmorValue() <= 0 && bitsDamage & MASK_CANBLEED)
+	if ( ArmorValue() == 0 && bitsDamage & MASK_CANBLEED)
 	{
 		m_flLastDamage = gpGlobals->curtime;
 
@@ -963,6 +960,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 
 	m_Local.m_vecPunchAngle.SetX(flPunch);
 
+	float flHealthPrev = m_iHealth;
 	if (!bTrivial && bMajor && flHealthPrev >= 75)
 	{
 		// first time we take major damage...
