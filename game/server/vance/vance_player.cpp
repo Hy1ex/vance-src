@@ -750,8 +750,8 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 	if (!info.GetDamage() || !IsAlive() || !g_pGameRules->FPlayerCanTakeDamage(this, info.GetAttacker(), inputInfo) || GetFlags() & FL_GODMODE)
 		return 0;
 
-	float flBonus = 0.2;
-	float flRatio = 1.0;
+	float flRatio = 0.2f;
+	float flBonus = 1.0f;
 
 	if ((info.GetDamageType() & DMG_BLAST) && g_pGameRules->IsMultiplayer())
 		flBonus *= 2; // blasts damage armor more.
