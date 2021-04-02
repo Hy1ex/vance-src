@@ -8,9 +8,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-class CItemTourniquet : public CItem
+class CItemStim : public CItem
 {
-	DECLARE_CLASS( CItemTourniquet, CItem );
+	DECLARE_CLASS( CItemStim, CItem );
 
 public:
 
@@ -19,32 +19,35 @@ public:
 	bool MyTouch( CBasePlayer *pPlayer );
 };
 
-LINK_ENTITY_TO_CLASS( item_tourniquet, CItemTourniquet );
-PRECACHE_REGISTER( item_tourniquet );
+LINK_ENTITY_TO_CLASS( item_stim, CItemStim );
+PRECACHE_REGISTER( item_stim );
+
+// Alias for temporary replacement
+LINK_ENTITY_TO_CLASS( item_healthvial, CItemStim );
+PRECACHE_REGISTER( item_healthvial );
 
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CItemTourniquet::Spawn()
+void CItemStim::Spawn()
 {
 	BaseClass::Spawn();
 
 	Precache();
 	SetModel( "models/healthvial.mdl" );
-	SetRenderColor( 255, 0, 0 );
 }
 
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CItemTourniquet::Precache()
+void CItemStim::Precache()
 {
 	PrecacheModel("models/healthvial.mdl");
 
-	PrecacheScriptSound( "Tourniquet.Touch" );
-	PrecacheScriptSound( "Tourniquet.Touch_Suitless" );
+	PrecacheScriptSound( "Stim.Touch" );
+	PrecacheScriptSound( "Stim.Touch_Suitless" );
 }
 
 
@@ -53,11 +56,11 @@ void CItemTourniquet::Precache()
 // Input  : *pPlayer - 
 // Output : 
 //-----------------------------------------------------------------------------
-bool CItemTourniquet::MyTouch( CBasePlayer *pPlayer )
+bool CItemStim::MyTouch( CBasePlayer *pPlayer )
 {
 	CVancePlayer *pVancePlayer = static_cast<CVancePlayer *>( pPlayer );
 
-	if ( pVancePlayer->GiveTourniquet() )
+	if ( pVancePlayer->GiveStim() )
 	{
 		CSingleUserRecipientFilter user( pPlayer );
 		user.MakeReliable();
@@ -66,10 +69,10 @@ bool CItemTourniquet::MyTouch( CBasePlayer *pPlayer )
 		WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		const char *szSoundToPlay = "Tourniquet.Touch";
+		const char *szSoundToPlay = "Stim.Touch";
 		if ( !pPlayer->IsSuitEquipped() )
 		{
-			szSoundToPlay = "Tourniquet.Touch_Suitless";
+			szSoundToPlay = "Stim.Touch_Suitless";
 		}
 
 		CPASAttenuationFilter filter( pPlayer, szSoundToPlay );

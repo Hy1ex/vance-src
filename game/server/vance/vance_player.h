@@ -13,13 +13,19 @@
 #define V_KICK_ALYX		"models/weapons/v_kick_nosuit.mdl"
 #define V_KICK_HEV		"models/weapons/v_kick_suit.mdl"
 
-extern ConVar sk_max_tourniquets;
-
 enum class ParkourAction
 {
 	None,
 	Slide,
 	Climb
+};
+
+// Needs better name
+enum class GestureAction
+{
+	None,
+	InjectingStim,
+	EquippingTourniquet
 };
 
 class CVancePlayer : public CHL2_Player
@@ -98,18 +104,11 @@ public:
 	inline bool				IsBleeding() const { return m_bBleeding; }
 
 	void					UseTourniquet();
-	void					InjectStim();
-
-	inline unsigned int		MaxTourniquets() { return sk_max_tourniquets.GetInt(); }
-	inline unsigned int		NumTourniquets() { return m_nNumTourniquets; }
-	bool GiveTourniquet();
-
-	void SetBusy( float flBusyEndTime );
-
+	void					UseStim();
+	bool					GiveTourniquet();
+	bool					GiveStim();
 	
 private:
-	bool			m_bBusyInAnim;
-	float			m_flBusyAnimEndTime;
 
 	CAI_Expresser	*m_pExpresser;
 	bool			m_bInAScript;
@@ -129,20 +128,30 @@ private:
 	bool		m_bSpawning;
 	float		m_flNextPainSound;
 
-	float		m_flLastDamage;
-	float		m_flBleedChance;
-	float		m_flNextBleedChanceDecay;
+	// Gestures
+	GestureAction m_PerformingGesture;
+	float		m_fGestureFinishTime;
 
-	bool		m_bBleeding;
-	float		m_flBleedEndTime;
-	float		m_flNextBleedTime;
+	// Bleed chance
+	float		m_fLastDamageTime;
+	float		m_fBleedChance;
+	float		m_fNextBleedChanceDecay;
 
-	bool		m_bShouldRegenerate;
-	float		m_flRegenerateEndTime;
-	float		m_flNextHealTime;
+	// Bleeding
+	bool		m_bBleeding;		// Are we bleeding?
+	float		m_fNextBleedTime;	// When will we next take bleed damage?
+	float		m_fBleedEndTime;	// When will bleeding stop?
 
-	unsigned int m_nNumTourniquets;
+	// Tourniquets
+	int			m_iNumTourniquets;
 
+	// Stims
+	int			m_iNumStims;
+	bool		m_bStimRegeneration;
+	float		m_fStimRegenerationNextHealTime;
+	float		m_fStimRegenerationEndTime;
+
+	// Parkour
 	ParkourAction m_ParkourAction;
 	Vector		m_vecClimbDesiredOrigin;
 	Vector		m_vecClimbCurrentOrigin;

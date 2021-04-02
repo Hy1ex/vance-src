@@ -53,6 +53,7 @@ extern ConVar hl2_sprintspeed;
 extern int gEvilImpulse101;
 
 ConVar sk_max_tourniquets("sk_max_tourniquets", "3", FCVAR_CHEAT);
+ConVar sk_max_stims( "sk_max_stims", "3", FCVAR_CHEAT );
 
 ConVar sk_bleed_chance("sk_bleed_chance", "5", FCVAR_CHEAT, "The chance (in percentage) that the Player will bleed upon taking damage.");
 ConVar sk_bleed_chance_increment("sk_bleed_chance_increment", "0.5", FCVAR_CHEAT, "The amount of chance the Player will bleed will increment by when shot.");
@@ -118,15 +119,41 @@ static void Cmd_UseTourniquet()
 }
 ConCommand use_tourniquet( "use_tourniquet", Cmd_UseTourniquet, "The Player uses an available tourniquet to stop the effects of bleeding.", FCVAR_CLIENTCMD_CAN_EXECUTE );
 
-static void Cmd_InjectStim()
+static void Cmd_UseStim()
 {
 	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
 	if ( pPlayer )
 	{
-		pPlayer->InjectStim();
+		pPlayer->UseStim();
 	}
 }
-ConCommand inject_stim( "inject_stim", Cmd_InjectStim, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE );
+ConCommand use_stim( "use_stim", Cmd_UseStim, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE );
+
+static void Cmd_Damage( const CCommand &args )
+{
+	if ( args.ArgC() < 1 || FStrEq( args.Arg( 1 ), "" ) )
+	{
+		Msg( "Usage: damage [amount of damage you want to take]\n" );
+		return;
+	}
+
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
+		pPlayer->Damage( V_atoi( args.Arg( 1 ) ) );
+	}
+}
+ConCommand damage( "damage", Cmd_Damage, "Makes the executing Player take damage by a certain amount.", FCVAR_CHEAT );
+
+static void Cmd_Bleed( const CCommand &args )
+{
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
+	if ( pPlayer )
+	{
+		pPlayer->Bleed();
+	}
+}
+ConCommand bleed( "bleed", Cmd_Bleed, "Makes the executing Player start bleeding.", FCVAR_CHEAT );
 
 CVancePlayer::CVancePlayer()
 {
@@ -141,7 +168,7 @@ CVancePlayer::CVancePlayer()
 
 	m_flNextSprint = 0.0f;
 
-	m_flBleedChance = sk_bleed_chance.GetFloat();
+	m_fBleedChance = sk_bleed_chance.GetFloat();
 }
 
 CVancePlayer::~CVancePlayer()
@@ -838,10 +865,10 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 
 	if ( ArmorValue() == 0 && bitsDamage & MASK_CANBLEED)
 	{
-		m_flLastDamage = gpGlobals->curtime;
+		m_fLastDamageTime = gpGlobals->curtime;
 
 		float chance = random->RandomFloat( 0.0f, 100.0f );
-		if ( chance <= m_flBleedChance )
+		if ( chance <= m_fBleedChance )
 		{
 			Bleed();
 			SetSuitUpdate( "!HEV_DMG6", false, SUIT_NEXT_IN_30SEC ); // blood loss detected
@@ -849,7 +876,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 		}
 		else
 		{
-			m_flBleedChance += sk_bleed_chance_increment.GetFloat();
+			m_fBleedChance += sk_bleed_chance_increment.GetFloat();
 		}
 	}
 
@@ -1034,73 +1061,72 @@ void CVancePlayer::Damage(int damage)
 	TakeDamage(info);
 }
 
-static void Cmd_Damage( const CCommand &args )
-{
-	if ( args.ArgC() < 1 || FStrEq( args.Arg( 1 ), "" ) )
-	{
-		Msg( "Usage: damage [amount of damage you want to take]\n" );
-		return;
-	}
-
-	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
-	if ( pPlayer )
-	{
-		pPlayer->Damage( V_atoi( args.Arg( 1 ) ) );
-	}
-}
-ConCommand damage("damage", Cmd_Damage, "Makes the executing Player take damage by a certain amount.", FCVAR_CHEAT);
-
-static void Cmd_Bleed( const CCommand &args )
-{
-	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
-	if ( pPlayer )
-	{
-		pPlayer->Bleed();
-	}
-}
-ConCommand bleed("bleed", Cmd_Bleed, "Makes the executing Player start bleeding.", FCVAR_CHEAT);
-
 void CVancePlayer::Bleed()
 {
 	m_bBleeding = true;
-	m_flNextBleedTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat();
-	m_flBleedEndTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat() + sk_bleed_lifetime.GetFloat();
+	m_fNextBleedTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat();
+	m_fBleedEndTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat() + sk_bleed_lifetime.GetFloat();
 }
 
 void CVancePlayer::UseTourniquet()
 {
-	if (NumTourniquets() != 0 && IsBleeding())
-		m_bBleeding = false;
-}
-
-void CVancePlayer::InjectStim()
-{
-	if (m_bBusyInAnim)
+	if ( m_iNumTourniquets == 0 || !m_bBleeding )
 		return;
 
-	CVanceViewModel *pViewModel = (CVanceViewModel *)GetViewModel();
-	if (pViewModel)
+	// Player must not be performing an action or
+	// interrupt stim
+	if ( m_PerformingGesture == GestureAction::None
+		|| m_PerformingGesture == GestureAction::InjectingStim )
 	{
-		pViewModel->SetWeaponModel("models/weapons/v_stim.mdl", NULL);
+		m_PerformingGesture = GestureAction::EquippingTourniquet;
+	}
 
-		int	idealSequence = pViewModel->LookupSequence("inject");
-		if (idealSequence >= 0)
+	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
+	if ( pViewModel )
+	{
+		pViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", nullptr );
+
+		int idealSequence = pViewModel->LookupSequence( "tourniquet" );
+		if ( idealSequence >= 0 )
 		{
-			pViewModel->SendViewModelMatchingSequence(idealSequence);
-			m_bShouldRegenerate = true;
-			m_flNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
-			m_flRegenerateEndTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat() + sk_stim_regen_lifetime.GetFloat();
+			pViewModel->SendViewModelMatchingSequence( idealSequence );
+			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
+		}
+	}
+}
 
-			SetBusy(gpGlobals->curtime + SequenceDuration(idealSequence));
+void CVancePlayer::UseStim()
+{
+	if ( m_iNumStims == 0 || GetHealth() == GetMaxHealth() )
+		return;
+
+	// Player must not be performing an action or 
+	// interrupt tourniquet
+	if ( m_PerformingGesture == GestureAction::None
+		|| m_PerformingGesture == GestureAction::EquippingTourniquet )
+	{
+		m_PerformingGesture = GestureAction::InjectingStim;
+	}
+
+	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
+	if ( pViewModel )
+	{
+		pViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", nullptr );
+
+		int idealSequence = pViewModel->LookupSequence( "inject" );
+		if ( idealSequence >= 0 )
+		{
+			pViewModel->SendViewModelMatchingSequence( idealSequence );
+			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
 		}
 	}
 }
 
 bool CVancePlayer::GiveTourniquet()
 {
-	if ( m_nNumTourniquets == MaxTourniquets() - 1 )
+	if ( m_iNumTourniquets != sk_max_tourniquets.GetInt() )
 	{
-		m_nNumTourniquets += 1;
+		m_iNumTourniquets++;
 		return true;
 	}
 	else
@@ -1109,12 +1135,17 @@ bool CVancePlayer::GiveTourniquet()
 	}
 }
 
-void CVancePlayer::SetBusy( float flBusyEndTime )
+bool CVancePlayer::GiveStim()
 {
-	Assert( !m_bBusyInAnim ); // we should not already be busy
-
-	m_bBusyInAnim = true;
-	m_flBusyAnimEndTime = flBusyEndTime;
+	if ( m_iNumStims != sk_max_stims.GetInt() )
+	{
+		m_iNumStims++;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 // might be better to use PreThink for this
@@ -1122,37 +1153,73 @@ void CVancePlayer::PostThink()
 {
 	BaseClass::PostThink();
 
-	if (gpGlobals->curtime <= m_flNextBleedChanceDecay && 
-		gpGlobals->curtime - m_flLastDamage >= sk_bleed_chance_decay_start_time.GetFloat())
+	// Place-holder HUD for stims, tourniquets and bleeding notification
+	debugoverlay->AddScreenTextOverlay( 0.02f, 0.75f, 0.0f, 255, 255, 255, 255, CFmtStr( "Stims: %i", m_iNumStims ) );
+	debugoverlay->AddScreenTextOverlay( 0.02f, 0.79f, 0.0f, 255, 255, 255, 255, CFmtStr( "Tourniquets: %i", m_iNumTourniquets ) );
+	if ( m_bStimRegeneration )
 	{
-		m_flBleedChance = clamp(m_flBleedChance - sk_bleed_chance_increment.GetFloat(), 5, 100);
-		m_flNextBleedChanceDecay = gpGlobals->curtime + sk_bleed_chance_decay_rate.GetFloat();
+		debugoverlay->AddScreenTextOverlay( 0.02f, 0.83f, 0.0f, 0, 180, 0, 255, "Regenerating!" );
+	}
+	if ( m_bBleeding )
+	{
+		debugoverlay->AddScreenTextOverlay( 0.02f, 0.87f, 0.0f, 180, 0, 0, 255, "Bleeding!" );
+	}
+	
+	// Gestures
+	if ( m_PerformingGesture != GestureAction::None && gpGlobals->curtime >= m_fGestureFinishTime )
+	{
+		switch ( m_PerformingGesture )
+		{
+			case GestureAction::InjectingStim:
+				m_bStimRegeneration = true;
+				m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
+				m_fStimRegenerationEndTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat() +
+					sk_stim_regen_lifetime.GetFloat();
+				m_iNumStims--;
+				break;
+			case GestureAction::EquippingTourniquet:
+				m_bBleeding = false;
+				m_iNumTourniquets--;
+				break;
+		}
+
+		m_PerformingGesture = GestureAction::None;
 	}
 
-	if (m_bBleeding)
+	// Stims, regenerates health on usage
+	if ( m_bStimRegeneration )
 	{
-		if (gpGlobals->curtime >= m_flBleedEndTime)
+		if ( gpGlobals->curtime >= m_fStimRegenerationEndTime )
+		{
+			m_bStimRegeneration = false;
+		}
+		else if ( gpGlobals->curtime >= m_fStimRegenerationNextHealTime )
+		{
+			Heal( sk_stim_health_per_interval.GetInt() );
+			m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
+		}
+	}
+
+	// Taking damage increases the chance of bleeding
+	if ( gpGlobals->curtime <= m_fNextBleedChanceDecay &&
+		 gpGlobals->curtime - m_fLastDamageTime >= sk_bleed_chance_decay_start_time.GetFloat() )
+	{
+		m_fBleedChance = Clamp( m_fBleedChance - sk_bleed_chance_increment.GetFloat(), 5.0f, 100.0f );
+		m_fNextBleedChanceDecay = gpGlobals->curtime + sk_bleed_chance_decay_rate.GetFloat();
+	}
+
+	// Bleeding
+	if ( m_bBleeding )
+	{
+		if ( gpGlobals->curtime >= m_fBleedEndTime )
 		{
 			m_bBleeding = false;
 		}
-		else if (gpGlobals->curtime >= m_flNextBleedTime)
+		else if ( gpGlobals->curtime >= m_fNextBleedTime )
 		{
-			EmitSound("HL2_Player.UseDeny");
-			Damage(sk_bleed_dmg_per_interval.GetFloat());
-			m_flNextBleedTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat();
-		}
-	}
-
-	if (m_bShouldRegenerate)
-	{
-		if (gpGlobals->curtime >= m_flRegenerateEndTime)
-		{
-			m_bShouldRegenerate = false;
-		}
-		else if (gpGlobals->curtime >= m_flNextHealTime)
-		{
-			Heal(sk_stim_health_per_interval.GetInt());
-			m_flNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
+			EmitSound( "HL2_Player.UseDeny" );
+			Damage( sk_bleed_dmg_per_interval.GetFloat() );
+			m_fNextBleedTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat();
 		}
 	}
 
@@ -1167,15 +1234,6 @@ void CVancePlayer::PostThink()
 			StopSprinting();
 			m_flNextSprint = gpGlobals->curtime + 1.0f;
 		}
-	}
-
-	if (gpGlobals->curtime >= m_flBusyAnimEndTime)
-	{
-		m_bBusyInAnim = false;
-	}
-	else if(m_bBusyInAnim)
-	{
-		return;
 	}
 
 	CBaseViewModel* vm = GetViewModel(VM_LEGS);
