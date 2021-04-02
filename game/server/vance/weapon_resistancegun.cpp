@@ -1,10 +1,3 @@
-//========= Copyright Valve Corporation, All rights reserved. ============//
-//
-// Purpose:		ResistanceGun - hand gun
-//
-// $NoKeywords: $
-//=============================================================================//
-
 #include "cbase.h"
 #include "npcevent.h"
 #include "vance_baseweapon_shared.h"
@@ -16,8 +9,6 @@
 #include "soundent.h"
 #include "game.h"
 #include "vstdlib/random.h"
-#include "gamestats.h"
-#include "saverestore.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -57,9 +48,9 @@ public:
 	virtual void		PrimaryAttack();
 	virtual void		SecondaryAttack();
 
-	virtual Activity	GetIdleActivity() { return !m_bFullAutoMode ? ACT_VM_IDLE : ACT_VM_IDLE_EXTENDED; };
-	virtual Activity	GetWalkActivity() { return !m_bFullAutoMode ? ACT_VM_WALK : ACT_VM_WALK_EXTENDED; };
-	virtual Activity	GetSprintActivity() { return !m_bFullAutoMode ? ACT_VM_SPRINT : ACT_VM_SPRINT_EXTENDED; };
+	virtual Activity	GetIdleActivity() { return !m_bSemiAutoMode ? ACT_VM_IDLE : ACT_VM_IDLE_EXTENDED; };
+	virtual Activity	GetWalkActivity() { return !m_bSemiAutoMode ? ACT_VM_WALK : ACT_VM_WALK_EXTENDED; };
+	virtual Activity	GetSprintActivity() { return !m_bSemiAutoMode ? ACT_VM_SPRINT : ACT_VM_SPRINT_EXTENDED; };
 
 	virtual void		ItemPostFrame();
 	void				AddViewKick();
@@ -72,8 +63,7 @@ private:
 	float	m_flSoonestPrimaryAttack;
 	float	m_flLastAttackTime;
 
-	// VANCE
-	bool	m_bFullAutoMode;
+	bool	m_bSemiAutoMode;
 	float	m_flDoneSwitchingMode;
 
 	bool	m_bInBurst;
@@ -91,7 +81,7 @@ PRECACHE_WEAPON_REGISTER(weapon_resistancegun);
 BEGIN_DATADESC(CWeaponResistanceGun)
 	DEFINE_FIELD(m_flSoonestPrimaryAttack, FIELD_TIME),
 	DEFINE_FIELD(m_flLastAttackTime, FIELD_TIME),
-	DEFINE_FIELD(m_bFullAutoMode, FIELD_BOOLEAN),
+	DEFINE_FIELD(m_bSemiAutoMode, FIELD_BOOLEAN),
 	DEFINE_THINKFUNC(BurstThink),
 END_DATADESC()
 
@@ -125,7 +115,7 @@ IMPLEMENT_ACTTABLE(CWeaponResistanceGun);
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CWeaponResistanceGun::CWeaponResistanceGun(void)
+CWeaponResistanceGun::CWeaponResistanceGun()
 {
 	m_flSoonestPrimaryAttack = gpGlobals->curtime; // stupid hack to make the weapon not fire when you pick it up
 
@@ -136,8 +126,7 @@ CWeaponResistanceGun::CWeaponResistanceGun(void)
 
 	m_bFiresUnderwater = false;
 
-	// VANCE
-	m_bFullAutoMode = false;
+	m_bSemiAutoMode = false;
 	m_bInTransition = false;
 	m_flDoneSwitchingMode = 0.0f;
 
@@ -158,14 +147,14 @@ void CWeaponResistanceGun::Spawn()
 //-----------------------------------------------------------------------------
 // Purpose: Called when gun is drawn.
 //-----------------------------------------------------------------------------
-Activity CWeaponResistanceGun::GetDrawActivity(void)
+Activity CWeaponResistanceGun::GetDrawActivity()
 {
 	if (m_bFirstDraw && GetVanceWpnData().bHasFirstDrawAnim)
 	{
 		m_bFirstDraw = false;
 		return ACT_VM_FIRSTDRAW;
 	}
-	else if (m_bFullAutoMode)
+	else if (m_bSemiAutoMode)
 	{
 		return ACT_VM_DRAW_EXTENDED;
 	}
@@ -178,7 +167,7 @@ Activity CWeaponResistanceGun::GetDrawActivity(void)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::DryFire(void)
+void CWeaponResistanceGun::DryFire()
 {
 	WeaponSound(EMPTY);
 	SendWeaponAnim(ACT_VM_DRYFIRE);
@@ -190,8 +179,12 @@ void CWeaponResistanceGun::DryFire(void)
 //-----------------------------------------------------------------------------
 // Purpose: Handles burst fire
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::BurstThink(void)
+void CWeaponResistanceGun::BurstThink()
 {
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
 	m_bInBurst = true;
 
 	if (m_iClip1 <= 0)
@@ -205,12 +198,9 @@ void CWeaponResistanceGun::BurstThink(void)
 		return;
 	}
 
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
-
 	Vector vecShootOrigin = pPlayer->Weapon_ShootPosition();
-	QAngle angShootDir = pPlayer->EyeAngles();
 	Vector vecShootDir;
-	AngleVectors(angShootDir, &vecShootDir);
+	pPlayer->EyeVectors( &vecShootDir );
 	Vector vecSpread = m_nBurstShot == 0 ? VECTOR_CONE_PRECALCULATED : VECTOR_CONE_4DEGREES;
 
 	FireBulletProjectiles(1, vecShootOrigin, vecShootDir, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, 1, BURST_DAMAGE);
@@ -240,18 +230,15 @@ void CWeaponResistanceGun::BurstThink(void)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::PrimaryAttack(void)
+void CWeaponResistanceGun::PrimaryAttack()
 {
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
 	if (m_iClip1 <= 0)
 	{
 		DryFire();
-		return;
-	}
-
-	CBasePlayer *pOwner = ToBasePlayer(GetOwner());
-
-	if (!pOwner)
-	{
 		return;
 	}
 	
@@ -259,62 +246,54 @@ void CWeaponResistanceGun::PrimaryAttack(void)
 
 	CSoundEnt::InsertSound(SOUND_COMBAT | SOUND_CONTEXT_GUNFIRE, pOwner->GetAbsOrigin(), SOUNDENT_VOLUME_PISTOL, 0.2, pOwner, SOUNDENT_CHANNEL_WEAPON, pOwner->GetEnemy());
 
-	if (m_bFullAutoMode)
+	if (m_bSemiAutoMode)
 	{
 		Vector vecShootOrigin = pOwner->Weapon_ShootPosition();
-		QAngle angShootDir = pOwner->EyeAngles();
 		Vector vecShootDir;
-		AngleVectors(angShootDir, &vecShootDir);
+		pOwner->EyeVectors( &vecShootDir );
 		
 		SendWeaponAnim(ACT_VM_FIRE_EXTENDED);
 		WeaponSound(SINGLE);
 		FireBulletProjectiles(1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, entindex(), -1, AUTO_DAMAGE);
 		pOwner->DoMuzzleFlash();
-		m_iClip1 = m_iClip1 - 1;
+		m_iClip1--;
 
 		m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 		m_flSoonestPrimaryAttack = m_flNextPrimaryAttack;
 	}
-	else
+	else if ( !m_bInBurst )
 	{
 		// Burst fires are handle almost entirely by our think function
-		if (m_bInBurst == false)
-		{
-			SendWeaponAnim(ACT_VM_PRIMARYATTACK);
-			WeaponSound(BURST);
-			SetThink(&CWeaponResistanceGun::BurstThink);
-			SetNextThink(gpGlobals->curtime);
-		}
+		SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+		WeaponSound( BURST );
+		SetThink( &CWeaponResistanceGun::BurstThink );
+		SetNextThink( gpGlobals->curtime );
 	}
 
 	m_iPrimaryAttacks++;
-	gamestats->Event_WeaponFired(pOwner, true, GetClassname());
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Used for switching between fire modes (Semi / Full Auto)
-// TODO: Remove ClientPrints(...), used for debugging
+// Purpose: Used for switching between fire modes (Burst / Full Auto)
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::SecondaryAttack(void)
+void CWeaponResistanceGun::SecondaryAttack()
 {
 	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
-
-	if (pPlayer == NULL)
+	if (!pPlayer)
 		return;
 
-	if (m_bFullAutoMode)
+	if (m_bSemiAutoMode)
 	{
-		m_bFullAutoMode = false;
-		m_bInTransition = true;
+		m_bSemiAutoMode = false;
 		SendWeaponAnim(ACT_VM_RETRACT);
 	}
 	else
 	{
-		m_bFullAutoMode = true;
-		m_bInTransition = true;
+		m_bSemiAutoMode = true;
 		SendWeaponAnim(ACT_VM_EXTEND);
 	}
 
+	m_bInTransition = true;
 	m_flDoneSwitchingMode = gpGlobals->curtime + GetViewModelSequenceDuration();
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
@@ -324,16 +303,16 @@ void CWeaponResistanceGun::SecondaryAttack(void)
 //-----------------------------------------------------------------------------
 // Purpose: Allows firing as fast as button is pressed
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::ItemPostFrame(void)
+void CWeaponResistanceGun::ItemPostFrame()
 {
-	//BaseClass::ItemPostFrame();
-
 	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
-	if (!pPlayer)
+	if ( !pPlayer )
 		return;
 
-	if (m_bInTransition && (m_flNextSecondaryAttack > gpGlobals->curtime))
+	if ( m_bInTransition && m_flNextSecondaryAttack > gpGlobals->curtime )
+	{
 		return;
+	}
 
 	CheckReload();
 
@@ -343,12 +322,12 @@ void CWeaponResistanceGun::ItemPostFrame(void)
 		return;
 	}
 
-	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime) && m_bFullAutoMode) // shoot as fast as the player can click
+	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime) && m_bSemiAutoMode) // shoot as fast as the player can click
 	{
 		PrimaryAttack();
 		return;
 	}
-	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) && !m_bFullAutoMode) // if we're holding shoot at a slower speed
+	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) && !m_bSemiAutoMode) // if we're holding shoot at a slower speed
 	{
 		PrimaryAttack();
 		return;
@@ -368,9 +347,9 @@ void CWeaponResistanceGun::ItemPostFrame(void)
 // Purpose: 
 // Output : int
 //-----------------------------------------------------------------------------
-Activity CWeaponResistanceGun::GetPrimaryAttackActivity(void)
+Activity CWeaponResistanceGun::GetPrimaryAttackActivity()
 {
-	return m_bFullAutoMode ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK;
+	return m_bSemiAutoMode ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK;
 }
 
 //-----------------------------------------------------------------------------
@@ -387,47 +366,48 @@ bool CWeaponResistanceGun::Holster(CBaseCombatWeapon* pSwitchingTo)
 	if (m_flDoneSwitchingMode > 0.0f && m_flDoneSwitchingMode > gpGlobals->curtime)
 	{
 		// Still switching mode. Cancel the transition.
-		m_bFullAutoMode = !m_bFullAutoMode;
+		m_bSemiAutoMode = !m_bSemiAutoMode;
 	}
-	//hack to get proper holster animation if in secondary attack mode
-	bool ret = BaseClass::Holster(pSwitchingTo);
-	if (m_bFullAutoMode)
+
+	// hack to get proper holster animation if in secondary attack mode
+	bool ret = BaseClass::Holster( pSwitchingTo );
+	if (m_bSemiAutoMode)
 	{
-		SendWeaponAnim(ACT_VM_HOLSTER_EXTENDED);
+		SendWeaponAnim( ACT_VM_HOLSTER_EXTENDED );
 	}
+
 	return ret;
 }
 
-bool CWeaponResistanceGun::Reload(void)
+bool CWeaponResistanceGun::Reload()
 {
-	bool fRet = m_bFullAutoMode ? 
+	bool ret = m_bSemiAutoMode ? 
 		DefaultReload(GetMaxClip1(), GetMaxClip2(), ACT_VM_RELOAD_EXTENDED) : 
 		DefaultReload(GetMaxClip1(), GetMaxClip2(), ACT_VM_RELOAD);
 
-	if (fRet)
+	if ( ret )
 	{
 		WeaponSound(RELOAD);
 	}
 
-	return fRet;
+	return ret;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CWeaponResistanceGun::AddViewKick(void)
+void CWeaponResistanceGun::AddViewKick()
 {
-	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
-
-	if (pPlayer == NULL)
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer )
 		return;
 
-	QAngle	viewPunch;
+	QAngle viewPunch;
 
-	viewPunch.x = random->RandomFloat(0.25f, 0.5f);
-	viewPunch.y = random->RandomFloat(-.6f, .6f);
+	viewPunch.x = random->RandomFloat( 0.25f, 0.5f );
+	viewPunch.y = random->RandomFloat( -.6f, .6f );
 	viewPunch.z = 0.0f;
 
 	//Add it to the view punch
-	pPlayer->ViewPunch(viewPunch);
+	pPlayer->ViewPunch( viewPunch );
 }
