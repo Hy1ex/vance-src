@@ -3,6 +3,8 @@ Language: Cpp
 BasedOnStyle: Microsoft
 Standard: Cpp11
 
+AlignOperands: false
+
 IndentCaseLabels: 'true'
 IndentPPDirectives: BeforeHash
 IndentWidth: '4'
