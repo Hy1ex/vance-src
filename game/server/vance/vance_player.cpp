@@ -1153,16 +1153,20 @@ void CVancePlayer::PostThink()
 {
 	BaseClass::PostThink();
 
-	// Place-holder HUD for stims, tourniquets and bleeding notification
-	debugoverlay->AddScreenTextOverlay( 0.02f, 0.75f, 0.0f, 255, 255, 255, 255, CFmtStr( "Stims: %i", m_iNumStims ) );
-	debugoverlay->AddScreenTextOverlay( 0.02f, 0.79f, 0.0f, 255, 255, 255, 255, CFmtStr( "Tourniquets: %i", m_iNumTourniquets ) );
-	if ( m_bStimRegeneration )
+	if ( gpGlobals->eLoadType != MapLoad_Background
+		&& IsSuitEquipped() )
 	{
-		debugoverlay->AddScreenTextOverlay( 0.02f, 0.83f, 0.0f, 0, 180, 0, 255, "Regenerating!" );
-	}
-	if ( m_bBleeding )
-	{
-		debugoverlay->AddScreenTextOverlay( 0.02f, 0.87f, 0.0f, 180, 0, 0, 255, "Bleeding!" );
+		// Place-holder HUD for stims, tourniquets and bleeding notification
+		debugoverlay->AddScreenTextOverlay( 0.02f, 0.75f, 0.0f, 255, 255, 255, 255, CFmtStr( "Stims: %i", m_iNumStims ) );
+		debugoverlay->AddScreenTextOverlay( 0.02f, 0.79f, 0.0f, 255, 255, 255, 255, CFmtStr( "Tourniquets: %i", m_iNumTourniquets ) );
+		if ( m_bStimRegeneration )
+		{
+			debugoverlay->AddScreenTextOverlay( 0.02f, 0.83f, 0.0f, 0, 180, 0, 255, "Regenerating!" );
+		}
+		if ( m_bBleeding )
+		{
+			debugoverlay->AddScreenTextOverlay( 0.02f, 0.87f, 0.0f, 180, 0, 0, 255, "Bleeding!" );
+		}
 	}
 	
 	// Gestures
