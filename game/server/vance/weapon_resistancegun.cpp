@@ -32,6 +32,7 @@ class CWeaponResistanceGun : public CBaseVanceWeapon
 	DECLARE_DATADESC();
 	DECLARE_SERVERCLASS();
 	DECLARE_ACTTABLE();
+
 public:
 
 	CWeaponResistanceGun();
@@ -40,7 +41,6 @@ public:
 	virtual bool		Holster(CBaseCombatWeapon* pSwitchingTo);
 
 	virtual void		Spawn();
-	virtual Activity	GetDrawActivity();
 	void				DryFire();
 	
 	void				BurstThink();
@@ -48,16 +48,13 @@ public:
 	virtual void		PrimaryAttack();
 	virtual void		SecondaryAttack();
 
-	virtual Activity	GetIdleActivity() { return !m_bSemiAutoMode ? ACT_VM_IDLE : ACT_VM_IDLE_EXTENDED; };
-	virtual Activity	GetWalkActivity() { return !m_bSemiAutoMode ? ACT_VM_WALK : ACT_VM_WALK_EXTENDED; };
-	virtual Activity	GetSprintActivity() { return !m_bSemiAutoMode ? ACT_VM_SPRINT : ACT_VM_SPRINT_EXTENDED; };
-
 	virtual void		ItemPostFrame();
 	void				AddViewKick();
 
-	virtual Activity	GetPrimaryAttackActivity();
-
-	virtual bool		Reload();
+	virtual Activity	GetIdleActivity() { return !m_bSemiAutoMode ? ACT_VM_IDLE : ACT_VM_IDLE_EXTENDED; }
+	virtual Activity	GetWalkActivity() { return !m_bSemiAutoMode ? ACT_VM_WALK : ACT_VM_WALK_EXTENDED; }
+	virtual Activity	GetSprintActivity() { return !m_bSemiAutoMode ? ACT_VM_SPRINT : ACT_VM_SPRINT_EXTENDED; }
+	virtual bool		SendWeaponAnim( int iActivity );
 
 private:
 	float	m_flSoonestPrimaryAttack;
@@ -85,32 +82,31 @@ BEGIN_DATADESC(CWeaponResistanceGun)
 	DEFINE_THINKFUNC(BurstThink),
 END_DATADESC()
 
-acttable_t CWeaponResistanceGun::m_acttable[] =
-{
-	{ ACT_IDLE,						ACT_IDLE_PISTOL,				true },
-	{ ACT_IDLE_ANGRY,				ACT_IDLE_ANGRY_PISTOL,			true },
-	{ ACT_RANGE_ATTACK1,			ACT_RANGE_ATTACK_PISTOL,		true },
-	{ ACT_RELOAD,					ACT_RELOAD_PISTOL,				true },
-	{ ACT_WALK_AIM,					ACT_WALK_AIM_PISTOL,			true },
-	{ ACT_RUN_AIM,					ACT_RUN_AIM_PISTOL,				true },
-	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_PISTOL,true },
-	{ ACT_RELOAD_LOW,				ACT_RELOAD_PISTOL_LOW,			false },
-	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_PISTOL_LOW,	false },
-	{ ACT_COVER_LOW,				ACT_COVER_PISTOL_LOW,			false },
-	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_PISTOL_LOW,		false },
-	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_PISTOL,		false },
-	{ ACT_WALK,						ACT_WALK_PISTOL,				false },
-	{ ACT_RUN,						ACT_RUN_PISTOL,					false },
-	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_PISTOL,                    false },
-	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_PISTOL,                    false },
-	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_PISTOL,            false },
-	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_PISTOL,            false },
-	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL,    false },
-	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_PISTOL,        false },
-	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_PISTOL,                    false },
-	{ ACT_RANGE_ATTACK1,                ACT_RANGE_ATTACK_PISTOL,                false },
+acttable_t CWeaponResistanceGun::m_acttable[] = {
+	{ ACT_IDLE, ACT_IDLE_PISTOL, true },
+	{ ACT_IDLE_ANGRY, ACT_IDLE_ANGRY_PISTOL, true },
+	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_PISTOL, true },
+	{ ACT_RELOAD, ACT_RELOAD_PISTOL, true },
+	{ ACT_WALK_AIM, ACT_WALK_AIM_PISTOL, true },
+	{ ACT_RUN_AIM, ACT_RUN_AIM_PISTOL, true },
+	{ ACT_GESTURE_RANGE_ATTACK1, ACT_GESTURE_RANGE_ATTACK_PISTOL, true },
+	{ ACT_RELOAD_LOW, ACT_RELOAD_PISTOL_LOW, false },
+	{ ACT_RANGE_ATTACK1_LOW, ACT_RANGE_ATTACK_PISTOL_LOW, false },
+	{ ACT_COVER_LOW, ACT_COVER_PISTOL_LOW, false },
+	{ ACT_RANGE_AIM_LOW, ACT_RANGE_AIM_PISTOL_LOW, false },
+	{ ACT_GESTURE_RELOAD, ACT_GESTURE_RELOAD_PISTOL, false },
+	{ ACT_WALK, ACT_WALK_PISTOL, false },
+	{ ACT_RUN, ACT_RUN_PISTOL, false },
+	{ ACT_HL2MP_IDLE, ACT_HL2MP_IDLE_PISTOL, false },
+	{ ACT_HL2MP_RUN, ACT_HL2MP_RUN_PISTOL, false },
+	{ ACT_HL2MP_IDLE_CROUCH, ACT_HL2MP_IDLE_CROUCH_PISTOL, false },
+	{ ACT_HL2MP_WALK_CROUCH, ACT_HL2MP_WALK_CROUCH_PISTOL, false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK, ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL, false },
+	{ ACT_HL2MP_GESTURE_RELOAD, ACT_HL2MP_GESTURE_RELOAD_PISTOL, false },
+	{ ACT_HL2MP_JUMP, ACT_HL2MP_JUMP_PISTOL, false },
+	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_PISTOL, false },
 };
-IMPLEMENT_ACTTABLE(CWeaponResistanceGun);
+IMPLEMENT_ACTTABLE( CWeaponResistanceGun );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -145,32 +141,12 @@ void CWeaponResistanceGun::Spawn()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Called when gun is drawn.
-//-----------------------------------------------------------------------------
-Activity CWeaponResistanceGun::GetDrawActivity()
-{
-	if (m_bFirstDraw && GetVanceWpnData().bHasFirstDrawAnim)
-	{
-		m_bFirstDraw = false;
-		return ACT_VM_FIRSTDRAW;
-	}
-	else if (m_bSemiAutoMode)
-	{
-		return ACT_VM_DRAW_EXTENDED;
-	}
-	else
-	{
-		return ACT_VM_DRAW;
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponResistanceGun::DryFire()
 {
-	WeaponSound(EMPTY);
-	SendWeaponAnim(ACT_VM_DRYFIRE);
+	WeaponSound( EMPTY );
+	SendWeaponAnim( ACT_VM_DRYFIRE );
 
 	m_flSoonestPrimaryAttack = gpGlobals->curtime + 0.2f;
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
@@ -245,6 +221,7 @@ void CWeaponResistanceGun::PrimaryAttack()
 	pOwner->ViewPunchReset();
 
 	CSoundEnt::InsertSound(SOUND_COMBAT | SOUND_CONTEXT_GUNFIRE, pOwner->GetAbsOrigin(), SOUNDENT_VOLUME_PISTOL, 0.2, pOwner, SOUNDENT_CHANNEL_WEAPON, pOwner->GetEnemy());
+	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
 	if (m_bSemiAutoMode)
 	{
@@ -252,7 +229,6 @@ void CWeaponResistanceGun::PrimaryAttack()
 		Vector vecShootDir;
 		pOwner->EyeVectors( &vecShootDir );
 		
-		SendWeaponAnim(ACT_VM_FIRE_EXTENDED);
 		WeaponSound(SINGLE);
 		FireBulletProjectiles(1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, entindex(), -1, AUTO_DAMAGE);
 		pOwner->DoMuzzleFlash();
@@ -264,7 +240,6 @@ void CWeaponResistanceGun::PrimaryAttack()
 	else if ( !m_bInBurst )
 	{
 		// Burst fires are handle almost entirely by our think function
-		SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 		WeaponSound( BURST );
 		SetThink( &CWeaponResistanceGun::BurstThink );
 		SetNextThink( gpGlobals->curtime );
@@ -309,9 +284,17 @@ void CWeaponResistanceGun::ItemPostFrame()
 	if ( !pPlayer )
 		return;
 
-	if ( m_bInTransition && m_flNextSecondaryAttack > gpGlobals->curtime )
+	if ( m_bInTransition )
 	{
-		return;
+		if ( m_flDoneSwitchingMode > gpGlobals->curtime )
+		{
+			WeaponIdle();
+		}
+		else
+		{
+			m_flDoneSwitchingMode = 0.0f;
+			m_bInTransition = false;
+		}
 	}
 
 	CheckReload();
@@ -344,15 +327,6 @@ void CWeaponResistanceGun::ItemPostFrame()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Output : int
-//-----------------------------------------------------------------------------
-Activity CWeaponResistanceGun::GetPrimaryAttackActivity()
-{
-	return m_bSemiAutoMode ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK;
-}
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 bool CWeaponResistanceGun::Deploy()
 {
@@ -363,34 +337,13 @@ bool CWeaponResistanceGun::Deploy()
 
 bool CWeaponResistanceGun::Holster(CBaseCombatWeapon* pSwitchingTo)
 {
-	if (m_flDoneSwitchingMode > 0.0f && m_flDoneSwitchingMode > gpGlobals->curtime)
+	if (m_bInTransition && m_flDoneSwitchingMode > gpGlobals->curtime)
 	{
 		// Still switching mode. Cancel the transition.
 		m_bSemiAutoMode = !m_bSemiAutoMode;
 	}
 
-	// hack to get proper holster animation if in secondary attack mode
-	bool ret = BaseClass::Holster( pSwitchingTo );
-	if (m_bSemiAutoMode)
-	{
-		SendWeaponAnim( ACT_VM_HOLSTER_EXTENDED );
-	}
-
-	return ret;
-}
-
-bool CWeaponResistanceGun::Reload()
-{
-	bool ret = m_bSemiAutoMode ? 
-		DefaultReload(GetMaxClip1(), GetMaxClip2(), ACT_VM_RELOAD_EXTENDED) : 
-		DefaultReload(GetMaxClip1(), GetMaxClip2(), ACT_VM_RELOAD);
-
-	if ( ret )
-	{
-		WeaponSound(RELOAD);
-	}
-
-	return ret;
+	return BaseClass::Holster( pSwitchingTo );
 }
 
 //-----------------------------------------------------------------------------
@@ -410,4 +363,40 @@ void CWeaponResistanceGun::AddViewKick()
 
 	//Add it to the view punch
 	pPlayer->ViewPunch( viewPunch );
+}
+
+
+bool CWeaponResistanceGun::SendWeaponAnim( int iActivity )
+{
+	if ( m_bSemiAutoMode )
+	{
+		switch ( iActivity )
+		{
+			default:
+				break;
+			case ACT_VM_PRIMARYATTACK:
+				iActivity = ACT_VM_FIRE_EXTENDED;
+				break;
+			case ACT_VM_HOLSTER:
+				iActivity = ACT_VM_HOLSTER_EXTENDED;
+				break;
+			case ACT_VM_RELOAD:
+				iActivity = ACT_VM_RELOAD_EXTENDED;
+				break;
+			/*case ACT_VM_IDLE:
+				iActivity = ACT_VM_IDLE_EXTENDED;
+				break;
+			case ACT_VM_WALK:
+				iActivity = ACT_VM_WALK_EXTENDED;
+				break;
+			case ACT_VM_SPRINT:
+				iActivity = ACT_VM_SPRINT_EXTENDED;
+				break;*/
+			case ACT_VM_DRAW:
+				iActivity = ACT_VM_DRAW_EXTENDED;
+				break;
+		}
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
 }
