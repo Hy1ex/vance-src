@@ -103,10 +103,13 @@ public:
 	
 	inline bool				IsBleeding() const { return m_bBleeding; }
 
+	void					UseStimOrTourniquet();
+
 	void					UseTourniquet();
 	void					UseStim();
-	bool					GiveTourniquet();
-	bool					GiveStim();
+
+	bool					GiveTourniquet( int count = 0 );
+	bool					GiveStim( int count = 0 );
 	
 private:
 

@@ -109,25 +109,15 @@ IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
 	SendPropFloat(SENDINFO(m_flKickAnimLength)),
 END_SEND_TABLE()
 
-static void Cmd_UseTourniquet()
+static void Cmd_UseStimOrTourniquet()
 {
 	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
 	if ( pPlayer )
 	{
-		pPlayer->UseTourniquet();
+		pPlayer->UseStimOrTourniquet();
 	}
 }
-ConCommand use_tourniquet( "use_tourniquet", Cmd_UseTourniquet, "The Player uses an available tourniquet to stop the effects of bleeding.", FCVAR_CLIENTCMD_CAN_EXECUTE );
-
-static void Cmd_UseStim()
-{
-	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
-	if ( pPlayer )
-	{
-		pPlayer->UseStim();
-	}
-}
-ConCommand use_stim( "use_stim", Cmd_UseStim, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE );
+ConCommand use_stim_or_tourniquet( "use_stim_or_tourniquet", Cmd_UseStimOrTourniquet, "The Player injects an available stimulant to regenerate health.", FCVAR_CLIENTCMD_CAN_EXECUTE );
 
 static void Cmd_Damage( const CCommand &args )
 {
@@ -263,6 +253,9 @@ void CVancePlayer::CheatImpulseCommands(int iImpulse)
 		{
 			TakeHealth(25, DMG_GENERIC);
 		}
+
+		GiveStim( 3 );
+		GiveTourniquet( 3 );
 
 		gEvilImpulse101 = false;
 
@@ -863,7 +856,7 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 
 	#define MASK_CANBLEED ( DMG_SLASH | DMG_FALL | DMG_BULLET | DMG_CLUB )
 
-	if ( ArmorValue() == 0 && bitsDamage & MASK_CANBLEED)
+	if ( ArmorValue() == 0 && bitsDamage & MASK_CANBLEED && !m_bStimRegeneration )
 	{
 		m_fLastDamageTime = gpGlobals->curtime;
 
@@ -1032,9 +1025,9 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 	return 1;
 }
 
-void CVancePlayer::Heal(int health)
+void CVancePlayer::Heal( int health )
 {
-	SetHealth(Clamp(GetHealth() + health, 0, GetMaxHealth()));
+	SetHealth( Clamp( GetHealth() + health, 0, GetMaxHealth() ) );
 }
 
 static void Cmd_Heal(const CCommand &args)
@@ -1068,11 +1061,20 @@ void CVancePlayer::Bleed()
 	m_fBleedEndTime = gpGlobals->curtime + sk_bleed_dmg_interval.GetFloat() + sk_bleed_lifetime.GetFloat();
 }
 
+void CVancePlayer::UseStimOrTourniquet()
+{
+	if ( m_bBleeding && m_iNumTourniquets > 0 )
+	{
+		UseTourniquet();
+	}
+	else if ( m_iNumStims > 0 )
+	{
+		UseStim();
+	}
+}
+
 void CVancePlayer::UseTourniquet()
 {
-	if ( m_iNumTourniquets == 0 || !m_bBleeding )
-		return;
-
 	// Player must not be performing an action or
 	// interrupt stim
 	if ( m_PerformingGesture == GestureAction::None
@@ -1097,9 +1099,6 @@ void CVancePlayer::UseTourniquet()
 
 void CVancePlayer::UseStim()
 {
-	if ( m_iNumStims == 0 || GetHealth() == GetMaxHealth() )
-		return;
-
 	// Player must not be performing an action or 
 	// interrupt tourniquet
 	if ( m_PerformingGesture == GestureAction::None
@@ -1122,11 +1121,11 @@ void CVancePlayer::UseStim()
 	}
 }
 
-bool CVancePlayer::GiveTourniquet()
+bool CVancePlayer::GiveTourniquet( int count )
 {
 	if ( m_iNumTourniquets != sk_max_tourniquets.GetInt() )
 	{
-		m_iNumTourniquets++;
+		m_iNumTourniquets = Clamp( m_iNumTourniquets + count, 0, sk_max_tourniquets.GetInt() );
 		return true;
 	}
 	else
@@ -1135,11 +1134,11 @@ bool CVancePlayer::GiveTourniquet()
 	}
 }
 
-bool CVancePlayer::GiveStim()
+bool CVancePlayer::GiveStim( int count )
 {
 	if ( m_iNumStims != sk_max_stims.GetInt() )
 	{
-		m_iNumStims++;
+		m_iNumStims = Clamp( m_iNumStims + count, 0, sk_max_stims.GetInt() );
 		return true;
 	}
 	else
