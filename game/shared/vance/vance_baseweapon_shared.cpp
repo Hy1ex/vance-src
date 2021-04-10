@@ -238,24 +238,28 @@ bool CBaseVanceWeapon::WeaponShouldBeLowered(void)
 //-----------------------------------------------------------------------------
 void CBaseVanceWeapon::WeaponIdle(void)
 {
-#ifndef CLIENT_DLL
-	CVancePlayer *pPlayer = (CVancePlayer *)(GetOwner());
-#else
-	C_VancePlayer *pPlayer = dynamic_cast<C_VancePlayer *>(GetOwner());
-#endif
-	if (!pPlayer)
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( GetOwner() );
+	if ( !pPlayer )
 		return;
 
 	float speed = pPlayer->GetLocalVelocity().Length2D();
 
-	if (CanSprint() &&
-#ifndef CLIENT_DLL
-	/*( player->m_nButtons & IN_FORWARD ) &&*/(pPlayer->m_nButtons & IN_SPEED) &&
-#endif
-		speed >= (pPlayer->IsSuitEquipped() ? 300 : 200) && pPlayer->GetWaterLevel() != 3 && (pPlayer->GetFlags() & FL_ONGROUND))
+	if ( pPlayer->IsSprinting() && speed >= 300 )
 	{
 		int iActivity = GetActivity();
-		if (HasWeaponIdleTimeElapsed() || (GetActivity() != ACT_VM_KICK && (GetActivity() == GetIdleActivity() || GetActivity() == GetWalkActivity() || GetActivity() == GetIdleLoweredActivity()) || GetActivity() == ACT_VM_IDLE_TO_LOWERED || GetActivity() == ACT_VM_LOWERED_TO_IDLE))
+		if (HasWeaponIdleTimeElapsed() || 
+				(
+					GetActivity() != ACT_VM_KICK &&
+					(
+						GetActivity() == GetIdleActivity() ||
+						GetActivity() == GetWalkActivity() ||
+						GetActivity() == GetIdleLoweredActivity()
+					) ||
+					GetActivity() == ACT_VM_IDLE_TO_LOWERED ||
+					GetActivity() == ACT_VM_LOWERED_TO_IDLE
+				)
+			)
+			// (idling || not kicking && activity == idle, walk or lowered || 
 		{
 			iActivity = GetSprintActivity();
 		}

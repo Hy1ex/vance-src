@@ -73,9 +73,6 @@ ConVar sk_stim_heal_interval("sk_stim_heal_interval", "1", FCVAR_CHEAT);
 #define	VANCE_WALK_SPEED hl2_normspeed.GetFloat()
 #define	VANCE_SPRINT_SPEED hl2_sprintspeed.GetFloat()
 
-ConVar hl2_runspeed("hl2_runspeed", "240");
-#define HL2_RUN_SPEED hl2_runspeed.GetFloat()
-
 #define	FLASH_DRAIN_TIME	 1.1111	// 100 units / 90 secs
 #define	FLASH_CHARGE_TIME	 50.0f	// 100 units / 2 secs
 
@@ -585,9 +582,7 @@ void CVancePlayer::PreThink()
 		return;
 	}
 
-#ifdef HL2_EPISODIC
 	CheckFlashlight();
-#endif	// HL2_EPISODIC
 
 	// So the correct flags get sent to client asap.
 	//
@@ -599,13 +594,10 @@ void CVancePlayer::PreThink()
 	// Train speed control
 	if (m_afPhysicsFlags & PFLAG_DIROVERRIDE)
 	{
-		CBaseEntity* pTrain = GetGroundEntity();
-		float vel;
-
-		if (pTrain)
+		CBaseEntity *pTrain = GetGroundEntity();
+		if ( pTrain && !( pTrain->ObjectCaps() & FCAP_DIRECTIONAL_USE ) )
 		{
-			if (!(pTrain->ObjectCaps() & FCAP_DIRECTIONAL_USE))
-				pTrain = NULL;
+			pTrain = nullptr;
 		}
 
 		if (!pTrain)
@@ -657,7 +649,7 @@ void CVancePlayer::PreThink()
 		}
 
 		SetAbsVelocity(vec3_origin);
-		vel = 0;
+		float vel = 0;
 		if (m_afButtonPressed & IN_FORWARD)
 		{
 			vel = 1;
@@ -1242,15 +1234,28 @@ void CVancePlayer::PostThink()
 		}
 	}
 
-	Activity curActivity = GetActivity();
-	if ( curActivity == ACT_VM_WALK || curActivity == ACT_VM_SPRINT )
+	CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
+	CBaseViewModel *pWeaponViewModel = GetViewModel();
+
+	// This should be in the base weapon code
+	if ( pWeapon && pWeaponViewModel )
 	{
-		float playbackSpeed = pow(playerSpeed, 2) / 3200; // This curve function should be tweaked
-		GetViewModel()->SetPlaybackRate(playbackSpeed);
-	}
-	else
-	{
-		GetViewModel()->SetPlaybackRate(1.0f);
+		// Implement a curve when we know what we want
+		float playbackSpeed = 1.0f;
+
+		Activity activity = pWeapon->GetActivity();
+		if ( activity == pWeapon->GetWalkActivity() )
+		{
+			pWeaponViewModel->SetPlaybackRate( playbackSpeed );
+		}
+		else if ( activity == pWeapon->GetSprintActivity() )
+		{
+			pWeaponViewModel->SetPlaybackRate( GetFlags() & FL_ONGROUND ? playbackSpeed : 0.1f );
+		}
+		else
+		{
+			pWeaponViewModel->SetPlaybackRate( 1.0f );
+		}
 	}
 
 	CBaseViewModel *pLegsViewModel = GetViewModel( VM_LEGS );
@@ -1285,9 +1290,9 @@ void CVancePlayer::PostThink()
 		}
 
 		// Play a special animation for weapons when kicking
-		if ( CBaseCombatWeapon *pActiveWeapon = GetActiveWeapon() )
+		if ( pWeapon )
 		{
-			pActiveWeapon->SendWeaponAnim( ACT_VM_KICK );
+			pWeapon->SendWeaponAnim( ACT_VM_KICK );
 		}
 
 		ViewPunch( QAngle( random->RandomFloat( 1.0f, 2.0f ), 0, 0 ) );
@@ -1522,7 +1527,7 @@ bool CVancePlayer::ApplyBattery( float powerMultiplier )
 		if ( pct > 0 )
 			pct--;
 
-		Q_snprintf( szcharge, sizeof( szcharge ), "!HEV_%1dP", pct );
+		V_snprintf( szcharge, sizeof( szcharge ), "!HEV_%1dP", pct );
 
 		return true;
 	}
@@ -1580,8 +1585,6 @@ void CVancePlayer::Hit(trace_t& tr, Activity nHitActivity)
 
 void CVancePlayer::KickAttack()
 {
-	MDLCACHE_CRITICAL_SECTION();
-
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
