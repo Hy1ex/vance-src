@@ -52,6 +52,8 @@ public:
 	virtual Activity	GetSprintActivity() { return !m_bSemiAutoMode ? ACT_VM_SPRINT : ACT_VM_SPRINT_EXTENDED; }
 	virtual bool		SendWeaponAnim( int iActivity );
 
+	virtual bool		CanAttackWhileZoomed() { return m_bSemiAutoMode; }
+
 private:
 	float	m_flSoonestPrimaryAttack;
 	float	m_flLastAttackTime;
@@ -195,6 +197,11 @@ void CWeaponResistanceGun::PrimaryAttack()
 	if ( !pOwner )
 		return;
 
+	if ( m_bInTransition )
+	{
+		return;
+	}
+
 	if ( m_iClip1 <= 0 )
 	{
 		DryFire();
@@ -208,7 +215,7 @@ void CWeaponResistanceGun::PrimaryAttack()
 	CSoundEnt::InsertSound(SOUND_COMBAT | SOUND_CONTEXT_GUNFIRE, pOwner->GetAbsOrigin(), SOUNDENT_VOLUME_PISTOL, 0.2, pOwner, SOUNDENT_CHANNEL_WEAPON, pOwner->GetEnemy());
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
-	if (m_bSemiAutoMode)
+	if ( m_bSemiAutoMode )
 	{
 		Vector vecShootOrigin = pOwner->Weapon_ShootPosition();
 		Vector vecShootDir;

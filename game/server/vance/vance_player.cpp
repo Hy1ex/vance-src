@@ -716,17 +716,25 @@ void CVancePlayer::PreThink()
 			SetAbsVelocity(vec3_origin);
 		}
 	}
-	// StudioFrameAdvance( );//!!!HACKHACK!!! Can't be hit by traceline when not animating?
 
 	// Update weapon's ready status
 	UpdateWeaponPosture();
 
 	if (m_nButtons & IN_ZOOM)
 	{
-		//FIXME: Held weapons like the grenade get sad when this happens
-		CBaseCombatWeapon *pWep = GetActiveWeapon();
-		if (!m_hUseEntity || (pWep && pWep->IsWeaponVisible()))
-			m_nButtons &= ~(IN_ATTACK | IN_ATTACK2);
+		CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+		CBaseVanceWeapon *pVanceWeapon = dynamic_cast<CBaseVanceWeapon *>( pWeapon );
+		bool canAttackWhileZoom = pVanceWeapon ? pVanceWeapon->CanAttackWhileZoomed() : false;
+
+		// If we're using a mounted gun or holding a grenade
+		// or the Alyx Gun, allow attacking
+
+		// using entity or have visible weapon
+		// clear buttons
+		if ( ( !m_hUseEntity || ( pWeapon && pWeapon->IsWeaponVisible() ) ) && !canAttackWhileZoom )
+		{
+			m_nButtons &= ~( IN_ATTACK | IN_ATTACK2 );
+		}
 	}
 }
 

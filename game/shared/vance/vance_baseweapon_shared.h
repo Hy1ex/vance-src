@@ -87,6 +87,8 @@ public:
 	virtual Activity	GetWalkActivity() { return ACT_VM_WALK; };
 	virtual Activity	GetSprintActivity() { return ACT_VM_SPRINT; };
 
+	virtual bool		CanAttackWhileZoomed() { return false; }
+
 #ifdef CLIENT_DLL
 	virtual void		OnDataChanged(DataUpdateType_t updateType);
 #endif
