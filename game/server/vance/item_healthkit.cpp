@@ -56,7 +56,6 @@ void CHealthKit::Precache( void )
 	PrecacheModel("models/items/healthkit.mdl");
 
 	PrecacheScriptSound( "HealthKit.Touch" );
-	PrecacheScriptSound( "HealthKit.Touch_Suitless" );
 }
 
 
@@ -76,14 +75,8 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 			WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		const char *szSoundToPlay = "HealthKit.Touch";
-		if ( !pPlayer->IsSuitEquipped() )
-		{
-			szSoundToPlay = "HealthKit.Touch_Suitless";
-		}
-
-		CPASAttenuationFilter filter( pPlayer, szSoundToPlay );
-		EmitSound( filter, pPlayer->entindex(), szSoundToPlay );
+		CPASAttenuationFilter filter( pPlayer, "HealthKit.Touch" );
+		EmitSound( filter, pPlayer->entindex(), "HealthKit.Touch" );
 
 		UTIL_Remove(this);	
 
@@ -92,7 +85,6 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 
 	return false;
 }
-
 //-----------------------------------------------------------------------------
 // Wall mounted health kit. Heals the player when used.
 //-----------------------------------------------------------------------------
@@ -101,24 +93,27 @@ class CWallHealth : public CBaseToggle
 public:
 	DECLARE_CLASS( CWallHealth, CBaseToggle );
 
-	void Spawn( );
+	void Spawn();
 	void Precache( void );
-	int  DrawDebugTextOverlays(void);
-	bool CreateVPhysics(void);
-	void Off(void);
-	void Recharge(void);
-	bool KeyValue(  const char *szKeyName, const char *szValue );
+	int DrawDebugTextOverlays( void );
+	bool CreateVPhysics( void );
+	void Off( void );
+	void Recharge( void );
+	bool KeyValue( const char *szKeyName, const char *szValue );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
-	virtual int	ObjectCaps( void ) { return BaseClass::ObjectCaps() | m_iCaps; }
+	virtual int ObjectCaps( void )
+	{
+		return BaseClass::ObjectCaps() | m_iCaps;
+	}
 
-	float m_flNextCharge; 
-	int		m_iReactivate ; // DeathMatch Delay until reactvated
-	int		m_iJuice;
-	int		m_iOn;			// 0 = off, 1 = startup, 2 = going
-	float   m_flSoundTime;
+	float m_flNextCharge;
+	int m_iReactivate; // DeathMatch Delay until reactvated
+	int m_iJuice;
+	int m_iOn; // 0 = off, 1 = startup, 2 = going
+	float m_flSoundTime;
 
-	int		m_nState;
-	int		m_iCaps;
+	int m_nState;
+	int m_iCaps;
 
 	COutputFloat m_OutRemainingHealth;
 	COutputEvent m_OnPlayerUse;
@@ -126,60 +121,44 @@ public:
 	DECLARE_DATADESC();
 };
 
-LINK_ENTITY_TO_CLASS(func_healthcharger, CWallHealth);
-
+LINK_ENTITY_TO_CLASS( func_healthcharger, CWallHealth );
 
 BEGIN_DATADESC( CWallHealth )
 
-	DEFINE_FIELD( m_flNextCharge, FIELD_TIME),
-	DEFINE_FIELD( m_iReactivate, FIELD_INTEGER),
-	DEFINE_FIELD( m_iJuice, FIELD_INTEGER),
-	DEFINE_FIELD( m_iOn, FIELD_INTEGER),
-	DEFINE_FIELD( m_flSoundTime, FIELD_TIME),
-	DEFINE_FIELD( m_nState, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iCaps, FIELD_INTEGER ),
+DEFINE_FIELD( m_flNextCharge, FIELD_TIME ), DEFINE_FIELD( m_iReactivate, FIELD_INTEGER ), DEFINE_FIELD( m_iJuice, FIELD_INTEGER ), DEFINE_FIELD( m_iOn, FIELD_INTEGER ), DEFINE_FIELD( m_flSoundTime, FIELD_TIME ), DEFINE_FIELD( m_nState, FIELD_INTEGER ), DEFINE_FIELD( m_iCaps, FIELD_INTEGER ),
 
 	// Function Pointers
-	DEFINE_FUNCTION( Off ),
-	DEFINE_FUNCTION( Recharge ),
+	DEFINE_FUNCTION( Off ), DEFINE_FUNCTION( Recharge ),
 
-	DEFINE_OUTPUT( m_OnPlayerUse, "OnPlayerUse" ),
-	DEFINE_OUTPUT( m_OutRemainingHealth, "OutRemainingHealth"),
+	DEFINE_OUTPUT( m_OnPlayerUse, "OnPlayerUse" ), DEFINE_OUTPUT( m_OutRemainingHealth, "OutRemainingHealth" ),
 
-END_DATADESC()
+	END_DATADESC()
 
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pkvd - 
-//-----------------------------------------------------------------------------
-bool CWallHealth::KeyValue(  const char *szKeyName, const char *szValue )
+	//-----------------------------------------------------------------------------
+	// Purpose:
+	// Input  : *pkvd -
+	//-----------------------------------------------------------------------------
+	bool CWallHealth::KeyValue( const char *szKeyName, const char *szValue )
 {
-	if (FStrEq(szKeyName, "style") ||
-		FStrEq(szKeyName, "height") ||
-		FStrEq(szKeyName, "value1") ||
-		FStrEq(szKeyName, "value2") ||
-		FStrEq(szKeyName, "value3"))
+	if ( FStrEq( szKeyName, "style" ) || FStrEq( szKeyName, "height" ) || FStrEq( szKeyName, "value1" ) || FStrEq( szKeyName, "value2" ) || FStrEq( szKeyName, "value3" ) )
 	{
-		return(true);
+		return ( true );
 	}
-	else if (FStrEq(szKeyName, "dmdelay"))
+	else if ( FStrEq( szKeyName, "dmdelay" ) )
 	{
-		m_iReactivate = atoi(szValue);
-		return(true);
+		m_iReactivate = atoi( szValue );
+		return ( true );
 	}
 
-	return(BaseClass::KeyValue( szKeyName, szValue ));
+	return ( BaseClass::KeyValue( szKeyName, szValue ) );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CWallHealth::Spawn(void)
+void CWallHealth::Spawn( void )
 {
-	Precache( );
+	Precache();
 
 	SetSolid( SOLID_BSP );
 	SetMoveType( MOVETYPE_PUSH );
@@ -188,22 +167,22 @@ void CWallHealth::Spawn(void)
 
 	m_iJuice = sk_healthcharger.GetFloat();
 
-	m_nState = 0;	
-	
-	m_iCaps	= FCAP_CONTINUOUS_USE;
+	m_nState = 0;
+
+	m_iCaps = FCAP_CONTINUOUS_USE;
 
 	CreateVPhysics();
 }
 
-int CWallHealth::DrawDebugTextOverlays(void) 
+int CWallHealth::DrawDebugTextOverlays( void )
 {
 	int text_offset = BaseClass::DrawDebugTextOverlays();
 
-	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
 	{
 		char tempstr[512];
-		Q_snprintf(tempstr,sizeof(tempstr),"Charge left: %i", m_iJuice );
-		EntityText(text_offset,tempstr,0);
+		Q_snprintf( tempstr, sizeof( tempstr ), "Charge left: %i", m_iJuice );
+		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 	}
 	return text_offset;
@@ -211,17 +190,16 @@ int CWallHealth::DrawDebugTextOverlays(void)
 
 //-----------------------------------------------------------------------------
 
-bool CWallHealth::CreateVPhysics(void)
+bool CWallHealth::CreateVPhysics( void )
 {
 	VPhysicsInitStatic();
 	return true;
-
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CWallHealth::Precache(void)
+void CWallHealth::Precache( void )
 {
 	PrecacheScriptSound( "WallHealth.Deny" );
 	PrecacheScriptSound( "WallHealth.Start" );
@@ -229,42 +207,41 @@ void CWallHealth::Precache(void)
 	PrecacheScriptSound( "WallHealth.Recharge" );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pActivator - 
-//			*pCaller - 
-//			useType - 
-//			value - 
+// Purpose:
+// Input  : *pActivator -
+//			*pCaller -
+//			useType -
+//			value -
 //-----------------------------------------------------------------------------
 void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
-{ 
+{
 	// Make sure that we have a caller
-	if (!pActivator)
+	if ( !pActivator )
 		return;
 
 	// if it's not a player, ignore
 	if ( !pActivator->IsPlayer() )
 		return;
 
-	CBasePlayer *pPlayer = dynamic_cast<CBasePlayer *>(pActivator);
+	CBasePlayer *pPlayer = dynamic_cast<CBasePlayer *>( pActivator );
 
 	// Reset to a state of continuous use.
 	m_iCaps = FCAP_CONTINUOUS_USE;
 
 	// if there is no juice left, turn it off
-	if (m_iJuice <= 0)
+	if ( m_iJuice <= 0 )
 	{
-		m_nState = 1;			
+		m_nState = 1;
 		Off();
 	}
 
 	// if the player doesn't have the suit, or there is no juice left, make the deny noise.
 	// disabled HEV suit dependency for now.
 	//if ((m_iJuice <= 0) || (!(pActivator->m_bWearingSuit)))
-	if (m_iJuice <= 0)
+	if ( m_iJuice <= 0 )
 	{
-		if (m_flSoundTime <= gpGlobals->curtime)
+		if ( m_flSoundTime <= gpGlobals->curtime )
 		{
 			m_flSoundTime = gpGlobals->curtime + 0.62;
 			EmitSound( "WallHealth.Deny" );
@@ -272,9 +249,9 @@ void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 		return;
 	}
 
-	if( pActivator->GetHealth() >= pActivator->GetMaxHealth() )
+	if ( pActivator->GetHealth() >= pActivator->GetMaxHealth() )
 	{
-		if( pPlayer )
+		if ( pPlayer )
 		{
 			pPlayer->m_afButtonPressed &= ~IN_USE;
 		}
@@ -286,15 +263,15 @@ void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 	}
 
 	SetNextThink( gpGlobals->curtime + 0.25f );
-	SetThink(&CWallHealth::Off);
+	SetThink( &CWallHealth::Off );
 
 	// Time to recharge yet?
 
-	if (m_flNextCharge >= gpGlobals->curtime)
+	if ( m_flNextCharge >= gpGlobals->curtime )
 		return;
 
 	// Play the on sound or the looping charging sound
-	if (!m_iOn)
+	if ( !m_iOn )
 	{
 		m_iOn++;
 		EmitSound( "WallHealth.Start" );
@@ -302,7 +279,7 @@ void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 
 		m_OnPlayerUse.FireOutput( pActivator, this );
 	}
-	if ((m_iOn == 1) && (m_flSoundTime <= gpGlobals->curtime))
+	if ( ( m_iOn == 1 ) && ( m_flSoundTime <= gpGlobals->curtime ) )
 	{
 		m_iOn++;
 		CPASAttenuationFilter filter( this, "WallHealth.LoopingContinueCharge" );
@@ -318,40 +295,38 @@ void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 
 	// Send the output.
 	float flRemaining = m_iJuice / sk_healthcharger.GetFloat();
-	m_OutRemainingHealth.Set(flRemaining, pActivator, this);
+	m_OutRemainingHealth.Set( flRemaining, pActivator, this );
 
 	// govern the rate of charge
 	m_flNextCharge = gpGlobals->curtime + 0.1;
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CWallHealth::Recharge(void)
+void CWallHealth::Recharge( void )
 {
 	EmitSound( "WallHealth.Recharge" );
 	m_iJuice = sk_healthcharger.GetFloat();
-	m_nState = 0;			
+	m_nState = 0;
 	SetThink( NULL );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CWallHealth::Off(void)
+void CWallHealth::Off( void )
 {
 	// Stop looping sound.
-	if (m_iOn > 1)
+	if ( m_iOn > 1 )
 		StopSound( "WallHealth.LoopingContinueCharge" );
 
 	m_iOn = 0;
 
-	if ((!m_iJuice) &&  ( ( m_iReactivate = g_pGameRules->FlHealthChargerRechargeTime() ) > 0) )
+	if ( ( !m_iJuice ) && ( ( m_iReactivate = g_pGameRules->FlHealthChargerRechargeTime() ) > 0 ) )
 	{
 		SetNextThink( gpGlobals->curtime + m_iReactivate );
-		SetThink(&CWallHealth::Recharge);
+		SetThink( &CWallHealth::Recharge );
 	}
 	else
 		SetThink( NULL );
@@ -365,94 +340,81 @@ class CNewWallHealth : public CBaseAnimating
 public:
 	DECLARE_CLASS( CNewWallHealth, CBaseAnimating );
 
-	void Spawn( );
+	void Spawn();
 	void Precache( void );
-	int  DrawDebugTextOverlays(void);
-	bool CreateVPhysics(void);
-	void Off(void);
-	void Recharge(void);
-	bool KeyValue(  const char *szKeyName, const char *szValue );
+	int DrawDebugTextOverlays( void );
+	bool CreateVPhysics( void );
+	void Off( void );
+	void Recharge( void );
+	bool KeyValue( const char *szKeyName, const char *szValue );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
-	virtual int	ObjectCaps( void ) { return BaseClass::ObjectCaps() | m_iCaps; }
+	virtual int ObjectCaps( void )
+	{
+		return BaseClass::ObjectCaps() | m_iCaps;
+	}
 
-	float m_flNextCharge; 
-	int		m_iReactivate ; // DeathMatch Delay until reactvated
-	int		m_iJuice;
-	int		m_iOn;			// 0 = off, 1 = startup, 2 = going
-	float   m_flSoundTime;
+	float m_flNextCharge;
+	int m_iReactivate; // DeathMatch Delay until reactvated
+	int m_iJuice;
+	int m_iOn; // 0 = off, 1 = startup, 2 = going
+	float m_flSoundTime;
 
-	int		m_nState;
-	int		m_iCaps;
+	int m_nState;
+	int m_iCaps;
 
 	COutputFloat m_OutRemainingHealth;
 	COutputEvent m_OnPlayerUse;
 
-	void StudioFrameAdvance ( void );
+	void StudioFrameAdvance( void );
 
 	float m_flJuice;
 
 	DECLARE_DATADESC();
 };
 
-LINK_ENTITY_TO_CLASS( item_healthcharger, CNewWallHealth);
-
+LINK_ENTITY_TO_CLASS( item_healthcharger, CNewWallHealth );
 
 BEGIN_DATADESC( CNewWallHealth )
 
-	DEFINE_FIELD( m_flNextCharge, FIELD_TIME),
-	DEFINE_FIELD( m_iReactivate, FIELD_INTEGER),
-	DEFINE_FIELD( m_iJuice, FIELD_INTEGER),
-	DEFINE_FIELD( m_iOn, FIELD_INTEGER),
-	DEFINE_FIELD( m_flSoundTime, FIELD_TIME),
-	DEFINE_FIELD( m_nState, FIELD_INTEGER ),
-	DEFINE_FIELD( m_iCaps, FIELD_INTEGER ),
-	DEFINE_FIELD( m_flJuice, FIELD_FLOAT ),
+DEFINE_FIELD( m_flNextCharge, FIELD_TIME ), DEFINE_FIELD( m_iReactivate, FIELD_INTEGER ), DEFINE_FIELD( m_iJuice, FIELD_INTEGER ), DEFINE_FIELD( m_iOn, FIELD_INTEGER ), DEFINE_FIELD( m_flSoundTime, FIELD_TIME ), DEFINE_FIELD( m_nState, FIELD_INTEGER ), DEFINE_FIELD( m_iCaps, FIELD_INTEGER ), DEFINE_FIELD( m_flJuice, FIELD_FLOAT ),
 
 	// Function Pointers
-	DEFINE_FUNCTION( Off ),
-	DEFINE_FUNCTION( Recharge ),
+	DEFINE_FUNCTION( Off ), DEFINE_FUNCTION( Recharge ),
 
-	DEFINE_OUTPUT( m_OnPlayerUse, "OnPlayerUse" ),
-	DEFINE_OUTPUT( m_OutRemainingHealth, "OutRemainingHealth"),
+	DEFINE_OUTPUT( m_OnPlayerUse, "OnPlayerUse" ), DEFINE_OUTPUT( m_OutRemainingHealth, "OutRemainingHealth" ),
 
-END_DATADESC()
+	END_DATADESC()
 
 #define HEALTH_CHARGER_MODEL_NAME "models/props_combine/health_charger001.mdl"
 #define CHARGE_RATE 0.25f
 #define CHARGES_PER_SECOND 1.0f / CHARGE_RATE
 #define CALLS_PER_SECOND 7.0f * CHARGES_PER_SECOND
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pkvd - 
-//-----------------------------------------------------------------------------
-bool CNewWallHealth::KeyValue(  const char *szKeyName, const char *szValue )
+	//-----------------------------------------------------------------------------
+	// Purpose:
+	// Input  : *pkvd -
+	//-----------------------------------------------------------------------------
+	bool CNewWallHealth::KeyValue( const char *szKeyName, const char *szValue )
 {
-	if (FStrEq(szKeyName, "style") ||
-		FStrEq(szKeyName, "height") ||
-		FStrEq(szKeyName, "value1") ||
-		FStrEq(szKeyName, "value2") ||
-		FStrEq(szKeyName, "value3"))
+	if ( FStrEq( szKeyName, "style" ) || FStrEq( szKeyName, "height" ) || FStrEq( szKeyName, "value1" ) || FStrEq( szKeyName, "value2" ) || FStrEq( szKeyName, "value3" ) )
 	{
-		return(true);
+		return ( true );
 	}
-	else if (FStrEq(szKeyName, "dmdelay"))
+	else if ( FStrEq( szKeyName, "dmdelay" ) )
 	{
-		m_iReactivate = atoi(szValue);
-		return(true);
+		m_iReactivate = atoi( szValue );
+		return ( true );
 	}
 
-	return(BaseClass::KeyValue( szKeyName, szValue ));
+	return ( BaseClass::KeyValue( szKeyName, szValue ) );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CNewWallHealth::Spawn(void)
+void CNewWallHealth::Spawn( void )
 {
-	Precache( );
+	Precache();
 
 	SetMoveType( MOVETYPE_NONE );
 	SetSolid( SOLID_VPHYSICS );
@@ -465,26 +427,26 @@ void CNewWallHealth::Spawn(void)
 
 	m_iJuice = sk_healthcharger.GetFloat();
 
-	m_nState = 0;	
-	
+	m_nState = 0;
+
 	m_iReactivate = 0;
-	m_iCaps	= FCAP_CONTINUOUS_USE;
+	m_iCaps = FCAP_CONTINUOUS_USE;
 
 	CreateVPhysics();
 
 	m_flJuice = m_iJuice;
-	SetCycle( 1.0f - ( m_flJuice /  sk_healthcharger.GetFloat() ) );
+	SetCycle( 1.0f - ( m_flJuice / sk_healthcharger.GetFloat() ) );
 }
 
-int CNewWallHealth::DrawDebugTextOverlays(void) 
+int CNewWallHealth::DrawDebugTextOverlays( void )
 {
 	int text_offset = BaseClass::DrawDebugTextOverlays();
 
-	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
+	if ( m_debugOverlays & OVERLAY_TEXT_BIT )
 	{
 		char tempstr[512];
-		Q_snprintf(tempstr,sizeof(tempstr),"Charge left: %i", m_iJuice );
-		EntityText(text_offset,tempstr,0);
+		Q_snprintf( tempstr, sizeof( tempstr ), "Charge left: %i", m_iJuice );
+		EntityText( text_offset, tempstr, 0 );
 		text_offset++;
 	}
 	return text_offset;
@@ -492,16 +454,16 @@ int CNewWallHealth::DrawDebugTextOverlays(void)
 
 //-----------------------------------------------------------------------------
 
-bool CNewWallHealth::CreateVPhysics(void)
+bool CNewWallHealth::CreateVPhysics( void )
 {
 	VPhysicsInitStatic();
 	return true;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CNewWallHealth::Precache(void)
+void CNewWallHealth::Precache( void )
 {
 	PrecacheModel( HEALTH_CHARGER_MODEL_NAME );
 
@@ -516,9 +478,9 @@ void CNewWallHealth::StudioFrameAdvance( void )
 	m_flPlaybackRate = 0;
 
 	float flMaxJuice = sk_healthcharger.GetFloat();
-	
+
 	SetCycle( 1.0f - (float)( m_flJuice / flMaxJuice ) );
-//	Msg( "Cycle: %f - Juice: %d - m_flJuice :%f - Interval: %f\n", (float)GetCycle(), (int)m_iJuice, (float)m_flJuice, GetAnimTimeInterval() );
+	//	Msg( "Cycle: %f - Juice: %d - m_flJuice :%f - Interval: %f\n", (float)GetCycle(), (int)m_iJuice, (float)m_flJuice, GetAnimTimeInterval() );
 
 	if ( !m_flPrevAnimTime )
 	{
@@ -532,22 +494,22 @@ void CNewWallHealth::StudioFrameAdvance( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pActivator - 
-//			*pCaller - 
-//			useType - 
-//			value - 
+// Purpose:
+// Input  : *pActivator -
+//			*pCaller -
+//			useType -
+//			value -
 //-----------------------------------------------------------------------------
 void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
-{ 
+{
 	// Make sure that we have a caller
-	if (!pActivator)
+	if ( !pActivator )
 		return;
 
 	// if it's not a player, ignore
 	if ( !pActivator->IsPlayer() )
 		return;
-	CBasePlayer *pPlayer = dynamic_cast<CBasePlayer *>(pActivator);
+	CBasePlayer *pPlayer = dynamic_cast<CBasePlayer *>( pActivator );
 
 	// Reset to a state of continuous use.
 	m_iCaps = FCAP_CONTINUOUS_USE;
@@ -562,19 +524,19 @@ void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	}
 
 	// if there is no juice left, turn it off
-	if (m_iJuice <= 0)
+	if ( m_iJuice <= 0 )
 	{
 		ResetSequence( LookupSequence( "emptyclick" ) );
-		m_nState = 1;			
+		m_nState = 1;
 		Off();
 	}
 
 	// if the player doesn't have the suit, or there is no juice left, make the deny noise.
 	// disabled HEV suit dependency for now.
 	//if ((m_iJuice <= 0) || (!(pActivator->m_bWearingSuit)))
-	if (m_iJuice <= 0)
+	if ( m_iJuice <= 0 )
 	{
-		if (m_flSoundTime <= gpGlobals->curtime)
+		if ( m_flSoundTime <= gpGlobals->curtime )
 		{
 			m_flSoundTime = gpGlobals->curtime + 0.62;
 			EmitSound( "WallHealth.Deny" );
@@ -582,16 +544,16 @@ void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		return;
 	}
 
-	if( pActivator->GetHealth() >= pActivator->GetMaxHealth() )
+	if ( pActivator->GetHealth() >= pActivator->GetMaxHealth() )
 	{
-		if( pPlayer )
+		if ( pPlayer )
 		{
 			pPlayer->m_afButtonPressed &= ~IN_USE;
 		}
 
 		// Make the user re-use me to get started drawing health.
 		m_iCaps = FCAP_IMPULSE_USE;
-		
+
 		EmitSound( "WallHealth.Deny" );
 		return;
 	}
@@ -601,11 +563,11 @@ void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 	// Time to recharge yet?
 
-	if (m_flNextCharge >= gpGlobals->curtime)
+	if ( m_flNextCharge >= gpGlobals->curtime )
 		return;
 
 	// Play the on sound or the looping charging sound
-	if (!m_iOn)
+	if ( !m_iOn )
 	{
 		m_iOn++;
 		EmitSound( "WallHealth.Start" );
@@ -613,7 +575,7 @@ void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 		m_OnPlayerUse.FireOutput( pActivator, this );
 	}
-	if ((m_iOn == 1) && (m_flSoundTime <= gpGlobals->curtime))
+	if ( ( m_iOn == 1 ) && ( m_flSoundTime <= gpGlobals->curtime ) )
 	{
 		m_iOn++;
 		CPASAttenuationFilter filter( this, "WallHealth.LoopingContinueCharge" );
@@ -629,17 +591,16 @@ void CNewWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 	// Send the output.
 	float flRemaining = m_iJuice / sk_healthcharger.GetFloat();
-	m_OutRemainingHealth.Set(flRemaining, pActivator, this);
+	m_OutRemainingHealth.Set( flRemaining, pActivator, this );
 
 	// govern the rate of charge
 	m_flNextCharge = gpGlobals->curtime + 0.1;
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CNewWallHealth::Recharge(void)
+void CNewWallHealth::Recharge( void )
 {
 	EmitSound( "WallHealth.Recharge" );
 	m_flJuice = m_iJuice = sk_healthcharger.GetFloat();
@@ -653,14 +614,13 @@ void CNewWallHealth::Recharge(void)
 	SetThink( NULL );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CNewWallHealth::Off(void)
+void CNewWallHealth::Off( void )
 {
 	// Stop looping sound.
-	if (m_iOn > 1)
+	if ( m_iOn > 1 )
 		StopSound( "WallHealth.LoopingContinueCharge" );
 
 	if ( m_nState == 1 )
@@ -673,14 +633,13 @@ void CNewWallHealth::Off(void)
 
 	if ( m_iReactivate == 0 )
 	{
-		if ((!m_iJuice) && g_pGameRules->FlHealthChargerRechargeTime() > 0 )
+		if ( ( !m_iJuice ) && g_pGameRules->FlHealthChargerRechargeTime() > 0 )
 		{
 			m_iReactivate = g_pGameRules->FlHealthChargerRechargeTime();
 			SetNextThink( gpGlobals->curtime + m_iReactivate );
-			SetThink(&CNewWallHealth::Recharge);
+			SetThink( &CNewWallHealth::Recharge );
 		}
 		else
 			SetThink( NULL );
 	}
 }
-

@@ -73,11 +73,10 @@ public:
 	void					StopWalking();
 
 	void					SuitPower_Update();
-	bool					ApplyBattery(float powerMultiplier, bool bFlashlightPower = false);
+	bool					ApplyBattery( float powerMultiplier );
 	void					FlashlightTurnOn();
 
-	void					Hit(trace_t& traceHit, Activity nHitActivity, bool bIsSecondary);
-	void					SetKickTime(CBaseViewModel* pViewModel);
+	void					Hit( trace_t &traceHit, Activity nHitActivity );
 	void					KickAttack();
 	float					GetKickAnimationLength() { return m_flKickAnimLength; }
 

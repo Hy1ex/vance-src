@@ -50,6 +50,8 @@ extern ConVar hl2_walkspeed;
 extern ConVar hl2_normspeed;
 extern ConVar hl2_sprintspeed;
 
+extern ConVar sk_battery;
+
 extern int gEvilImpulse101;
 
 ConVar sk_max_tourniquets("sk_max_tourniquets", "3", FCVAR_CHEAT);
@@ -79,10 +81,6 @@ ConVar hl2_runspeed("hl2_runspeed", "240");
 
 #define SUITPOWER_CHARGE_RATE	12.5	// 100 units in 8 seconds
 
-// Divide everything by half for now.
-#define	FLASH_DRAIN_TIME_SUITLESS	2.2222f		// 100 units / 45 secs
-#define	FLASH_CHARGE_TIME_SUITLESS	25.0f		// 100 units / 4 secs
-
 ConVar vance_climb_speed("vance_climb_speed", "0.025", FCVAR_CHEAT);
 ConVar vance_climb_checkray_count("vance_climb_checkray_count", "5", FCVAR_CHEAT);
 ConVar vance_climb_checkray_dist("vance_climb_checkray_dist", "64", FCVAR_CHEAT);
@@ -90,6 +88,8 @@ ConVar vance_climb_debug("vance_climb_debug", "0");
 #define CLIMB_TRACE_DIST		vance_climb_checkray_dist.GetFloat()
 #define CLIMB_LERPSPEED			vance_climb_speed.GetFloat();
 
+ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
+ConVar vance_kick_powerscale( "kick_powerscale", "1", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
 ConVar vance_kick_range("kick_range", "100", FCVAR_CHEAT);
 ConVar vance_kick_firerate("kick_firerate", "1", FCVAR_CHEAT);
@@ -194,11 +194,6 @@ void CVancePlayer::Precache()
 
 	PrecacheScriptSound( "HL2Player.KickHit" );
 	PrecacheScriptSound( "HL2Player.KickMiss" );
-
-	PrecacheScriptSound( "HL2Player.AmmoPickup_Suitless" );
-	PrecacheScriptSound( "HL2Player.PickupWeapon_Suitless" );
-	PrecacheScriptSound( "HL2Player.FlashLightOn_Suitless" );
-	PrecacheScriptSound( "HL2Player.FlashLightOff_Suitless" );
 
 	PrecacheScriptSound( "AlyxPlayer.PainHeavy" );
 
@@ -1239,13 +1234,10 @@ void CVancePlayer::PostThink()
 		}
 	}
 
-	CBaseViewModel* vm = GetViewModel(VM_LEGS);
-
 	Activity curActivity = GetActivity();
-	if (curActivity == ACT_VM_WALK ||
-		curActivity == ACT_VM_SPRINT)
+	if ( curActivity == ACT_VM_WALK || curActivity == ACT_VM_SPRINT )
 	{
-		float playbackSpeed = (((int)playerSpeed ^ 2) / 10) / 320; // This curve function should be tweaked
+		float playbackSpeed = pow(playerSpeed, 2) / 3200; // This curve function should be tweaked
 		GetViewModel()->SetPlaybackRate(playbackSpeed);
 	}
 	else
@@ -1253,17 +1245,28 @@ void CVancePlayer::PostThink()
 		GetViewModel()->SetPlaybackRate(1.0f);
 	}
 
+	CBaseViewModel *pLegsViewModel = GetViewModel( VM_LEGS );
+
 	if (m_afButtonReleased & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime)
 	{
-		if (vm)
+		// Play a kick animation for the legs
+		if ( pLegsViewModel )
 		{
-			bool bIsInAir = GetGroundEntity() == NULL;
-			int	idealSequence = bIsInAir ? vm->SelectWeightedSequence(ACT_VM_SECONDARYATTACK) : vm->SelectWeightedSequence(ACT_VM_PRIMARYATTACK);
-			if (idealSequence >= 0)
+			int idealSequence = 0;
+			if ( GetGroundEntity() == nullptr )
 			{
-				vm->SendViewModelMatchingSequence(idealSequence);
-				m_flNextKickAttack = gpGlobals->curtime + vm->SequenceDuration(idealSequence) - 0.5f;
-				m_flKickAnimLength = gpGlobals->curtime + vm->SequenceDuration(idealSequence) - 0.1f;
+				idealSequence = pLegsViewModel->SelectWeightedSequence( ACT_VM_SECONDARYATTACK );
+			}
+			else
+			{
+				idealSequence = pLegsViewModel->SelectWeightedSequence( ACT_VM_PRIMARYATTACK );
+			}
+
+			if ( idealSequence >= 0 )
+			{
+				pLegsViewModel->SendViewModelMatchingSequence( idealSequence );
+				m_flNextKickAttack = gpGlobals->curtime + pLegsViewModel->SequenceDuration( idealSequence ) - 0.5f;
+				m_flKickAnimLength = gpGlobals->curtime + pLegsViewModel->SequenceDuration( idealSequence ) - 0.1f;
 				m_flNextKick = gpGlobals->curtime + vance_kick_firerate.GetFloat();
 
 				StopSprinting();
@@ -1273,37 +1276,39 @@ void CVancePlayer::PostThink()
 			}
 		}
 
-		CBaseCombatWeapon* pActiveWeapon = GetActiveWeapon();
-		if (pActiveWeapon)
+		// Play a special animation for weapons when kicking
+		if ( CBaseCombatWeapon *pActiveWeapon = GetActiveWeapon() )
 		{
-			int	idealSequence = GetActiveWeapon()->SelectWeightedSequence(ACT_VM_KICK);
-			if (idealSequence >= 0)
-			{
-				pActiveWeapon->SendWeaponAnim(ACT_VM_KICK);
-			}
+			pActiveWeapon->SendWeaponAnim( ACT_VM_KICK );
 		}
 
-		QAngle recoil = QAngle(random->RandomFloat(1.0f, 2.0f), 0, 0);
-		ViewPunch(recoil);
+		ViewPunch( QAngle( random->RandomFloat( 1.0f, 2.0f ), 0, 0 ) );
 
-		SetKickTime(vm);
+		float kickDuration = 0.0f;
+		if ( pLegsViewModel )
+		{
+			kickDuration = pLegsViewModel->SequenceDuration();
+		}
+
+		// When to apply damage
+		m_flKickTime = kickDuration / 4 + gpGlobals->curtime + vance_kick_time_adjust.GetFloat();
 		m_bIsKicking = true;
 	}
 
-	if (m_flKickTime < gpGlobals->curtime && m_bIsKicking)
+	if ( m_bIsKicking && m_flKickTime < gpGlobals->curtime )
 	{
 		KickAttack();
 		m_bIsKicking = false;
 	}
 
-	if (vm && m_flKickAnimLength < gpGlobals->curtime)
+	/*if ( pLegsViewModel && m_flKickAnimLength < gpGlobals->curtime )
 	{
-		int	idealSequence = vm->SelectWeightedSequence(ACT_VM_IDLE);
-		if (idealSequence >= 0)
+		int idealSequence = pLegsViewModel->SelectWeightedSequence( ACT_VM_IDLE );
+		if ( idealSequence >= 0 )
 		{
-			vm->SendViewModelMatchingSequence(idealSequence);
+			pLegsViewModel->SendViewModelMatchingSequence( idealSequence );
 		}
-	}
+	}*/
 
 	m_angEyeAngles = EyeAngles();
 
@@ -1482,51 +1487,35 @@ void CVancePlayer::SuitPower_Update()
 	}
 }
 
-extern ConVar sk_battery;
-ConVar sk_battery_flashlight("sk_battery_flashlight", "0");
-
-bool CVancePlayer::ApplyBattery(float powerMultiplier, bool bFlashlightPower /*= false*/)
+bool CVancePlayer::ApplyBattery( float powerMultiplier )
 {
-	if (bFlashlightPower)
-	{
-		m_HL2Local.m_flFlashBattery += sk_battery_flashlight.GetFloat() * powerMultiplier;
-
-		CPASAttenuationFilter filter(this, "ItemBattery.Touch_Suitless");
-		EmitSound(filter, entindex(), "ItemBattery.Touch_Suitless");
-
-		return true;
-	}
-
 	const float MAX_NORMAL_BATTERY = 100;
-	if (IsSuitEquipped() && ArmorValue() < MAX_NORMAL_BATTERY)
+	if ( ( ArmorValue() < MAX_NORMAL_BATTERY ) && IsSuitEquipped() )
 	{
 		int pct;
 		char szcharge[64];
 
-		IncrementArmorValue(sk_battery.GetFloat() * powerMultiplier, MAX_NORMAL_BATTERY);
+		IncrementArmorValue( sk_battery.GetFloat() * powerMultiplier, MAX_NORMAL_BATTERY );
 
-		CPASAttenuationFilter filter(this, "ItemBattery.Touch");
-		EmitSound(filter, entindex(), "ItemBattery.Touch");
+		CPASAttenuationFilter filter( this, "ItemBattery.Touch" );
+		EmitSound( filter, entindex(), "ItemBattery.Touch" );
 
-		CSingleUserRecipientFilter user(this);
+		CSingleUserRecipientFilter user( this );
 		user.MakeReliable();
 
-		UserMessageBegin(user, "ItemPickup");
-		WRITE_STRING("item_battery");
+		UserMessageBegin( user, "ItemPickup" );
+		WRITE_STRING( "item_battery" );
 		MessageEnd();
-
 
 		// Suit reports new power level
 		// For some reason this wasn't working in release build -- round it.
-		pct = (int)((float)(ArmorValue() * 100.0f) * (1.0f / MAX_NORMAL_BATTERY) + 0.5f);
-		pct = (pct / 5);
-		if (pct > 0)
+		pct = (int)( (float)( ArmorValue() * 100.0 ) * ( 1.0 / MAX_NORMAL_BATTERY ) + 0.5 );
+		pct = ( pct / 5 );
+		if ( pct > 0 )
 			pct--;
 
-		Q_snprintf(szcharge, sizeof(szcharge), "!HEV_%1dP", pct);
+		Q_snprintf( szcharge, sizeof( szcharge ), "!HEV_%1dP", pct );
 
-		//UTIL_EmitSoundSuit(edict(), szcharge);
-		//SetSuitUpdate(szcharge, FALSE, SUIT_NEXT_IN_30SEC);
 		return true;
 	}
 
@@ -1537,174 +1526,113 @@ bool CVancePlayer::ApplyBattery(float powerMultiplier, bool bFlashlightPower /*=
 //-----------------------------------------------------------------------------
 void CVancePlayer::FlashlightTurnOn()
 {
-	if (m_bFlashlightDisabled)
+	if ( m_bFlashlightDisabled )
 		return;
 
-	if (!IsSuitEquipped())
-	{
-		// Turn the flashlight off if we don't have the 'flashlight' attachment.
-		CBaseViewModel* pVM = GetViewModel();
-		if (!GetActiveWeapon() || (pVM && !pVM->LookupAttachment("flashlight")))
-			return;
-
-		EmitSound("HL2Player.FlashLightOn_Suitless");
-	}
-	else
-	{
-		EmitSound("HL2Player.FlashLightOn");
-	}
-
-	AddEffects(EF_DIMLIGHT);
+	EmitSound( "HL2Player.FlashLightOn" );
+	AddEffects( EF_DIMLIGHT );
 
 	variant_t flashlighton;
-	flashlighton.SetFloat(m_HL2Local.m_flSuitPower / 100.0f);
-	FirePlayerProxyOutput("OnFlashlightOn", flashlighton, this, this);
+	flashlighton.SetFloat( m_HL2Local.m_flSuitPower / 100.0f );
+	FirePlayerProxyOutput( "OnFlashlightOn", flashlighton, this, this );
 }
 
-// Dear lord, why must you make me do this the wrong way?
-ConVar vance_kick_meleedamageforce("kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity.");
-ConVar vance_kick_powerscale("kick_powerscale", "1", FCVAR_ARCHIVE, "The default damage of kick without player velocity.");
-
-void CVancePlayer::Hit(trace_t& traceHit, Activity nHitActivity, bool bIsSecondary)
+void CVancePlayer::Hit(trace_t& tr, Activity nHitActivity)
 {
-	CBasePlayer* pPlayer = this;
-
 	// Make sound for the AI
-	CSoundEnt::InsertSound(SOUND_BULLET_IMPACT, traceHit.endpos, 400, 0.2f, pPlayer);
-
-	// This isn't great, but it's something for when the crowbar hits.
-	pPlayer->RumbleEffect(RUMBLE_AR2, 0, RUMBLE_FLAG_RESTART);
-
-	CBaseEntity* pHitEntity = traceHit.m_pEnt;
+	CSoundEnt::InsertSound( SOUND_BULLET_IMPACT, tr.endpos, 400, 0.2f, this );
 
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
-	//Apply damage to a hit target
-	if (pHitEntity)
+	// Apply damage to a hit target
+	if ( tr.m_pEnt )
 	{
-		Vector hitDirection;
-		pPlayer->EyeVectors(&hitDirection, NULL, NULL);
-		VectorNormalize(hitDirection);
+		Vector vecForward;
+		EyeVectors( &vecForward );
 
-		CTakeDamageInfo info(pPlayer, pPlayer, 20 * vance_kick_powerscale.GetFloat() * flDamageMult, DMG_KICK);
+		CTakeDamageInfo info( this, this, 20 * vance_kick_powerscale.GetFloat() * flDamageMult, DMG_KICK );
 
-		if (pPlayer && pHitEntity->IsNPC())
+		if ( tr.m_pEnt->IsNPC() )
 		{
 			// If bonking an NPC, adjust damage.
 			info.AdjustPlayerDamageInflictedForSkillLevel();
 		}
 
-		CalculateMeleeDamageForce(&info, hitDirection, traceHit.endpos);
-		info.SetDamageForce(info.GetDamageForce() * vance_kick_meleedamageforce.GetFloat() * flForceMult);
+		CalculateMeleeDamageForce( &info, vecForward, tr.endpos );
+		info.SetDamageForce( info.GetDamageForce() * vance_kick_meleedamageforce.GetFloat() * flForceMult );
 
-		pHitEntity->DispatchTraceAttack(info, hitDirection, &traceHit);
+		tr.m_pEnt->DispatchTraceAttack( info, vecForward, &tr );
 		ApplyMultiDamage();
 
 		// Now hit all triggers along the ray that... 
-		TraceAttackToTriggers(info, traceHit.startpos, traceHit.endpos, hitDirection);
-
-		if (ToBaseCombatCharacter(pHitEntity))
-		{
-			gamestats->Event_WeaponHit(pPlayer, !bIsSecondary, GetClassname(), info);
-		}
+		TraceAttackToTriggers( info, tr.startpos, tr.endpos, vecForward );
 	}
-
-	// Apply an impact effect
-	//ImpactEffect(traceHit);
-}
-
-void CVancePlayer::SetKickTime(CBaseViewModel* pViewModel)
-{
-	float sequenceDuration = 0.0f;
-	if ( pViewModel )
-	{
-		sequenceDuration = pViewModel->SequenceDuration();
-	}
-
-	m_flKickTime = sequenceDuration / 4 + gpGlobals->curtime + vance_kick_time_adjust.GetFloat();
 }
 
 void CVancePlayer::KickAttack()
 {
 	MDLCACHE_CRITICAL_SECTION();
 
-	trace_t traceHit;
-	Vector vecDirection;
-	//int kick_maxrange = 120;
-	AngleVectors(QAngle(EyeAngles().x, EyeAngles().y, EyeAngles().z), &vecDirection);
-
-	//vm->SendViewModelMatchingSequence(idealSequence);
-
-	// Try a ray
-	CBasePlayer* pOwner = this;
-	if (!pOwner)
-		return;
-
-	pOwner->RumbleEffect(RUMBLE_CROWBAR_SWING, 0, RUMBLE_FLAG_RESTART);
-
-	Vector swingStart = Weapon_ShootPosition();
-	Vector forward;
-
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
-	forward = pOwner->GetAutoaimVector(AUTOAIM_SCALE_DEFAULT, 64);
+	Vector vecForward;
+	EyeVectors( &vecForward );
 
-	Vector swingEnd = swingStart + forward * vance_kick_range.GetFloat();
-	UTIL_TraceLine(swingStart, swingEnd, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit);
-	//Activity nHitActivity = ACT_VM_PRIMARYATTACK;
+	Vector swingStart = Weapon_ShootPosition();
+	Vector swingEnd = swingStart + vecForward * vance_kick_range.GetFloat();
+
+	trace_t tr;
+	UTIL_TraceLine( swingStart, swingEnd, MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr );
 
 	// Like bullets, bludgeon traces have to trace against triggers.
 	CTakeDamageInfo triggerInfo(this, this, 20 * vance_kick_powerscale.GetFloat() * flDamageMult, DMG_KICK);
-	triggerInfo.SetDamagePosition(traceHit.startpos);
+	triggerInfo.SetDamagePosition( tr.startpos );
 	triggerInfo.SetDamageForce(triggerInfo.GetDamageForce() * vance_kick_meleedamageforce.GetFloat() * flForceMult);
-	TraceAttackToTriggers(triggerInfo, traceHit.startpos, traceHit.endpos, forward);
+	TraceAttackToTriggers( triggerInfo, tr.startpos, tr.endpos, vecForward );
 
 	const float bludgeonHullDim = 16;
-	static const Vector bludgeonMins( -bludgeonHullDim, -bludgeonHullDim, -bludgeonHullDim );
-	static const Vector bludgeonMaxs( bludgeonHullDim, bludgeonHullDim, bludgeonHullDim );
+	const Vector bludgeonMins( -bludgeonHullDim, -bludgeonHullDim, -bludgeonHullDim );
+	const Vector bludgeonMaxs( bludgeonHullDim, bludgeonHullDim, bludgeonHullDim );
 
-	if (traceHit.fraction == 1.0)
+	if ( tr.fraction == 1.0 )
 	{
 		float bludgeonHullRadius = 1.732f * bludgeonHullDim; // Hull is +/- 16, so use cuberoot of 2 to determine how big the hull is from center to the corner point
-		swingEnd -= forward * bludgeonHullRadius;	// Back off by hull "radius"
+		swingEnd -= vecForward * bludgeonHullRadius; // Back off by hull "radius"
 
-		UTIL_TraceHull( swingStart, swingEnd, bludgeonMins, bludgeonMaxs, MASK_SHOT_HULL, pOwner, COLLISION_GROUP_NONE, &traceHit );
-		if (traceHit.fraction < 1.0 && traceHit.m_pEnt)
+		UTIL_TraceHull( swingStart, swingEnd, bludgeonMins, bludgeonMaxs, MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr );
+		if ( tr.fraction < 1.0 && tr.m_pEnt )
 		{
-			Vector vecToTarget = traceHit.m_pEnt->GetAbsOrigin() - swingStart;
+			Vector vecToTarget = tr.m_pEnt->GetAbsOrigin() - swingStart;
 			VectorNormalize(vecToTarget);
 
-			float dot = vecToTarget.Dot(forward);
+			float dot = DotProduct( vecToTarget, vecForward );
 
 			// YWB:  Make sure they are sort of facing the guy at least...
-			if (dot < 0.70721f)
+			if ( dot < 0.70721f )
 			{
 				// Force amiss
-				traceHit.fraction = 1.0f;
+				tr.fraction = 1.0f;
 			}
 		}
 	}
 
-	if (traceHit.DidHit())
+	if (tr.DidHit())
 	{
 		EmitSound("HL2Player.KickHit");
-		UTIL_ScreenShake(GetAbsOrigin(), 4.0f, 10.0f, 0.25f, 1000, SHAKE_START, false);
+		UTIL_ScreenShake( GetAbsOrigin(), 4.0f, 10.0f, 0.25f, 1000, SHAKE_START, false );
 	}
 	else
 	{
 		EmitSound("HL2Player.KickMiss");
 	}
 
-	QAngle	recoil = QAngle(random->RandomFloat(-1.0f, -2.0f), 0, random->RandomFloat(-2.0f, 2.0f));
-	ViewPunch(recoil);
+	ViewPunch( QAngle( random->RandomFloat( -1.0f, -2.0f ), 0, random->RandomFloat( -2.0f, 2.0f ) ) );
 
-	gamestats->Event_WeaponFired(pOwner, false, GetClassname());
-
-	if (traceHit.fraction != 1.0f)
+	if (tr.fraction != 1.0f)
 	{
-		Hit(traceHit, ACT_VM_PRIMARYATTACK, false);
+		Hit( tr, ACT_VM_PRIMARYATTACK );
 	}
 }
 
@@ -1871,26 +1799,17 @@ void CVancePlayer::UpdateClientData()
 	// Update Flashlight
 	if (FlashlightIsOn() && !sv_infinite_aux_power.GetBool())
 	{
-		m_HL2Local.m_flFlashBattery -= (!IsSuitEquipped() ? FLASH_DRAIN_TIME_SUITLESS : FLASH_DRAIN_TIME) * gpGlobals->frametime;
+		m_HL2Local.m_flFlashBattery -= FLASH_DRAIN_TIME * gpGlobals->frametime;
 		if (m_HL2Local.m_flFlashBattery < 0.0f)
 		{
 			FlashlightTurnOff();
 			m_HL2Local.m_flFlashBattery = 0.0f;
 		}
-
-		// Turn off the flashlight if the current weapon doesn't have the 'flashlight' attachment,
-		// remove this check to fallback to the 'muzzle' attachment.
-		CBaseViewModel* pVM = GetViewModel();
-		if (!IsSuitEquipped() && (!GetActiveWeapon() || (pVM && !pVM->LookupAttachment("flashlight"))))
-		{
-			FlashlightTurnOff();
-		}
 	}
 	else
 	{
-		// Allow a suitless player to horde flashlight power when grabbing batteries.
-		m_HL2Local.m_flFlashBattery += (!IsSuitEquipped() ? FLASH_CHARGE_TIME_SUITLESS : FLASH_CHARGE_TIME) * gpGlobals->frametime;
-		if (IsSuitEquipped() && m_HL2Local.m_flFlashBattery > 100.0f)
+		m_HL2Local.m_flFlashBattery += FLASH_CHARGE_TIME * gpGlobals->frametime;
+		if ( IsSuitEquipped() && m_HL2Local.m_flFlashBattery > 100.0f )
 		{
 			m_HL2Local.m_flFlashBattery = 100.0f;
 		}

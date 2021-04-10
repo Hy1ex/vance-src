@@ -47,7 +47,6 @@ void CItemStim::Precache()
 	PrecacheModel("models/healthvial.mdl");
 
 	PrecacheScriptSound( "Stim.Touch" );
-	PrecacheScriptSound( "Stim.Touch_Suitless" );
 }
 
 
@@ -69,14 +68,8 @@ bool CItemStim::MyTouch( CBasePlayer *pPlayer )
 		WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		const char *szSoundToPlay = "Stim.Touch";
-		if ( !pPlayer->IsSuitEquipped() )
-		{
-			szSoundToPlay = "Stim.Touch_Suitless";
-		}
-
-		CPASAttenuationFilter filter( pPlayer, szSoundToPlay );
-		EmitSound( filter, pPlayer->entindex(), szSoundToPlay );
+		CPASAttenuationFilter filter( pPlayer, "Stim.Touch" );
+		EmitSound( filter, pPlayer->entindex(), "Stim.Touch" );
 
 		UTIL_Remove( this );
 		return true;

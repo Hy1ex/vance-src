@@ -13,14 +13,10 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define BURST_SIZE 2
-#define BURST_SOONEST_REFIRE_RATE 0.4 // tap-shoot speed
-#define BURST_AUTO_REFIRE_RATE 0.4; // hold-shoot speed
-#define BURST_RATE 0.05
-#define BURST_DAMAGE 5.0 // per-bullet of the burst damage
+ConVar sk_alyxgun_burst_rate( "sk_alyxgun_burst_rate", "0.05", FCVAR_CHEAT );
+ConVar sk_alyxgun_burst_damage( "sk_alyxgun_burst_damage", "5.0", FCVAR_CHEAT );
 
-#define AUTO_ACCURACY_CONE 0.0 // 100% accurate
-#define AUTO_DAMAGE 15.0
+ConVar sk_alyxgun_semiauto_damage( "sk_alyxgun_semiauto_damage", "15.0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // CWeaponResistanceGun
@@ -147,9 +143,6 @@ void CWeaponResistanceGun::DryFire()
 {
 	WeaponSound( EMPTY );
 	SendWeaponAnim( ACT_VM_DRYFIRE );
-
-	m_flSoonestPrimaryAttack = gpGlobals->curtime + 0.2f;
-	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 }
 
 //-----------------------------------------------------------------------------
@@ -157,18 +150,22 @@ void CWeaponResistanceGun::DryFire()
 //-----------------------------------------------------------------------------
 void CWeaponResistanceGun::BurstThink()
 {
+	const int BURST_SIZE = 3;
+
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
 
-	m_bInBurst = true;
-
-	if (m_iClip1 <= 0)
+	if ( m_iClip1 <= 0 || m_nBurstShot == BURST_SIZE )
 	{
+		if ( m_nBurstShot != BURST_SIZE )
+		{
+			DryFire();
+		}
+
+		m_flSoonestPrimaryAttack = gpGlobals->curtime + 0.4f;
+		m_flNextPrimaryAttack = gpGlobals->curtime + 0.4f;
 		m_nBurstShot = 0;
-
-		DryFire();
-
 		m_bInBurst = false;
 		SetNextThink(TICK_NEVER_THINK); // We're out of ammo, end of burst.
 		return;
@@ -179,28 +176,14 @@ void CWeaponResistanceGun::BurstThink()
 	pPlayer->EyeVectors( &vecShootDir );
 	Vector vecSpread = m_nBurstShot == 0 ? VECTOR_CONE_PRECALCULATED : VECTOR_CONE_4DEGREES;
 
-	FireBulletProjectiles(1, vecShootOrigin, vecShootDir, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, 1, BURST_DAMAGE);
+	FireBulletProjectiles(1, vecShootOrigin, vecShootDir, vecSpread, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, -1, 1, sk_alyxgun_burst_damage.GetFloat());
 
 	pPlayer->DoMuzzleFlash();
 
-	m_iClip1 = m_iClip1 - 1;
+	m_iClip1--;
+	m_nBurstShot++;
 
-	if (m_nBurstShot < BURST_SIZE)
-	{
-		m_nBurstShot++;
-		SetNextThink(gpGlobals->curtime + BURST_RATE);
-		return;
-	}
-	else
-	{
-		m_flSoonestPrimaryAttack = gpGlobals->curtime + BURST_SOONEST_REFIRE_RATE;
-		m_flNextPrimaryAttack = gpGlobals->curtime + BURST_AUTO_REFIRE_RATE;
-
-		m_nBurstShot = 0;
-		m_bInBurst = false;
-		SetNextThink(TICK_NEVER_THINK); // We've fired 3 bullets, end of burst.
-		return;
-	}
+	SetNextThink( gpGlobals->curtime + sk_alyxgun_burst_rate.GetFloat() );
 }
 
 //-----------------------------------------------------------------------------
@@ -212,9 +195,11 @@ void CWeaponResistanceGun::PrimaryAttack()
 	if ( !pOwner )
 		return;
 
-	if (m_iClip1 <= 0)
+	if ( m_iClip1 <= 0 )
 	{
 		DryFire();
+		m_flSoonestPrimaryAttack = gpGlobals->curtime + 0.2f;
+		m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 		return;
 	}
 	
@@ -230,7 +215,7 @@ void CWeaponResistanceGun::PrimaryAttack()
 		pOwner->EyeVectors( &vecShootDir );
 		
 		WeaponSound(SINGLE);
-		FireBulletProjectiles(1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, entindex(), -1, AUTO_DAMAGE);
+		FireBulletProjectiles( 1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 1, entindex(), -1, sk_alyxgun_semiauto_damage.GetFloat() );
 		pOwner->DoMuzzleFlash();
 		m_iClip1--;
 
@@ -241,6 +226,7 @@ void CWeaponResistanceGun::PrimaryAttack()
 	{
 		// Burst fires are handle almost entirely by our think function
 		WeaponSound( BURST );
+		m_bInBurst = true;
 		SetThink( &CWeaponResistanceGun::BurstThink );
 		SetNextThink( gpGlobals->curtime );
 	}
@@ -395,6 +381,8 @@ bool CWeaponResistanceGun::SendWeaponAnim( int iActivity )
 			case ACT_VM_DRAW:
 				iActivity = ACT_VM_DRAW_EXTENDED;
 				break;
+			case ACT_VM_KICK:
+				iActivity = ACT_VM_KICK_EXTENDED;
 		}
 	}
 

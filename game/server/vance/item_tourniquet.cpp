@@ -44,7 +44,6 @@ void CItemTourniquet::Precache()
 	PrecacheModel("models/healthvial.mdl");
 
 	PrecacheScriptSound( "Tourniquet.Touch" );
-	PrecacheScriptSound( "Tourniquet.Touch_Suitless" );
 }
 
 
@@ -66,14 +65,8 @@ bool CItemTourniquet::MyTouch( CBasePlayer *pPlayer )
 		WRITE_STRING( GetClassname() );
 		MessageEnd();
 
-		const char *szSoundToPlay = "Tourniquet.Touch";
-		if ( !pPlayer->IsSuitEquipped() )
-		{
-			szSoundToPlay = "Tourniquet.Touch_Suitless";
-		}
-
-		CPASAttenuationFilter filter( pPlayer, szSoundToPlay );
-		EmitSound( filter, pPlayer->entindex(), szSoundToPlay );
+		CPASAttenuationFilter filter( pPlayer, "Tourniquet.Touch" );
+		EmitSound( filter, pPlayer->entindex(), "Tourniquet.Touch" );
 
 		UTIL_Remove( this );
 		return true;
