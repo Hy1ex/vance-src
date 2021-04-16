@@ -107,8 +107,8 @@ public:
 	void					UseTourniquet();
 	void					UseStim();
 
-	bool					GiveTourniquet( int count = 0 );
-	bool					GiveStim( int count = 0 );
+	bool					GiveTourniquet( int count = 1 );
+	bool					GiveStim( int count = 1 );
 	
 private:
 
