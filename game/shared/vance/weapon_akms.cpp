@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		ResistanceGun - hand gun
+// Purpose:		AKMS with overheating
 //
 // $NoKeywords: $
 //=============================================================================//

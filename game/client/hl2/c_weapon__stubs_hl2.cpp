@@ -47,6 +47,7 @@ STUB_WEAPON_CLASS( weapon_oldmanharpoon, WeaponOldManHarpoon, C_WeaponCitizenPac
 #ifdef VANCE
 STUB_WEAPON_CLASS(weapon_resistancegun, WeaponResistanceGun, C_BaseHLCombatWeapon);
 //STUB_WEAPON_CLASS(weapon_akms, WeaponAKMS, C_BaseHLCombatWeapon);
+STUB_WEAPON_CLASS( weapon_anastasia, WeaponAnastasia, C_BaseHLCombatWeapon );
 #endif
 
 
