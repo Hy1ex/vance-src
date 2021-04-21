@@ -12,6 +12,8 @@ $Group "game"
 {
 	"client"
 	"server"
+	"tier1"
+	"mathlib"
 }
 
 $Group "shaders"
