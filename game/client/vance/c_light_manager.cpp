@@ -257,7 +257,7 @@ void CLightingManager::PrepareShadowLights()
 
 void CLightingManager::RenderLights(const CViewSetup& view)
 {
-	CMatRenderContextPtr pRenderContext(materials);
+/*	CMatRenderContextPtr pRenderContext(materials);
 
 	FOR_EACH_VEC_FAST(LightDesc_t*, m_hLights, l)
 	{
@@ -267,6 +267,7 @@ void CLightingManager::RenderLights(const CViewSetup& view)
 			DrawWorldSpaceLightPyramid(pRenderContext, *l, m_matLightMaterial, 0);
 	}
 	FOR_EACH_VEC_FAST_END;
+	*/
 }
 
 void CLightingManager::LevelInitPreEntity()
