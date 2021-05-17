@@ -106,13 +106,6 @@ SHADER_DRAW
 		Draw(false);
 	}
 
-	if (!hasFlashlight)
-	{
-		DrawLightPass_Vars_t vars;
-		SetupVars(vars);
-		DrawLightPass(this, params, pShaderAPI, pShaderShadow, vertexCompression, pContextDataPtr, vars);
-	}
-
 }
 
 END_SHADER

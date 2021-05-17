@@ -13,11 +13,18 @@
 #include "lightmappedPBR_ps30.inc"
 #include "commandbuilder.h"
 
+#include "IDeferredExt.h"
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 static ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
+
+
+extern ConVar r_csm_bias;
+extern ConVar r_csm_slopescalebias;
+extern ConVar r_csm_performance;
 extern ConVar mat_cubemapparallax;
 
 //-----------------------------------------------------------------------------
@@ -231,11 +238,12 @@ static void DrawLightmappedPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVa
 			flags |= VERTEX_COLOR;
 		}
 
+		pShaderShadow->EnableTexture( SHADER_SAMPLER4, true ); // Shadow depth map
+		pShaderShadow->SetShadowDepthFiltering( SHADER_SAMPLER4 );
+		pShaderShadow->EnableSRGBRead( SHADER_SAMPLER4, false );
+
 		if( bHasFlashlight )
 		{
-			pShaderShadow->EnableTexture( SHADER_SAMPLER4, true );	// Shadow depth map
-			pShaderShadow->SetShadowDepthFiltering( SHADER_SAMPLER4 );
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER4, false );
 			pShaderShadow->EnableTexture( SHADER_SAMPLER5, true );	// Noise map
 			pShaderShadow->EnableTexture( SHADER_SAMPLER6, true );	// Flashlight cookie
 			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER6, true );
@@ -340,6 +348,9 @@ static void DrawLightmappedPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVa
 
 		pShaderAPI->BindStandardTexture(SHADER_SAMPLER11, TEXTURE_LIGHTMAP);
 
+		ITexture *pCascadedDepthTexture = (ITexture *)pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_DEPTHTEXTURE );
+		bool bUseCSM = pCascadedDepthTexture != NULL;
+
 		if (!g_pConfig->m_bFastNoBump)
 		{
 			if (bHasBump)
@@ -408,8 +419,9 @@ static void DrawLightmappedPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVa
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( CUBEMAPCORRECTED, isEnvmapCorrected && mat_cubemapparallax.GetBool());
-		SET_DYNAMIC_PIXEL_SHADER_COMBO(LIGHT_PREVIEW,
-			pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_ENABLE_FIXED_LIGHTING));
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( LIGHT_PREVIEW, pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_ENABLE_FIXED_LIGHTING ) );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM, bUseCSM && !bHasFlashlight );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM_PERF, MAX( 0, MIN( r_csm_performance.GetInt(), 2 ) ) ); // i just dont know anymore
 		SET_DYNAMIC_PIXEL_SHADER(lightmappedpbr_ps30);
 
 		if (bSeamlessMapping)
@@ -466,6 +478,34 @@ static void DrawLightmappedPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVa
 			tweaks[1] = ShadowAttenFromState( flashlightState );
 			pShader->HashShadow2DJitter( flashlightState.m_flShadowJitterSeed, &tweaks[2], &tweaks[3] );
 			pShaderAPI->SetPixelShaderConstant( PSREG_ENVMAP_TINT__SHADOW_TWEAKS, tweaks, 1 );
+		}
+		else
+		{
+			if ( bUseCSM )
+			{
+				pShader->BindTexture( SHADER_SAMPLER4, pCascadedDepthTexture );
+
+				VMatrix *worldToTexture0 = (VMatrix *)pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0 );
+				pShaderAPI->SetPixelShaderConstant( 22, worldToTexture0->Base(), 4 );
+
+				lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
+				Vector csmFwd = csmData.vecLight;
+				pShaderAPI->SetPixelShaderConstant( 26, csmFwd.Base() );
+
+				Vector csmLight = csmData.light.AsVector3D();
+				pShaderAPI->SetPixelShaderConstant( 27, csmLight.Base() );
+
+				Vector csmAmbient = csmData.ambient.AsVector3D();
+				pShaderAPI->SetPixelShaderConstant( 28, csmAmbient.Base() );
+
+				float biasVar[2] = { r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat() };
+				pShaderAPI->SetPixelShaderConstant( 31, biasVar );
+
+				float textureSize[2] = { pCascadedDepthTexture->GetActualWidth(), pCascadedDepthTexture->GetActualHeight() };
+				pShaderAPI->SetPixelShaderConstant( 32, textureSize );
+
+				pShaderAPI->SetPixelShaderConstant( 33, GetDeferredExt()->GetLightData_Global().sizes.Base() );
+			}
 		}
 	}
 	pShader->Draw();

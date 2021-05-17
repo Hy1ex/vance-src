@@ -217,17 +217,10 @@ BEGIN_VS_SHADER(SDK_LightmappedGeneric,
 	{
 		SetupVars( s_info );
 		InitLightmappedGeneric_DX9( this, params, s_info );
-
-#ifdef VANCE
-		DrawLightPass_Vars_t vars;
-		SetupVars(vars);
-		InitLightPass(this, params, vars);
-#endif // VANCE
 	}
 
 	SHADER_DRAW
 	{
-		bool hasFlashlight = UsingFlashlight(params);
 		bool bDrawStandardPass = true;
 
 		if (bDrawStandardPass)
@@ -238,13 +231,6 @@ BEGIN_VS_SHADER(SDK_LightmappedGeneric,
 		{
 			// Skip this pass!
 			Draw(false);
-		}
-
-		if (!hasFlashlight)
-		{
-			DrawLightPass_Vars_t vars;
-			SetupVars(vars);
-			DrawLightPass(this, params, pShaderAPI, pShaderShadow, vertexCompression, pContextDataPtr, vars);
 		}
 	}
 END_SHADER

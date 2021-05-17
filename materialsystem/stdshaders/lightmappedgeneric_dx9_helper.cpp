@@ -587,7 +587,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 				DECLARE_STATIC_VERTEX_SHADER(lightmappedgeneric_vs30);
 #endif // !VANCE
 				SET_STATIC_VERTEX_SHADER_COMBO( ENVMAP_MASK,  hasEnvmapMask );
-				SET_STATIC_VERTEX_SHADER_COMBO( TANGENTSPACE,  params[info.m_nEnvmap]->IsTexture() );
+				SET_STATIC_VERTEX_SHADER_COMBO( TANGENTSPACE,  1 );
 				SET_STATIC_VERTEX_SHADER_COMBO( BUMPMAP,  hasBump );
 				SET_STATIC_VERTEX_SHADER_COMBO( DIFFUSEBUMPMAP, hasDiffuseBumpmap );
 				SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR, IS_FLAG_SET( MATERIAL_VAR_VERTEXCOLOR ) );
@@ -685,7 +685,6 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 				SET_STATIC_PIXEL_SHADER_COMBO(SEAMLESS, bSeamlessMapping);
 				//SET_STATIC_PIXEL_SHADER_COMBO(OUTLINE, bHasOutline);
 				//SET_STATIC_PIXEL_SHADER_COMBO(SOFTEDGES, bHasSoftEdges);
-				SET_STATIC_PIXEL_SHADER_COMBO(DETAIL_BLEND_MODE, nDetailBlendMode);
 				SET_STATIC_PIXEL_SHADER(lightmappedgeneric_ps30);
 #endif // !VANCE
 				// HACK HACK HACK - enable alpha writes all the time so that we have them for
@@ -966,8 +965,8 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 	{
 
 
-	ITexture* pCascadedDepthTexture = (ITexture*)pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_CASCADED_DEPTHTEXTURE);
-	bool bCSM = /*pCascadedDepthTexture != NULL*/ false;
+		ITexture* pCascadedDepthTexture = (ITexture*)pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_CASCADED_DEPTHTEXTURE);
+		bool bCSM = pCascadedDepthTexture != NULL;
 
 		CCommandBufferBuilder< CFixedCommandStorageBuffer< 1000 > > DynamicCmdsOut;
 		DynamicCmdsOut.Call( pContextData->m_pStaticCmds );
@@ -1081,18 +1080,18 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		
 		SET_DYNAMIC_PIXEL_SHADER_COMBO(CUBEMAPCORRECTED, isEnvmapCorrected && hasEnvmap && mat_cubemapparallax.GetBool());
 		SET_DYNAMIC_PIXEL_SHADER_COMBO(LIGHTING_PREVIEW, nFixedLightingMode);
+
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM, bCSM && !hasFlashlight );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM_PERF, MAX( 0, MIN( r_csm_performance.GetInt(), 2 ) ) ); // i just dont know anymore
 		SET_DYNAMIC_PIXEL_SHADER_CMD(DynamicCmdsOut, lightmappedgeneric_ps30);
 #endif // !1
 
 
 		if (bCSM)
 		{
-			if (pCascadedDepthTexture)
-			{
-				pShader->BindTexture(SHADER_SAMPLER13, pCascadedDepthTexture);
-				VMatrix* worldToTexture0 = (VMatrix*)pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0);
-				pShaderAPI->SetPixelShaderConstant(22, worldToTexture0->Base(), 4);
-			}
+			pShader->BindTexture(SHADER_SAMPLER13, pCascadedDepthTexture);
+			VMatrix* worldToTexture0 = (VMatrix*)pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0);
+			pShaderAPI->SetPixelShaderConstant(22, worldToTexture0->Base(), 4);
 
 			lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
 			Vector csmFwd = csmData.vecLight;

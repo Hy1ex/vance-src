@@ -13,13 +13,17 @@
 #include "vertexlitPBR_ps30.inc"
 #include "commandbuilder.h"
 
+#include "IDeferredExt.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 static ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
 static ConVar r_rimlight( "r_rimlight", "1", FCVAR_CHEAT );
-static ConVar r_ibl_basic("r_ibl_basic", "1");
+
+extern ConVar r_csm_bias;
+extern ConVar r_csm_slopescalebias;
+extern ConVar r_csm_performance;
 
 //-----------------------------------------------------------------------------
 // Initialize shader parameters
@@ -232,11 +236,12 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 			flags |= VERTEX_COLOR;
 		}
 
+		pShaderShadow->EnableTexture( SHADER_SAMPLER4, true ); // Shadow depth map
+		pShaderShadow->SetShadowDepthFiltering( SHADER_SAMPLER4 );
+		pShaderShadow->EnableSRGBRead( SHADER_SAMPLER4, false );
+
 		if( bHasFlashlight )
 		{
-			pShaderShadow->EnableTexture( SHADER_SAMPLER4, true );	// Shadow depth map
-			pShaderShadow->SetShadowDepthFiltering( SHADER_SAMPLER4 );
-			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER4, false );
 			pShaderShadow->EnableTexture( SHADER_SAMPLER5, true );	// Noise map
 			pShaderShadow->EnableTexture( SHADER_SAMPLER6, true );	// Flashlight cookie
 			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER6, true );
@@ -385,6 +390,9 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 			AssertMsg( !(bWriteDepthToAlpha && bWriteWaterFogToAlpha), "Can't write two values to alpha at the same time." );
 		}
 
+		ITexture *pCascadedDepthTexture = (ITexture *)pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_DEPTHTEXTURE );
+		bool bUseCSM = pCascadedDepthTexture != NULL;
+
 		DECLARE_DYNAMIC_VERTEX_SHADER( vertexlitpbr_vs30 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, fogIndex );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, numBones > 0 );
@@ -401,10 +409,11 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-		SET_DYNAMIC_PIXEL_SHADER_COMBO( OLDIBL, r_ibl_basic.GetBool());
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( LIGHTMAP, bHasLightmap);
 		SET_DYNAMIC_PIXEL_SHADER_COMBO(LIGHT_PREVIEW,
 			pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_ENABLE_FIXED_LIGHTING));
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM, bUseCSM && !bHasFlashlight );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( CSM_PERF, MAX( 0, MIN( r_csm_performance.GetInt(), 2 ) ) ); // i just dont know anymore
 		SET_DYNAMIC_PIXEL_SHADER(vertexlitpbr_ps30);
 
 		pShader->SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, info.m_nBaseTextureTransform );
@@ -462,6 +471,34 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 			tweaks[1] = ShadowAttenFromState( flashlightState );
 			pShader->HashShadow2DJitter( flashlightState.m_flShadowJitterSeed, &tweaks[2], &tweaks[3] );
 			pShaderAPI->SetPixelShaderConstant( PSREG_ENVMAP_TINT__SHADOW_TWEAKS, tweaks, 1 );
+		}
+		else
+		{
+			if ( bUseCSM )
+			{
+				pShader->BindTexture( SHADER_SAMPLER4, pCascadedDepthTexture );
+
+				VMatrix *worldToTexture0 = (VMatrix *)pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0 );
+				pShaderAPI->SetPixelShaderConstant( 32, worldToTexture0->Base(), 4 );
+
+				lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
+				Vector csmFwd = csmData.vecLight;
+				pShaderAPI->SetPixelShaderConstant( 36, csmFwd.Base() );
+
+				Vector csmLight = csmData.light.AsVector3D();
+				pShaderAPI->SetPixelShaderConstant( 37, csmLight.Base() );
+
+				Vector csmAmbient = csmData.ambient.AsVector3D();
+				pShaderAPI->SetPixelShaderConstant( 38, csmAmbient.Base() );
+
+				float biasVar[2] = { r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat() };
+				pShaderAPI->SetPixelShaderConstant( 39, biasVar );
+
+				float textureSize[2] = { pCascadedDepthTexture->GetActualWidth(), pCascadedDepthTexture->GetActualHeight() };
+				pShaderAPI->SetPixelShaderConstant( 40, textureSize );
+
+				pShaderAPI->SetPixelShaderConstant( 41, GetDeferredExt()->GetLightData_Global().sizes.Base() );
+			}
 		}
 	}
 	pShader->Draw();
