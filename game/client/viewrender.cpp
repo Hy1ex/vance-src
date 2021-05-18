@@ -2310,13 +2310,6 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		bool bDrew3dSkybox = false;
 		SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
 
-		CDepthView* pDepthView = new CDepthView(this);
-		pDepthView->Setup(view);
-		{
-			AddViewToScene(pDepthView);
-		}
-		SafeRelease(pDepthView);
-
 		// clear happens here probably
 		SetupMain3DView( view, nClearFlags );
 
@@ -2348,6 +2341,16 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		{
 			ViewDrawScene_Intro( view, nClearFlags, *g_pIntroData );
 		}
+
+
+		// HACKHACK: depth pre-pass messes up with view frustum stack in the engine
+		// so i have to do it AFTER we render everything
+		CDepthView *pDepthView = new CDepthView( this );
+		pDepthView->Setup( view );
+		{
+			AddViewToScene( pDepthView );
+		}
+		SafeRelease( pDepthView );
 
 		if (r_volumetrics.GetBool())
 		{
@@ -5747,15 +5750,14 @@ void CBaseWorldView::PopView()
 			if ( m_DrawFlags & DF_RENDER_REFRACTION )
 			{
 				pRenderContext->CopyRenderTargetToTextureEx( GetWaterRefractionTexture(), NULL, NULL );
-				render->PopView(GetFrustum());
 			}
 			if ( m_DrawFlags & DF_RENDER_REFLECTION )
 			{
 				pRenderContext->CopyRenderTargetToTextureEx( GetWaterReflectionTexture(), NULL, NULL );
-				render->PopView(GetFrustum());
 			}
 		}
 
+		render->PopView( GetFrustum() );
 		if (SavedLinearLightMapScale.x>=0)
 		{
 			//pRenderContext->SetToneMappingScaleLinear(SavedLinearLightMapScale);
