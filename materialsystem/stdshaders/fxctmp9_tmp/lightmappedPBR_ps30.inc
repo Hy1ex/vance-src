@@ -188,7 +188,7 @@ public:
 		bool bAllStaticVarsDefined = m_bCONVERT_TO_SRGB && m_bFLASHLIGHT && m_bCUBEMAP && m_bCUBEMAP_SPHERE_LEGACY && m_bSMOOTHNESS && m_bSEAMLESS && m_bBUMPMAP;
 		Assert( bAllStaticVarsDefined );
 #endif // _DEBUG
-		return ( 96 * m_nCONVERT_TO_SRGB ) + ( 96 * m_nFLASHLIGHT ) + ( 192 * m_nCUBEMAP ) + ( 384 * m_nCUBEMAP_SPHERE_LEGACY ) + ( 768 * m_nSMOOTHNESS ) + ( 1536 * m_nSEAMLESS ) + ( 3072 * m_nBUMPMAP ) + 0;
+		return ( 576 * m_nCONVERT_TO_SRGB ) + ( 576 * m_nFLASHLIGHT ) + ( 1152 * m_nCUBEMAP ) + ( 2304 * m_nCUBEMAP_SPHERE_LEGACY ) + ( 4608 * m_nSMOOTHNESS ) + ( 9216 * m_nSEAMLESS ) + ( 18432 * m_nBUMPMAP ) + 0;
 	}
 };
 #define shaderStaticTest_lightmappedpbr_ps30 psh_forgot_to_set_static_CONVERT_TO_SRGB + psh_forgot_to_set_static_FLASHLIGHT + psh_forgot_to_set_static_CUBEMAP + psh_forgot_to_set_static_CUBEMAP_SPHERE_LEGACY + psh_forgot_to_set_static_SMOOTHNESS + psh_forgot_to_set_static_SEAMLESS + psh_forgot_to_set_static_BUMPMAP + 0
@@ -300,6 +300,48 @@ public:
 #endif
 	}
 private:
+	int m_nCSM;
+#ifdef _DEBUG
+	bool m_bCSM;
+#endif
+public:
+	void SetCSM( int i )
+	{
+		Assert( i >= 0 && i <= 1 );
+		m_nCSM = i;
+#ifdef _DEBUG
+		m_bCSM = true;
+#endif
+	}
+	void SetCSM( bool i )
+	{
+		m_nCSM = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCSM = true;
+#endif
+	}
+private:
+	int m_nCSM_PERF;
+#ifdef _DEBUG
+	bool m_bCSM_PERF;
+#endif
+public:
+	void SetCSM_PERF( int i )
+	{
+		Assert( i >= 0 && i <= 2 );
+		m_nCSM_PERF = i;
+#ifdef _DEBUG
+		m_bCSM_PERF = true;
+#endif
+	}
+	void SetCSM_PERF( bool i )
+	{
+		m_nCSM_PERF = i ? 1 : 0;
+#ifdef _DEBUG
+		m_bCSM_PERF = true;
+#endif
+	}
+private:
 	int m_nLIGHT_PREVIEW;
 #ifdef _DEBUG
 	bool m_bLIGHT_PREVIEW;
@@ -344,6 +386,14 @@ public:
 #endif // _DEBUG
 		m_nCUBEMAPCORRECTED = 0;
 #ifdef _DEBUG
+		m_bCSM = false;
+#endif // _DEBUG
+		m_nCSM = 0;
+#ifdef _DEBUG
+		m_bCSM_PERF = false;
+#endif // _DEBUG
+		m_nCSM_PERF = 0;
+#ifdef _DEBUG
 		m_bLIGHT_PREVIEW = false;
 #endif // _DEBUG
 		m_nLIGHT_PREVIEW = 0;
@@ -353,10 +403,10 @@ public:
 		// Asserts to make sure that we aren't using any skipped combinations.
 		// Asserts to make sure that we are setting all of the combination vars.
 #ifdef _DEBUG
-		bool bAllDynamicVarsDefined = m_bWRITEWATERFOGTODESTALPHA && m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA && m_bFLASHLIGHTSHADOWS && m_bCUBEMAPCORRECTED && m_bLIGHT_PREVIEW;
+		bool bAllDynamicVarsDefined = m_bWRITEWATERFOGTODESTALPHA && m_bPIXELFOGTYPE && m_bWRITE_DEPTH_TO_DESTALPHA && m_bFLASHLIGHTSHADOWS && m_bCUBEMAPCORRECTED && m_bCSM && m_bCSM_PERF && m_bLIGHT_PREVIEW;
 		Assert( bAllDynamicVarsDefined );
 #endif // _DEBUG
-		return ( 1 * m_nWRITEWATERFOGTODESTALPHA ) + ( 2 * m_nPIXELFOGTYPE ) + ( 4 * m_nWRITE_DEPTH_TO_DESTALPHA ) + ( 8 * m_nFLASHLIGHTSHADOWS ) + ( 16 * m_nCUBEMAPCORRECTED ) + ( 32 * m_nLIGHT_PREVIEW ) + 0;
+		return ( 1 * m_nWRITEWATERFOGTODESTALPHA ) + ( 2 * m_nPIXELFOGTYPE ) + ( 4 * m_nWRITE_DEPTH_TO_DESTALPHA ) + ( 8 * m_nFLASHLIGHTSHADOWS ) + ( 16 * m_nCUBEMAPCORRECTED ) + ( 32 * m_nCSM ) + ( 64 * m_nCSM_PERF ) + ( 192 * m_nLIGHT_PREVIEW ) + 0;
 	}
 };
-#define shaderDynamicTest_lightmappedpbr_ps30 psh_forgot_to_set_dynamic_WRITEWATERFOGTODESTALPHA + psh_forgot_to_set_dynamic_PIXELFOGTYPE + psh_forgot_to_set_dynamic_WRITE_DEPTH_TO_DESTALPHA + psh_forgot_to_set_dynamic_FLASHLIGHTSHADOWS + psh_forgot_to_set_dynamic_CUBEMAPCORRECTED + psh_forgot_to_set_dynamic_LIGHT_PREVIEW + 0
+#define shaderDynamicTest_lightmappedpbr_ps30 psh_forgot_to_set_dynamic_WRITEWATERFOGTODESTALPHA + psh_forgot_to_set_dynamic_PIXELFOGTYPE + psh_forgot_to_set_dynamic_WRITE_DEPTH_TO_DESTALPHA + psh_forgot_to_set_dynamic_FLASHLIGHTSHADOWS + psh_forgot_to_set_dynamic_CUBEMAPCORRECTED + psh_forgot_to_set_dynamic_CSM + psh_forgot_to_set_dynamic_CSM_PERF + psh_forgot_to_set_dynamic_LIGHT_PREVIEW + 0
