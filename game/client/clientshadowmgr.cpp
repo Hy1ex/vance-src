@@ -1379,7 +1379,7 @@ void CClientShadowMgr::InitDepthTextureShadows()
 	{
 		m_bDepthTextureActive = true;
 
-		ImageFormat dstFormat = materials->GetShadowDepthTextureFormat();	// Vendor-dependent depth texture format
+		ImageFormat dstFormat = IMAGE_FORMAT_NV_DST24;                      // NVidia depth texture format
 		ImageFormat nullFormat = materials->GetNullTextureFormat();			// Vendor-dependent null texture format (takes as little memory as possible)
 
 		materials->BeginRenderTargetAllocation();
