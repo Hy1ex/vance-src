@@ -15,6 +15,7 @@ $Group "game"
 	"tier1"
 	"mathlib"
 	"gameui2"
+	"vgui_controls"
 }
 
 $Group "shaders"
