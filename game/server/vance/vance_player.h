@@ -55,6 +55,9 @@ public:
 	virtual void			CreateViewModel(int iViewModel = 0);
 
 	void					HandleSpeedChanges();
+	void					HandleThrowGrenade( void );
+	void					ThrowGrenade( void );
+	void					CreateGrenade( void );
 
 	void					Heal(int health); // move these to CBasePlayer at some point
 	void					Damage(int damage);
@@ -152,6 +155,12 @@ private:
 	bool		m_bStimRegeneration;
 	float		m_fStimRegenerationNextHealTime;
 	float		m_fStimRegenerationEndTime;
+
+	//QUick Grenade
+	float		timeholster;
+	float		timethrow;
+	float		timedeploy;
+	bool		WantThrow;
 
 	// Parkour
 	ParkourAction m_ParkourAction;

@@ -35,6 +35,7 @@
 #include "rumble_shared.h"
 #include "interpolatortypes.h"
 #include "ammodef.h"
+#include "grenade_frag.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -397,6 +398,103 @@ void CVancePlayer::HandleSpeedChanges()
 			StopWalking();
 		}
 	}
+}
+
+void CVancePlayer::HandleThrowGrenade( void )
+{
+	if ( ( m_afButtonPressed & IN_THROWGRENADE ) && !WantThrow && HasAnyAmmoOfType( 12 ) && HasWeapons() )
+	{
+		timeholster = NULL;
+		timethrow = NULL;
+		timedeploy = NULL;
+		WantThrow = true;
+	}
+
+	ThrowGrenade();
+}
+
+void CVancePlayer::ThrowGrenade( void )
+{
+	if ( WantThrow )
+	{
+		CBaseViewModel *vm = GetViewModel( 0 );
+		CBaseViewModel *vm2 = GetViewModel( 1 );
+
+		//2nd viewmodel creation
+		if ( !vm2 )
+		{
+			CreateViewModel( 1 );
+			vm2 = GetViewModel( 1 );
+		}
+
+		//HOLSTER SEQUENCING
+		int sequence1 = vm->SelectWeightedSequence( ACT_VM_HOLSTER );
+		if ( ( timeholster == NULL ) && ( sequence1 >= 0 ) )
+		{
+			vm->SendViewModelMatchingSequence( sequence1 );
+			timeholster = ( gpGlobals->curtime + vm->SequenceDuration( sequence1 ) + 0.5f );
+		}
+
+		//THROW SEQUENCING
+		if ( ( timeholster < gpGlobals->curtime ) && ( timeholster != NULL ) )
+		{
+			vm->AddEffects( EF_NODRAW );
+			vm2->SetWeaponModel( "models/weapons/v_grenade.mdl", NULL );
+
+			int sequence2 = vm2->SelectWeightedSequence( ACT_VM_THROW );
+			if ( ( timethrow == NULL ) && ( sequence2 >= 0 ) )
+			{
+				vm2->SendViewModelMatchingSequence( sequence2 );
+				timethrow = ( gpGlobals->curtime + vm2->SequenceDuration( sequence2 ) );
+				CreateGrenade();
+			}
+		}
+
+		if ( ( timethrow < gpGlobals->curtime ) && ( timethrow != NULL ) )
+		{
+			vm2->SetWeaponModel( NULL, NULL );
+			UTIL_RemoveImmediate( vm2 );
+			vm->RemoveEffects( EF_NODRAW );
+			int sequence3 = vm->SelectWeightedSequence( ACT_VM_DRAW );
+			if ( ( timedeploy == NULL ) && ( sequence3 >= 0 ) )
+			{
+				vm->SendViewModelMatchingSequence( sequence3 );
+				timedeploy = ( gpGlobals->curtime + vm->SequenceDuration( sequence3 ) );
+			}
+		}
+
+		if ( ( timedeploy < gpGlobals->curtime ) && ( timedeploy != NULL ) )
+		{
+			//Successfully Thrown A Grenade! Decrement ammo
+			RemoveAmmo( 1, 12 );
+			WantThrow = false;
+		}
+	}
+}
+
+void CVancePlayer::CreateGrenade( void )
+{
+	Vector vecEye = EyePosition();
+	Vector vForward, vRight;
+
+	EyeVectors( &vForward, &vRight, NULL );
+	Vector vecSrc = vecEye + vForward * 18.0f + vRight * 8.0f;
+	trace_t tr;
+
+	UTIL_TraceHull( vecEye, vecSrc, -Vector( 4.0f + 2, 4.0f + 2, 4.0f + 2 ), Vector( 4.0f + 2, 4.0f + 2, 4.0f + 2 ), PhysicsSolidMaskForEntity(), this, GetCollisionGroup(), &tr );
+
+	if ( tr.DidHit() )
+	{
+		vecSrc = tr.endpos;
+	}
+	vForward[2] += 0.1f;
+
+	Vector vecThrow;
+	GetVelocity( &vecThrow, NULL );
+	vecThrow += vForward * 1200;
+	Fraggrenade_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), this, 3.0f, false );
+
+	gamestats->Event_WeaponFired( this, true, GetClassname() );
 }
 
 //-----------------------------------------------------------------------------
