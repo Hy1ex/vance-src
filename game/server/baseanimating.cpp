@@ -3612,9 +3612,9 @@ CStudioHdr *CBaseAnimating::OnNewModel()
 }
 
 #ifdef VANCE
-void CBaseAnimating::Hack()
+void CBaseAnimating::Hack( CBaseEntity *pActivator, CBaseEntity *pCaller )
 {
 	m_bHacked = true;
-	FireNamedOutput("OnHack", variant_t(), this, this);
+	m_OnHacked.FireOutput( pActivator, pCaller );
 }
 #endif
