@@ -2657,8 +2657,12 @@ static void GatherSampleLightAt4Points( SSE_SampleInfo_t& info, int sampleIdx, i
 		{
 			if (info.m_WarnFace != info.m_FaceNum)
 			{
+				//Warning ("\nWARNING: Too many light styles on a face at (%f, %f, %f)\n",
+				//         info.m_Points.x.m128_f32[0], info.m_Points.y.m128_f32[0], info.m_Points.z.m128_f32[0] );
 				Warning ("\nWARNING: Too many light styles on a face at (%f, %f, %f)\n",
 					info.m_Points.x.m128_f32[0], info.m_Points.y.m128_f32[0], info.m_Points.z.m128_f32[0] );
+				 FLTX4_ELEMENT(info.m_Points.x, 0), FLTX4_ELEMENT(info.m_Points.y, 0), FLTX4_ELEMENT(info.m_Points.z, 0) );
+
 				info.m_WarnFace = info.m_FaceNum;
 			}
 			continue;
@@ -3413,13 +3417,7 @@ void BuildFacelights (int iThread, int facenum)
 		return;
 	}
 
-	if (!g_bUseMPI) 
-	{
-		//
-		// This is done on the master node when MPI is used
-		//
-		BuildPatchLights( facenum );
-	}
+	BuildPatchLights( facenum );
 
 	if( g_bDumpPatches )
 	{
