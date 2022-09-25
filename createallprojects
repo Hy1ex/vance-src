@@ -1,0 +1,2 @@
+#!/bin/sh
+devtools/bin/vpc /vance +everything /mksln everything
