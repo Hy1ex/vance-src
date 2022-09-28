@@ -1,6 +1,6 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2001, Valve LLC, All rights reserved. ============
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================
 
@@ -10,7 +10,7 @@
 #include "basehlcombatweapon.h"
 #include "decals.h"
 #include "beam_shared.h"
-#include "AmmoDef.h"
+#include "ammodef.h"
 #include "IEffects.h"
 #include "engine/IEngineSound.h"
 #include "in_buttons.h"
@@ -21,9 +21,9 @@
 #include "weapon_gauss.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &pos - 
-//			&angles - 
+// Purpose:
+// Input  : &pos -
+//			&angles -
 //-----------------------------------------------------------------------------
 extern void TE_GaussExplosion(IRecipientFilter& filter, float delay,
 	const Vector &pos, const Vector &dir, int type);
@@ -38,7 +38,7 @@ END_SEND_TABLE()
 LINK_ENTITY_TO_CLASS( weapon_gauss, CWeaponGaussGun );
 PRECACHE_WEAPON_REGISTER( weapon_gauss );
 
-acttable_t	CWeaponGaussGun::m_acttable[] = 
+acttable_t	CWeaponGaussGun::m_acttable[] =
 {
 	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_AR2, true },
 };
@@ -67,7 +67,7 @@ ConVar sk_plr_dmg_gauss( "sk_plr_dmg_gauss", "0" );
 ConVar sk_plr_max_dmg_gauss( "sk_plr_dmg_gauss_max", "0" );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CWeaponGaussGun::CWeaponGaussGun( void )
 {
@@ -80,7 +80,7 @@ CWeaponGaussGun::CWeaponGaussGun( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::Precache( void )
 {
@@ -90,7 +90,7 @@ void CWeaponGaussGun::Precache( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::Spawn( void )
 {
@@ -98,12 +98,12 @@ void CWeaponGaussGun::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::Fire( void )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
@@ -137,15 +137,15 @@ void CWeaponGaussGun::Fire( void )
 	aimDir = aimDir + x * GetBulletSpread().x * vecRight + y * GetBulletSpread().y * vecUp;
 
 	Vector	endPos	= startPos + ( aimDir * MAX_TRACE_LENGTH );
-	
+
 	//Shoot a shot straight out
 	trace_t	tr;
 	UTIL_TraceLine( startPos, endPos, MASK_SHOT, pOwner, COLLISION_GROUP_NONE, &tr );
-	
+
 	ClearMultiDamage();
 
 	CBaseEntity *pHit = tr.m_pEnt;
-	
+
 	CTakeDamageInfo dmgInfo( this, pOwner, sk_plr_dmg_gauss.GetFloat(), DMG_SHOCK );
 
 	if ( pHit != NULL )
@@ -153,7 +153,7 @@ void CWeaponGaussGun::Fire( void )
 		CalculateBulletDamageForce( &dmgInfo, m_iPrimaryAmmoType, aimDir, tr.endpos );
 		pHit->DispatchTraceAttack( dmgInfo, aimDir, &tr );
 	}
-	
+
 	if ( tr.DidHitWorld() )
 	{
 		float hitAngle = -DotProduct( tr.plane.normal, aimDir );
@@ -161,12 +161,12 @@ void CWeaponGaussGun::Fire( void )
 		if ( hitAngle < 0.5f )
 		{
 			Vector vReflection;
-		
+
 			vReflection = 2.0 * tr.plane.normal * hitAngle + aimDir;
-			
+
 			startPos	= tr.endpos;
 			endPos		= startPos + ( vReflection * MAX_TRACE_LENGTH );
-			
+
 			//Draw beam to reflection point
 			DrawBeam( tr.startpos, tr.endpos, 1.6, true );
 
@@ -197,7 +197,7 @@ void CWeaponGaussGun::Fire( void )
 	{
 		DrawBeam( tr.startpos, tr.endpos, 1.6, true );
 	}
-	
+
 	ApplyMultiDamage();
 
 	UTIL_ImpactTrace( &tr, GetAmmoDef()->DamageType(m_iPrimaryAmmoType), "ImpactGauss" );
@@ -214,12 +214,12 @@ void CWeaponGaussGun::Fire( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::ChargedFire( void )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
@@ -242,10 +242,10 @@ void CWeaponGaussGun::ChargedFire( void )
 	Vector	startPos= pOwner->Weapon_ShootPosition();
 	Vector	aimDir	= pOwner->GetAutoaimVector( AUTOAIM_5DEGREES );
 	Vector	endPos	= startPos + ( aimDir * MAX_TRACE_LENGTH );
-	
+
 	trace_t	tr;
 	UTIL_TraceLine( startPos, endPos, MASK_SHOT, pOwner, COLLISION_GROUP_NONE, &tr );
-	
+
 	ClearMultiDamage();
 
 	//Find how much damage to do
@@ -269,11 +269,11 @@ void CWeaponGaussGun::ChargedFire( void )
 
 		CPVSFilter filter( tr.endpos );
 		te->GaussExplosion( filter, 0.0f, tr.endpos, tr.plane.normal, 0 );
-		
+
 		Vector	testPos = tr.endpos + ( aimDir * 48.0f );
 
 		UTIL_TraceLine( testPos, tr.endpos, MASK_SHOT, pOwner, COLLISION_GROUP_NONE, &tr );
-			
+
 		if ( tr.allsolid == false )
 		{
 			UTIL_DecalTrace( &tr, "RedGlowFade" );
@@ -322,12 +322,12 @@ void CWeaponGaussGun::ChargedFire( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::DrawBeam( const Vector &startPos, const Vector &endPos, float width, bool useMuzzle )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
@@ -344,7 +344,7 @@ void CWeaponGaussGun::DrawBeam( const Vector &startPos, const Vector &endPos, fl
 
 	//Draw the main beam shaft
 	CBeam *pBeam = CBeam::BeamCreate( GAUSS_BEAM_SPRITE, width );
-	
+
 	if ( useMuzzle )
 	{
 		pBeam->PointEntInit( endPos, m_hViewModel );
@@ -369,7 +369,7 @@ void CWeaponGaussGun::DrawBeam( const Vector &startPos, const Vector &endPos, fl
 	for ( int i = 0; i < 3; i++ )
 	{
 		pBeam = CBeam::BeamCreate( GAUSS_BEAM_SPRITE, (width/2.0f) + i );
-		
+
 		if ( useMuzzle )
 		{
 			pBeam->PointEntInit( endPos, m_hViewModel );
@@ -380,7 +380,7 @@ void CWeaponGaussGun::DrawBeam( const Vector &startPos, const Vector &endPos, fl
 			pBeam->SetStartPos( startPos );
 			pBeam->SetEndPos( endPos );
 		}
-		
+
 		pBeam->SetBrightness( random->RandomInt( 64, 255 ) );
 		pBeam->SetColor( 255, 255, 150+random->RandomInt( 0, 64 ) );
 		pBeam->RelinkBeam();
@@ -391,18 +391,18 @@ void CWeaponGaussGun::DrawBeam( const Vector &startPos, const Vector &endPos, fl
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::PrimaryAttack( void )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
 	WeaponSound( SINGLE );
 	WeaponSound( SPECIAL2 );
-	
+
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
 	pOwner->DoMuzzleFlash();
@@ -418,7 +418,7 @@ void CWeaponGaussGun::PrimaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::IncreaseCharge( void )
 {
@@ -426,7 +426,7 @@ void CWeaponGaussGun::IncreaseCharge( void )
 		return;
 
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
@@ -444,10 +444,10 @@ void CWeaponGaussGun::IncreaseCharge( void )
 		{
 			//Damage the player
 			WeaponSound( SPECIAL2 );
-			
+
 			// Add DMG_CRUSH because we don't want any physics force
 			pOwner->TakeDamage( CTakeDamageInfo( this, this, 25, DMG_SHOCK | DMG_CRUSH ) );
-			
+
 			color32 gaussDamage = {255,128,0,128};
 			UTIL_ScreenFade( pOwner, gaussDamage, 0.2f, 0.2f, FFADE_IN );
 
@@ -471,12 +471,12 @@ void CWeaponGaussGun::IncreaseCharge( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::SecondaryAttack( void )
 {
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	
+
 	if ( pOwner == NULL )
 		return;
 
@@ -487,7 +487,7 @@ void CWeaponGaussGun::SecondaryAttack( void )
 	{
 		//Start looping animation
 		SendWeaponAnim( ACT_VM_PULLBACK );
-		
+
 		//Start looping sound
 		if ( m_sndCharge == NULL )
 		{
@@ -514,7 +514,7 @@ void CWeaponGaussGun::SecondaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::AddViewKick( void )
 {
@@ -534,7 +534,7 @@ void CWeaponGaussGun::AddViewKick( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::ItemPostFrame( void )
 {
@@ -562,12 +562,12 @@ void CWeaponGaussGun::ItemPostFrame( void )
 	//Update spinning bits
 	SetBoneController( 0, fanAngle );
 	SetBoneController( 1, m_flCoilAngle );
-	
+
 	BaseClass::ItemPostFrame();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponGaussGun::StopChargeSound( void )
 {
@@ -578,8 +578,8 @@ void CWeaponGaussGun::StopChargeSound( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pSwitchingTo - 
+// Purpose:
+// Input  : *pSwitchingTo -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CWeaponGaussGun::Holster( CBaseCombatWeapon *pSwitchingTo )

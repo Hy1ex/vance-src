@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:		Cute hound like Alien.
 //
@@ -7,15 +7,15 @@
 
 #include "cbase.h"
 #include "game.h"
-#include "AI_Default.h"
-#include "AI_Schedule.h"
-#include "AI_Hull.h"
-#include "AI_Navigator.h"
-#include "AI_Route.h"
-#include "AI_Squad.h"
-#include "AI_SquadSlot.h"
-#include "AI_Hint.h"
-#include "NPCEvent.h"
+#include "ai_default.h"
+#include "ai_schedule.h"
+#include "ai_hull.h"
+#include "ai_navigator.h"
+#include "ai_route.h"
+#include "ai_squad.h"
+#include "ai_squadslot.h"
+#include "ai_hint.h"
+#include "npcevent.h"
 #include "animation.h"
 #include "npc_houndeye.h"
 #include "gib.h"
@@ -25,7 +25,7 @@
 #include "engine/IEngineSound.h"
 #include "movevars_shared.h"
 
-// houndeye does 20 points of damage spread over a sphere 384 units in diameter, and each additional 
+// houndeye does 20 points of damage spread over a sphere 384 units in diameter, and each additional
 // squad member increases the BASE damage by 110%, per the spec.
 #define HOUNDEYE_MAX_SQUAD_SIZE			4
 #define	HOUNDEYE_MAX_ATTACK_RADIUS		384
@@ -94,7 +94,7 @@ enum
 };
 
 enum HoundEyeSquadSlots
-{	
+{
 	SQUAD_SLOTS_HOUND_ATTACK = LAST_SHARED_SQUADSLOT,
 };
 
@@ -105,14 +105,14 @@ enum HoundEyeSquadSlots
 void CNPC_Houndeye::Spawn()
 {
 	Precache( );
-	
+
 	SetRenderColor( 255, 255, 255, 255 );
 
 	SetModel( "models/houndeye.mdl" );
-	
+
 	SetHullType(HULL_TINY);
 	SetHullSizeNormal();
-	
+
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
 	SetMoveType( MOVETYPE_STEP );
@@ -123,7 +123,7 @@ void CNPC_Houndeye::Spawn()
 	m_NPCState			= NPC_STATE_NONE;
 	m_fAsleep			= FALSE; // everyone spawns awake
 	m_fDontBlink		= FALSE;
-	
+
 	CapabilitiesClear();
 
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_INNATE_RANGE_ATTACK1 );
@@ -152,7 +152,7 @@ void CNPC_Houndeye::Precache()
 	PrecacheScriptSound( "HoundEye.Sonic" );
 
 	BaseClass::Precache();
-}	
+}
 
 void CNPC_Houndeye::Event_Killed( const CTakeDamageInfo &info )
 {
@@ -163,10 +163,10 @@ void CNPC_Houndeye::Event_Killed( const CTakeDamageInfo &info )
 
 int CNPC_Houndeye::RangeAttack1Conditions ( float flDot, float flDist )
 {
-	// I'm not allowed to attack if standing in another hound eye 
+	// I'm not allowed to attack if standing in another hound eye
 	// (note houndeyes allowed to interpenetrate)
 	trace_t tr;
-	UTIL_TraceHull( GetAbsOrigin(), GetAbsOrigin() + Vector(0,0,0.1), 
+	UTIL_TraceHull( GetAbsOrigin(), GetAbsOrigin() + Vector(0,0,0.1),
 					GetHullMins(), GetHullMaxs(),
 					MASK_NPCSOLID, this, COLLISION_GROUP_NONE, &tr );
 	if (tr.startsolid)
@@ -178,7 +178,7 @@ int CNPC_Houndeye::RangeAttack1Conditions ( float flDot, float flDist )
 		}
 	}
 
-	// If I'm really close to my enemy allow me to attack if 
+	// If I'm really close to my enemy allow me to attack if
 	// I'm facing regardless of next attack time
 	if (flDist < 100 && flDot >= 0.3)
 	{
@@ -205,7 +205,7 @@ int CNPC_Houndeye::RangeAttack1Conditions ( float flDot, float flDist )
 void CNPC_Houndeye::IdleSound ( void )
 {
 	CPASAttenuationFilter filter( this );
-	EmitSound( filter, entindex(), "HoundEye.Idle" );	
+	EmitSound( filter, entindex(), "HoundEye.Idle" );
 }
 
 //=========================================================
@@ -214,20 +214,20 @@ void CNPC_Houndeye::IdleSound ( void )
 void CNPC_Houndeye::WarmUpSound ( void )
 {
 	CPASAttenuationFilter filter( this );
-	EmitSound( filter, entindex(),"HoundEye.Warn" );	
+	EmitSound( filter, entindex(),"HoundEye.Warn" );
 }
 
 //=========================================================
-// WarnSound 
+// WarnSound
 //=========================================================
 void CNPC_Houndeye::WarnSound ( void )
 {
 	CPASAttenuationFilter filter( this );
-	EmitSound( filter, entindex(), "HoundEye.Hunt" );	
+	EmitSound( filter, entindex(), "HoundEye.Hunt" );
 }
 
 //=========================================================
-// AlertSound 
+// AlertSound
 //=========================================================
 void CNPC_Houndeye::AlertSound ( void )
 {
@@ -240,21 +240,21 @@ void CNPC_Houndeye::AlertSound ( void )
 }
 
 //=========================================================
-// DeathSound 
+// DeathSound
 //=========================================================
 void CNPC_Houndeye::DeathSound( const CTakeDamageInfo &info )
 {
 	CPASAttenuationFilter filter( this );
-	EmitSound( filter, entindex(), "HoundEye.Die" );	
+	EmitSound( filter, entindex(), "HoundEye.Die" );
 }
 
 //=========================================================
-// PainSound 
+// PainSound
 //=========================================================
 void CNPC_Houndeye::PainSound ( const CTakeDamageInfo &info )
 {
 	CPASAttenuationFilter filter( this );
-	EmitSound( filter, entindex(), "HoundEye.Pain" );	
+	EmitSound( filter, entindex(), "HoundEye.Pain" );
 }
 
 //=========================================================
@@ -272,13 +272,13 @@ float CNPC_Houndeye::MaxYawSpeed  ( void )
 	case ACT_CROUCHIDLE://sleeping!
 		flYS = 0;
 		break;
-	case ACT_IDLE:	
+	case ACT_IDLE:
 		flYS = 60;
 		break;
 	case ACT_WALK:
 		flYS = 90;
 		break;
-	case ACT_RUN:	
+	case ACT_RUN:
 		flYS = 90;
 		break;
 	case ACT_TURN_LEFT:
@@ -291,7 +291,7 @@ float CNPC_Houndeye::MaxYawSpeed  ( void )
 }
 
 //=========================================================
-// Classify - indicates this monster's place in the 
+// Classify - indicates this monster's place in the
 // relationship table.
 //=========================================================
 Class_T	CNPC_Houndeye::Classify ( void )
@@ -339,14 +339,14 @@ void CNPC_Houndeye::HandleAnimEvent( animevent_t *pEvent )
 		case HOUND_AE_ANGERSOUND1:
 			{
 				CPASAttenuationFilter filter( this );
-				EmitSound( filter, entindex(), "HoundEye.Anger1" );	
+				EmitSound( filter, entindex(), "HoundEye.Anger1" );
 			}
 			break;
 
 		case HOUND_AE_ANGERSOUND2:
 			{
 				CPASAttenuationFilter filter2( this );
-				EmitSound( filter2, entindex(), "HoundEye.Anger2" );	
+				EmitSound( filter2, entindex(), "HoundEye.Anger2" );
 			}
 			break;
 
@@ -375,7 +375,7 @@ void CNPC_Houndeye::SonicAttack ( void )
 	EmitSound( filter, entindex(), "HoundEye.Sonic");
 
 	CBroadcastRecipientFilter filter2;
-	te->BeamRingPoint( filter2, 0.0, 
+	te->BeamRingPoint( filter2, 0.0,
 		GetAbsOrigin(),							//origin
 		16,										//start radius
 		HOUNDEYE_MAX_ATTACK_RADIUS,//end radius
@@ -395,7 +395,7 @@ void CNPC_Houndeye::SonicAttack ( void )
 		);
 
 	CBroadcastRecipientFilter filter3;
-	te->BeamRingPoint( filter3, 0.0, 
+	te->BeamRingPoint( filter3, 0.0,
 		GetAbsOrigin(),									//origin
 		16,												//start radius
 		HOUNDEYE_MAX_ATTACK_RADIUS / 2,											//end radius
@@ -413,7 +413,7 @@ void CNPC_Houndeye::SonicAttack ( void )
 		192,											//a
 		0												//speed
 		);
-	
+
 	CBaseEntity *pEntity = NULL;
 	// iterate on all entities in the vicinity.
 	while ((pEntity = gEntList.FindEntityInSphere( pEntity, GetAbsOrigin(), HOUNDEYE_MAX_ATTACK_RADIUS )) != NULL)
@@ -446,12 +446,12 @@ void CNPC_Houndeye::SonicAttack ( void )
 				{
 					if ( pEntity->IsPlayer() )
 					{
-						// if this entity is a client, and is not in full view, inflict half damage. We do this so that players still 
+						// if this entity is a client, and is not in full view, inflict half damage. We do this so that players still
 						// take the residual damage if they don't totally leave the houndeye's effective radius. We restrict it to clients
 						// so that monsters in other parts of the level don't take the damage and get pissed.
 						flAdjustedDamage *= 0.5;
 					}
-					else if ( !FClassnameIs( pEntity, "func_breakable" ) && !FClassnameIs( pEntity, "func_pushable" ) ) 
+					else if ( !FClassnameIs( pEntity, "func_breakable" ) && !FClassnameIs( pEntity, "func_pushable" ) )
 					{
 						// do not hurt nonclients through walls, but allow damage to be done to breakables
 						flAdjustedDamage = 0;
@@ -469,7 +469,7 @@ void CNPC_Houndeye::SonicAttack ( void )
 
 					if ( (pEntity->GetAbsOrigin() - GetAbsOrigin()).Length2D() <= HOUNDEYE_MAX_ATTACK_RADIUS )
 					{
-						if ( pEntity->GetMoveType() == MOVETYPE_VPHYSICS || (pEntity->VPhysicsGetObject() && !pEntity->IsPlayer()) ) 
+						if ( pEntity->GetMoveType() == MOVETYPE_VPHYSICS || (pEntity->VPhysicsGetObject() && !pEntity->IsPlayer()) )
 						{
 							IPhysicsObject *pPhysObject = pEntity->VPhysicsGetObject();
 
@@ -496,8 +496,8 @@ void CNPC_Houndeye::SonicAttack ( void )
 }
 
 //=========================================================
-// WriteBeamColor - writes a color vector to the network 
-// based on the size of the group. 
+// WriteBeamColor - writes a color vector to the network
+// based on the size of the group.
 //=========================================================
 Vector CNPC_Houndeye::WriteBeamColor ( void )
 {
@@ -538,7 +538,7 @@ Vector CNPC_Houndeye::WriteBeamColor ( void )
 		bGreen	= 220;
 		bBlue	= 255;
 	}
-	
+
 
 	return Vector ( bRed, bGreen, bBlue );
 }
@@ -584,7 +584,7 @@ bool CNPC_Houndeye::FValidateHintType ( CAI_Hint *pHint )
 }
 
 //=========================================================
-// SetActivity 
+// SetActivity
 //=========================================================
 void CNPC_Houndeye::SetActivity ( Activity NewActivity )
 {
@@ -599,7 +599,7 @@ void CNPC_Houndeye::SetActivity ( Activity NewActivity )
 		iSequence = LookupSequence( "madidle" );
 
 		SetActivity( NewActivity ); // Go ahead and set this so it doesn't keep trying when the anim is not present
-	
+
 		// In case someone calls this with something other than the ideal activity
 		SetIdealActivity( GetActivity() );
 
@@ -668,7 +668,7 @@ void CNPC_Houndeye::StartTask ( const Task_t *pTask )
 			SetIdealActivity( ACT_SPECIAL_ATTACK1 );
 			break;
 		}
-	default: 
+	default:
 		{
 			BaseClass::StartTask(pTask);
 			break;
@@ -677,7 +677,7 @@ void CNPC_Houndeye::StartTask ( const Task_t *pTask )
 }
 
 //=========================================================
-// RunTask 
+// RunTask
 //=========================================================
 void CNPC_Houndeye::RunTask ( const Task_t *pTask )
 {
@@ -696,7 +696,7 @@ void CNPC_Houndeye::RunTask ( const Task_t *pTask )
 			{
 				TaskComplete();
 			}
-			
+
 			break;
 		}
 	case TASK_HOUND_CLOSE_EYE:
@@ -720,7 +720,7 @@ void CNPC_Houndeye::RunTask ( const Task_t *pTask )
 			float idealYaw;
 			idealYaw = UTIL_VecToYaw( GetNavigator()->GetGoalPos() );
 			GetMotor()->SetIdealYawAndUpdate( idealYaw );
-			
+
 			float life;
 			life = ((255 - GetCycle()) / ( m_flPlaybackRate * m_flPlaybackRate));
 			if (life < 0.1)
@@ -737,10 +737,10 @@ void CNPC_Houndeye::RunTask ( const Task_t *pTask )
 				WRITE_BYTE( pev->frame / 25.0 ); // count
 				WRITE_BYTE( life * 10 ); // life
 			MessageEnd();*/
-			
+
 			if ( IsSequenceFinished() )
 			{
-				SonicAttack(); 
+				SonicAttack();
 				TaskComplete();
 			}
 
@@ -760,7 +760,7 @@ void CNPC_Houndeye::RunTask ( const Task_t *pTask )
 void CNPC_Houndeye::PrescheduleThink ( void )
 {
 	BaseClass::PrescheduleThink();
-	
+
 	// if the hound is mad and is running, make hunt noises.
 	if ( m_NPCState == NPC_STATE_COMBAT && GetActivity() == ACT_RUN && random->RandomFloat( 0, 1 ) < 0.2 )
 	{
@@ -797,14 +797,14 @@ void CNPC_Houndeye::PrescheduleThink ( void )
 }
 
 //=========================================================
-// GetScheduleOfType 
+// GetScheduleOfType
 //=========================================================
-int CNPC_Houndeye::TranslateSchedule( int scheduleType ) 
+int CNPC_Houndeye::TranslateSchedule( int scheduleType )
 {
 	if ( m_fAsleep )
 	{
 		// if the hound is sleeping, must wake and stand!
-		if ( HasCondition( COND_HEAR_DANGER ) ||  HasCondition( COND_HEAR_THUMPER ) || HasCondition( COND_HEAR_COMBAT ) || 
+		if ( HasCondition( COND_HEAR_DANGER ) ||  HasCondition( COND_HEAR_THUMPER ) || HasCondition( COND_HEAR_COMBAT ) ||
 			 HasCondition( COND_HEAR_WORLD ) || HasCondition( COND_HEAR_PLAYER ) || HasCondition( COND_HEAR_BULLET_IMPACT ) )
 		{
 			CSound *pWakeSound;
@@ -867,7 +867,7 @@ int CNPC_Houndeye::TranslateSchedule( int scheduleType )
 				}
 				else
 				{
-					// client has taken off! 
+					// client has taken off!
 					return SCHED_HOUND_COMBAT_FAIL_NOPVS;
 				}
 			}
@@ -904,7 +904,7 @@ int CNPC_Houndeye::SelectSchedule( void )
 					Vector v_forward;
 					GetVectors( &v_forward, NULL, NULL );
 					UTIL_TraceEntity( this, GetAbsOrigin(), GetAbsOrigin() + v_forward * -128, MASK_SOLID, &trace );
-					
+
 					if ( trace.fraction == 1.0 )
 					{
 						// it's clear behind, so the hound will jump
@@ -934,9 +934,9 @@ int CNPC_Houndeye::SelectSchedule( void )
 
 //=========================================================
 // FLSoundVolume - subtracts the volume of the given sound
-// from the distance the sound source is from the caller, 
-// and returns that value, which is considered to be the 'local' 
-// volume of the sound. 
+// from the distance the sound source is from the caller,
+// and returns that value, which is considered to be the 'local'
+// volume of the sound.
 //=========================================================
 float CNPC_Houndeye::FLSoundVolume( CSound *pSound )
 {
@@ -1161,7 +1161,7 @@ AI_END_CUSTOM_NPC()
 class CNPC_HoundeyeHD : public CNPC_Houndeye
 {
 	DECLARE_CLASS( CNPC_HoundeyeHD, CNPC_Houndeye );
-	
+
 public:
 	void Spawn( void );
 	void Precache( void );
@@ -1189,7 +1189,7 @@ void CNPC_HoundeyeHD::Precache()
 	PrecacheScriptSound( "HoundEye.Sonic" );
 
 	CAI_BaseNPC::Precache();
-}	
+}
 
 //=========================================================
 // Spawn
@@ -1197,14 +1197,14 @@ void CNPC_HoundeyeHD::Precache()
 void CNPC_HoundeyeHD::Spawn()
 {
 	Precache( );
-	
+
 	SetRenderColor( 255, 255, 255, 255 );
 
 	SetModel( "models/houndeye.mdl" );
-	
+
 	SetHullType(HULL_TINY);
 	SetHullSizeNormal();
-	
+
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
 	SetMoveType( MOVETYPE_STEP );
@@ -1215,7 +1215,7 @@ void CNPC_HoundeyeHD::Spawn()
 	m_NPCState			= NPC_STATE_NONE;
 	m_fAsleep			= FALSE; // everyone spawns awake
 	m_fDontBlink		= FALSE;
-	
+
 	CapabilitiesClear();
 
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_INNATE_RANGE_ATTACK1 );

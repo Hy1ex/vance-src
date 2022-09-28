@@ -8,7 +8,7 @@
 #include "rendertexture.h"
 #include "viewrender.h"
 #include "fmtstr.h"
-#include "mathlib\mathlib.h"
+#include "mathlib/mathlib.h"
 #include <KeyValues.h>
 ConVarRef cl_sky_sunpos ("cl_sky_sunpos");
 ConVarRef cl_sky_windspeed ("cl_sky_windspeed");

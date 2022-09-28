@@ -1,4 +1,4 @@
-//========= Copyright © 2010, Gear Development, All rights reserved. ============//
+//========= Copyright ï¿½ 2010, Gear Development, All rights reserved. ============//
 //
 // Purpose: I imagine a few of you are going to wonder dearly what this is is why we're doing this.
 // Well, sit down. I'm going to tell you a story:
@@ -14,7 +14,7 @@
 #include "cbase.h"
 #include "ScreenSpaceEffects.h"
 #include "deferred_screenspace_effects.h"
-#include "episodic\episodic_screenspaceeffects.h"
+#include "episodic/episodic_screenspaceeffects.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

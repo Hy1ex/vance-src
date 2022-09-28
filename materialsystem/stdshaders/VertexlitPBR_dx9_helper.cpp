@@ -1,12 +1,12 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
 //===========================================================================//
 #include "BaseVSShader.h"
-#include "vertexlitPBR_dx9_helper.h"
+#include "VertexlitPBR_dx9_helper.h"
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"
 #include "vertexlitPBR_vs30.inc"
@@ -29,10 +29,10 @@ extern ConVar r_csm_performance;
 // Initialize shader parameters
 //-----------------------------------------------------------------------------
 void InitParamsVertexLitPBR_DX9( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, VertexLitPBR_DX9_Vars_t &info )
-{	
+{
 	// FLASHLIGHTFIXME: Do ShaderAPI::BindFlashlightTexture
 	Assert( info.m_nFlashlightTexture >= 0 );
-	
+
 	params[info.m_nBRDF]->SetStringValue("models/PBRTest/BRDF");
 
 	if ( g_pHardwareConfig->SupportsBorderColor() )
@@ -46,7 +46,7 @@ void InitParamsVertexLitPBR_DX9( CBaseVSShader *pShader, IMaterialVar** params, 
 
 	if (((info.m_nBumpmap != -1) && g_pConfig->UseBumpmapping() && params[info.m_nBumpmap]->IsDefined())
 		// we don't need a tangent space if we have envmap without bumpmap
-		//		|| ( info.m_nEnvmap != -1 && params[info.m_nEnvmap]->IsDefined() ) 
+		//		|| ( info.m_nEnvmap != -1 && params[info.m_nEnvmap]->IsDefined() )
 		)
 	{
 		SET_FLAGS2(MATERIAL_VAR2_NEEDS_TANGENT_SPACES);
@@ -65,12 +65,12 @@ void InitVertexLitPBR_DX9( CBaseVSShader *pShader, IMaterialVar** params, Vertex
 {
 	Assert( info.m_nFlashlightTexture >= 0 );
 	pShader->LoadTexture(info.m_nFlashlightTexture, TEXTUREFLAGS_SRGB);
-	
+
 	bool bIsBaseTextureTranslucent = false;
 	if ( params[info.m_nBaseTexture]->IsDefined() )
 	{
 		pShader->LoadTexture( info.m_nBaseTexture, TEXTUREFLAGS_SRGB );
-		
+
 		if ( params[info.m_nBaseTexture]->GetTextureValue()->IsTranslucent() )
 		{
 			bIsBaseTextureTranslucent = true;
@@ -190,7 +190,7 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 
 			if( bIsAlphaTested )
 			{
-				// disable alpha test and use the zfunc zequals since alpha isn't guaranteed to 
+				// disable alpha test and use the zfunc zequals since alpha isn't guaranteed to
 				// be the same on both the regular pass and the flashlight pass.
 				pShaderShadow->EnableAlphaTest( false );
 				pShaderShadow->DepthFunc( SHADER_DEPTHFUNC_EQUAL );
@@ -210,7 +210,7 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 				pShader->SetDefaultBlendingShadowState( info.m_nBaseTexture, true );
 			}
 		}
-		
+
 		unsigned int flags = VERTEX_POSITION | VERTEX_NORMAL;
 		int userDataSize = 0;
 
@@ -258,7 +258,7 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 		userDataSize = 4; // tangent S
 		pShaderShadow->EnableTexture( SHADER_SAMPLER5, true );		// Normalizing cube map
 		pShaderShadow->EnableSRGBWrite( true );
-		
+
 		// texcoord0 : base texcoord
 		int pTexCoordDim[3] = { 2, 2, 3 };
 		int nTexCoordCount = 1;
@@ -352,7 +352,7 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 		}
 
 		pShader->BindTexture(SHADER_SAMPLER8, info.m_nBRDF);
-		
+
 		LightState_t lightState = { 0, false, false };
 		bool bFlashlightShadows = false;
 		if( bHasFlashlight )
@@ -383,7 +383,7 @@ static void DrawVertexLitPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVar*
 
 		bool bWriteDepthToAlpha = false;
 		bool bWriteWaterFogToAlpha = false;
-		if( bFullyOpaque ) 
+		if( bFullyOpaque )
 		{
 			bWriteDepthToAlpha = pShaderAPI->ShouldWriteDepthToDestAlpha();
 			bWriteWaterFogToAlpha = (fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z);

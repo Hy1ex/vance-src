@@ -1,26 +1,26 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
 //=============================================================================//
 #include	"cbase.h"
 #include	"ai_basenpc.h"
-#include	"AI_Default.h"
-#include	"AI_Task.h"
-#include	"AI_Schedule.h"
-#include	"AI_Node.h"
-#include	"AI_Hull.h"
-#include	"AI_Hint.h"
-#include	"AI_Memory.h"
-#include	"AI_Route.h"
-#include	"AI_Motor.h"
-#include	"AI_Senses.h"
+#include	"ai_default.h"
+#include	"ai_task.h"
+#include	"ai_schedule.h"
+#include	"ai_node.h"
+#include	"ai_hull.h"
+#include	"ai_hint.h"
+#include	"ai_memory.h"
+#include	"ai_route.h"
+#include	"ai_motor.h"
+#include	"ai_senses.h"
 #include	"soundent.h"
 #include	"game.h"
-#include	"NPCEvent.h"
-#include	"EntityList.h"
+#include	"npcevent.h"
+#include	"entitylist.h"
 #include	"activitylist.h"
 #include	"animation.h"
 #include	"basecombatweapon.h"
@@ -28,8 +28,8 @@
 #include	"vstdlib/random.h"
 #include	"engine/IEngineSound.h"
 #include	"ammodef.h"
-#include	"AI_Behavior_Follow.h"
-#include	"AI_Navigator.h"
+#include	"ai_behavior_follow.h"
+#include	"ai_navigator.h"
 #include	"decals.h"
 
 
@@ -46,7 +46,7 @@
 class CNPC_Roach : public CAI_BaseNPC
 {
 	DECLARE_CLASS( CNPC_Roach, CAI_BaseNPC);
-	
+
 public:
 
 	void Spawn( void );
@@ -74,7 +74,7 @@ public:
 
 	float	m_flLastLightLevel;
 	float	m_flNextSmellTime;
-		
+
 	// UNDONE: These don't necessarily need to be save/restored, but if we add more data, it may
 	bool	m_fLightHacked;
 	int		m_iMode;
@@ -88,7 +88,7 @@ LINK_ENTITY_TO_CLASS( npc_cockroach, CNPC_Roach );
 //BEGIN_DATADESC( CNPC_Roach )
 
 //	DEFINE_FUNCTION( RoachTouch ),
-	
+
 //END_DATADESC()
 
 
@@ -174,7 +174,7 @@ void CNPC_Roach::NPCThink( void  )
 
 	if ( !m_fLightHacked )
 	{
-		// if light value hasn't been collection for the first time yet, 
+		// if light value hasn't been collection for the first time yet,
 		// suspend the creature for a second so the world finishes spawning, then we'll collect the light level.
 		SetNextThink( gpGlobals->curtime + 1 );
 		m_fLightHacked = TRUE;
@@ -213,12 +213,12 @@ void CNPC_Roach::NPCThink( void  )
 
 					if ( m_iMode == ROACH_EAT )
 					{
-						// roach will ignore food for 30 to 45 seconds if it got bored while eating. 
+						// roach will ignore food for 30 to 45 seconds if it got bored while eating.
 						Eat( 30 +  ( random->RandomInt(0,14) ) );
 					}
 				}
 			}
-	
+
 			// don't do this stuff if eating!
 			if ( m_iMode == ROACH_IDLE )
 			{
@@ -260,7 +260,7 @@ void CNPC_Roach::NPCThink( void  )
 			break;
 		}
 	}
-	
+
 	if ( GetActivity() != ACT_IDLE )
 	{
 		Move( flInterval );
@@ -289,10 +289,10 @@ void CNPC_Roach::PickNewDest ( int iCondition )
 		}
 	}
 
-	do 
+	do
 	{
 		// picks a random spot, requiring that it be at least 128 units away
-		// else, the roach will pick a spot too close to itself and run in 
+		// else, the roach will pick a spot too close to itself and run in
 		// circles. this is a hack but buys me time to work on the real monsters.
 		vecNewDir.x = random->RandomInt( -1, 1 );
 		vecNewDir.y = random->RandomInt( -1, 1 );
@@ -306,7 +306,7 @@ void CNPC_Roach::PickNewDest ( int iCondition )
 	vecLocation.x = vecDest.x;
 	vecLocation.y = vecDest.y;
 	vecLocation.z = GetAbsOrigin().z;
-	
+
 	AI_NavGoal_t goal( GOALTYPE_LOCATION, vecLocation, ACT_WALK );
 
 	GetNavigator()->SetGoal( goal );
@@ -320,7 +320,7 @@ void CNPC_Roach::PickNewDest ( int iCondition )
 }
 
 //=========================================================
-// Look - overriden for the roach, which can virtually see 
+// Look - overriden for the roach, which can virtually see
 // 360 degrees.
 //=========================================================
 void CNPC_Roach::Look ( int iDistance )
@@ -336,7 +336,7 @@ void CNPC_Roach::Look ( int iDistance )
 	{
 		return;
 	}
-	
+
 	// Does sphere also limit itself to PVS?
 	// Examine all entities within a reasonable radius
 	// !!!PERFORMANCE - let's trivially reject the ent list before radius searching!
@@ -352,7 +352,7 @@ void CNPC_Roach::Look ( int iDistance )
 				// we see monsters other than the Enemy.
 				switch ( IRelationType ( pSightEnt ) )
 				{
-				case	D_FR:		
+				case	D_FR:
 					SetCondition( COND_SEE_FEAR );
 					break;
 				case	D_NU:
@@ -369,14 +369,14 @@ void CNPC_Roach::Look ( int iDistance )
 //=========================================================
 // roach's move function
 //=========================================================
-void CNPC_Roach::Move ( float flInterval ) 
+void CNPC_Roach::Move ( float flInterval )
 {
 	float		flWaypointDist;
 	Vector		vecApex;
 
 	// local move to waypoint.
 	flWaypointDist = ( GetNavigator()->GetGoalPos() - GetAbsOrigin() ).Length2D();
-	
+
 	GetMotor()->SetIdealYawToTargetAndUpdate( GetNavigator()->GetGoalPos() );
 
 	float speed = 150 * flInterval;
@@ -390,7 +390,7 @@ void CNPC_Roach::Move ( float flInterval )
 		// randomly change direction
 		PickNewDest( m_iMode );
 	}
-	
+
 	if( !WalkMove( vMovePos, MASK_NPCSOLID ) )
 	{
 		PickNewDest( m_iMode );
@@ -446,9 +446,9 @@ void CNPC_Roach::Touch ( CBaseEntity *pOther )
 void CNPC_Roach::Event_Killed( const CTakeDamageInfo &info )
 {
 	RemoveSolidFlags( FSOLID_NOT_SOLID );
-	
+
 	CPASAttenuationFilter filter( this );
-	
+
 	//random sound
 	if ( random->RandomInt( 0,4 ) == 1 )
 	{
@@ -458,13 +458,13 @@ void CNPC_Roach::Event_Killed( const CTakeDamageInfo &info )
 	{
 		EmitSound( filter, entindex(), "Roach.Smash" );
 	}
-	
+
 	CSoundEnt::InsertSound ( SOUND_WORLD, GetAbsOrigin(), 128, 1 );
 
 	UTIL_Remove( this );
 }
 
-int CNPC_Roach::GetSoundInterests ( void) 
+int CNPC_Roach::GetSoundInterests ( void)
 {
 	return	SOUND_CARCASS	|
 			SOUND_MEAT;

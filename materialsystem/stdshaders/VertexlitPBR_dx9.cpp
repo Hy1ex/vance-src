@@ -6,7 +6,7 @@
 
 #include "BaseVSShader.h"
 #include "convar.h"
-#include "vertexlitpbr_dx9_helper.h"
+#include "VertexlitPBR_dx9_helper.h"
 #include "lightpass_helper.h"
 
 #ifdef STDSHADER

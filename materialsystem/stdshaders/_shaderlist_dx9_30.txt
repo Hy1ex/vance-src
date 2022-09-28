@@ -62,7 +62,7 @@ vertexLit_and_unlit_Generic_vs30.fxc
 vertexlit_and_unlit_generic_bump_ps30.fxc
 VertexLit_and_unlit_Generic_bump_vs30.fxc
 
-VertexlitPBR_ps30.fxc
+vertexlitPBR_ps30.fxc
 vertexlitPBR_vs30.fxc
 
 lightmappedPBR_ps30.fxc

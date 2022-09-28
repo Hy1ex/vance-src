@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Single Player animation state 'handler'. This utility is used
 //            to evaluate the pose parameter value based on the direction
@@ -14,7 +14,7 @@
 #include "apparent_velocity_helper.h"
 #include "utldict.h"
 #include "filesystem.h"
-#include "..\public\datacache\imdlcache.h"
+#include "datacache/imdlcache.h"
 
 extern ConVar mp_facefronttime, mp_feetyawrate, mp_ik;
 

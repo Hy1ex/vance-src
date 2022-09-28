@@ -1,20 +1,20 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
 //=============================================================================//
 #include "cbase.h"
 #include "ammodef.h"
-#include "AI_Hint.h"
-#include "AI_Navigator.h"
+#include "ai_hint.h"
+#include "ai_navigator.h"
 #include "npc_assassin.h"
 #include "game.h"
 #include "npcevent.h"
 #include "engine/IEngineSound.h"
 #include "ai_squad.h"
-#include "AI_SquadSlot.h"
+#include "ai_squadslot.h"
 #include "ai_moveprobe.h"
 #include "ai_scheduleobject.h"
 #include "ai_tacticalservices.h"
@@ -117,7 +117,7 @@ Class_T	CNPC_HAssassin::Classify(void)
 }
 
 //=========================================================
-// CheckMeleeAttack1 - jump like crazy if the enemy gets too close. 
+// CheckMeleeAttack1 - jump like crazy if the enemy gets too close.
 //=========================================================
 int CNPC_HAssassin::MeleeAttack1Conditions(float flDot, float flDist)
 {
@@ -179,7 +179,7 @@ int CNPC_HAssassin::RangeAttack1Conditions(float flDot, float flDist)
 }
 
 //=========================================================
-// CheckRangeAttack2 - toss grenade is enemy gets in the way and is too close. 
+// CheckRangeAttack2 - toss grenade is enemy gets in the way and is too close.
 //=========================================================
 int CNPC_HAssassin::RangeAttack2Conditions(float flDot, float flDist)
 {
@@ -245,7 +245,7 @@ void CNPC_HAssassin::StartTask(const Task_t* pTask)
 
 
 //=========================================================
-// RunTask 
+// RunTask
 //=========================================================
 void CNPC_HAssassin::RunTask(const Task_t* pTask)
 {
