@@ -149,10 +149,12 @@
 #endif
 
 
-#ifdef VANCE
+#if VANCE
+#if _WIN32
 // Discord RPC
 #include "discord_rpc.h"
 #include <time.h>
+#endif
 
 #include "IDeferredExt.h"
 //GAMEUI2
@@ -345,7 +347,7 @@ static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display num
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
 
-#ifdef VANCE
+#if VANCE && WIN32
 // Discord RPC
 static ConVar cl_discord_appid("cl_discord_appid", "549012876413632533", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT);
 static int64_t startTimestamp = time(0);
@@ -859,7 +861,7 @@ bool IsEngineThreaded()
 // Constructor
 //-----------------------------------------------------------------------------
 
-#ifdef VANCE
+#if VANCE && WIN32
 //-----------------------------------------------------------------------------
 // Discord RPC
 //-----------------------------------------------------------------------------
@@ -1146,7 +1148,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	HookHapticMessages(); // Always hook the messages
 #endif
 
-#ifdef VANCE
+#if VANCE && WIN32
 	// Discord RPC
 	DiscordEventHandlers handlers;
 	memset(&handlers, 0, sizeof(handlers));
@@ -1350,9 +1352,12 @@ void CHLClient::Shutdown( void )
 	DisconnectDataModel();
 	ShutdownFbx();
 #endif
+
+#if VANCE && WIN32
 	// Discord RPC
 	Discord_Shutdown();
-	
+#endif
+
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
 	DisconnectTier2Libraries( );
@@ -1768,7 +1773,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 #endif
 
-#ifdef VANCE
+#if VANCE && WIN32
 	// Discord RPC
 	if (!g_bTextMode)
 	{
@@ -1884,7 +1889,7 @@ void CHLClient::LevelShutdown( void )
 
 	gHUD.LevelShutdown();
 	
-#ifdef VANCE
+#if VANCE && WIN32
 	// Discord RPC
 	if (!g_bTextMode)
 	{

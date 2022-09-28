@@ -11,7 +11,7 @@
 #include "lightmappedgeneric_dx9_helper.h"
 #ifdef VANCE
 #include "lightpass_helper.h"
-#include "vertexlitpbr_dx9_helper.h"
+#include "VertexlitPBR_dx9_helper.h"
 #endif // VANCE
 
 

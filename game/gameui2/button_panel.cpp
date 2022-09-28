@@ -29,7 +29,7 @@ Button_Panel::Button_Panel(vgui::Panel* Parent, vgui::Panel* ActionSignalTarget,
 void Button_Panel::SetButtonText(const char* Text)
 {
 	ButtonText = GetGameUI2().ConvertToLocalizedString(Text);
-	ButtonText = wcsupr(ButtonText);
+	ButtonText = V_wcsupr(ButtonText);
 }
 
 void Button_Panel::SetButtonDescription(const char* Description)

@@ -15,9 +15,11 @@ work.  If not, see <http://creativecommons.org/licenses/by-sa/4.0/>.
 #include "vgui/ISurface.h"
 #include "vgui/IVGui.h"
 
+#include "tier0/valve_minmax_off.h"	// GCC 4.2.2 headers screw up our min/max defs.
 #include <string>
 #include <algorithm>
 #include <functional>
+#include "tier0/valve_minmax_on.h"	// GCC 4.2.2 headers screw up our min/max defs.
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

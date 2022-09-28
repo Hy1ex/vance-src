@@ -20,9 +20,9 @@
 #endif // !VANCE
 
 #ifndef _X360
-#include "vertexlit_and_unlit_generic_vs30.inc"
+#include "vertexLit_and_unlit_Generic_vs30.inc"
 #include "vertexlit_and_unlit_generic_ps30.inc"
-#include "vertexlit_and_unlit_generic_bump_vs30.inc"
+#include "VertexLit_and_unlit_Generic_bump_vs30.inc"
 #include "vertexlit_and_unlit_generic_bump_ps30.inc"
 #endif
 

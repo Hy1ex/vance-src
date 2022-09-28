@@ -10,7 +10,7 @@
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"
 #include "vertexlitPBR_vs30.inc"
-#include "vertexlitPBR_ps30.inc"
+#include "VertexlitPBR_ps30.inc"
 #include "commandbuilder.h"
 
 #include "IDeferredExt.h"

@@ -41,7 +41,7 @@ Panel_Options::Panel_Options(vgui::VPANEL Parent, const char* PanelName) : BaseC
 	Activate();
 
 	PanelTitle = GetGameUI2().ConvertToLocalizedString("#GameUI2_TitleOptions");
-	PanelTitle = wcsupr(PanelTitle);
+	PanelTitle = V_wcsupr(PanelTitle);
 
 	ButtonDone = new Button_Panel(this, this, "");
 	ButtonDone->SetButtonText("#GameUI2_Done");

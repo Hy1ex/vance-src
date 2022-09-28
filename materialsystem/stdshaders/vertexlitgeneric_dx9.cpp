@@ -14,7 +14,7 @@
 #include "flesh_interior_blended_pass_helper.h"
 #include "weapon_sheen_pass_helper.h"
 #else
-#include "vertexlitpbr_dx9_helper.h"
+#include "VertexlitPBR_dx9_helper.h"
 #include "lightpass_helper.h"
 #endif // !VANCE
 
