@@ -1,6 +1,6 @@
-//====== Copyright © Sandern Corporation, All rights reserved. ===========//
+//====== Copyright ï¿½ Sandern Corporation, All rights reserved. ===========//
 //
-// Purpose: Implementation of IMaterialSystem interface which "passes tru" all 
+// Purpose: Implementation of IMaterialSystem interface which "passes tru" all
 //			function calls to the real interface. Can be used to override
 //			IMaterialSystem function calls (combined with engine->Mat_Stub).
 //
@@ -180,7 +180,7 @@ public:
 		int w,
 		int h,
 		ImageFormat fmt,
-		int nFlags) 
+		int nFlags)
 	{
 		return m_pBaseMaterialsPassThru->CreateProceduralTexture(pTextureName, pTextureGroupName, w, h, fmt, nFlags);
 	}
@@ -192,7 +192,7 @@ public:
 		int h,
 		RenderTargetSizeMode_t sizeMode,	// Controls how size is generated (and regenerated on video mode change).
 		ImageFormat	format,
-		MaterialRenderTargetDepth_t depth = MATERIAL_RT_DEPTH_SHARED) 
+		MaterialRenderTargetDepth_t depth = MATERIAL_RT_DEPTH_SHARED)
 	{
 		return m_pBaseMaterialsPassThru->CreateRenderTargetTexture(w, h, sizeMode, format, depth);
 	}
@@ -204,7 +204,7 @@ public:
 		ImageFormat format,
 		MaterialRenderTargetDepth_t depth = MATERIAL_RT_DEPTH_SHARED,
 		unsigned int textureFlags = TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT,
-		unsigned int renderTargetFlags = 0) 
+		unsigned int renderTargetFlags = 0)
 	{
 		return m_pBaseMaterialsPassThru->CreateNamedRenderTargetTextureEx(pRTName, w, h, sizeMode, format, depth, textureFlags, renderTargetFlags);
 	}
@@ -216,7 +216,7 @@ public:
 		ImageFormat format,
 		MaterialRenderTargetDepth_t depth = MATERIAL_RT_DEPTH_SHARED,
 		bool bClampTexCoords = true,
-		bool bAutoMipMap = false) 
+		bool bAutoMipMap = false)
 	{
 		return m_pBaseMaterialsPassThru->CreateNamedRenderTargetTexture(pRTName, w, h, sizeMode, format, depth, bClampTexCoords, bAutoMipMap);
 	}
@@ -228,7 +228,7 @@ public:
 		ImageFormat format,
 		MaterialRenderTargetDepth_t depth = MATERIAL_RT_DEPTH_SHARED,
 		unsigned int textureFlags = TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT,
-		unsigned int renderTargetFlags = 0) 
+		unsigned int renderTargetFlags = 0)
 	{
 		return m_pBaseMaterialsPassThru->CreateNamedRenderTargetTextureEx2(pRTName, w, h, sizeMode, format, depth, textureFlags, renderTargetFlags);
 	}
@@ -238,7 +238,7 @@ public:
 
 	virtual int 				AllocateLightmap(int width, int height,
 		int offsetIntoLightmapPage[2],
-		IMaterial* pMaterial) 
+		IMaterial* pMaterial)
 	{
 		return m_pBaseMaterialsPassThru->AllocateLightmap(width, height, offsetIntoLightmapPage, pMaterial);
 	}
@@ -247,7 +247,7 @@ public:
 	virtual void				UpdateLightmap(int lightmapPageID, int lightmapSize[2],
 		int offsetIntoLightmapPage[2],
 		float* pFloatImage, float* pFloatImageBump1,
-		float* pFloatImageBump2, float* pFloatImageBump3) 
+		float* pFloatImageBump2, float* pFloatImageBump3)
 	{
 		m_pBaseMaterialsPassThru->UpdateLightmap(lightmapPageID, lightmapSize, offsetIntoLightmapPage, pFloatImage, pFloatImageBump1, pFloatImageBump2, pFloatImageBump3);
 	}
@@ -321,6 +321,13 @@ public:
 	{
 		return m_pBaseMaterialsPassThru->FindMaterialEx(pMaterialName, pTextureGroupName, nContext, complain, pComplainPrefix);
 	}
+
+#ifdef DX_TO_GL_ABSTRACTION
+	virtual void DoStartupShaderPreloading()
+  {
+    m_pBaseMaterialsPassThru->DoStartupShaderPreloading();
+  }
+#endif
 
 	virtual void				SetRenderTargetFrameBufferSizeOverrides(int nWidth, int nHeight)  { m_pBaseMaterialsPassThru->SetRenderTargetFrameBufferSizeOverrides(nWidth, nHeight); }
 
