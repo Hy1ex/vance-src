@@ -14,7 +14,6 @@ $Group "game"
 	"server"
 	"tier1"
 	"mathlib"
-	"gameui2"
 }
 
 $Group "shaders"
@@ -48,7 +47,6 @@ $Group "everything"
 	"vtfdiff"
 	"vvis_dll"
 	"vvis_launcher"
-	"gameui2"
 }
 
 $Group "tools"
