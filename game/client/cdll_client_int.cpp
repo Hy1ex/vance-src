@@ -156,7 +156,7 @@
 
 #include "IDeferredExt.h"
 //GAMEUI2
-#include "../gameui2/igameui2.h"
+#include "igameui2.h"
 #endif
 
 extern vgui::IInputInternal *g_InputInternal;
