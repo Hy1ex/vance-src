@@ -1,0 +1,23 @@
+//-----------------------------------------------------------------------------
+//    GAMEPADUI_VANCE.VPC
+//
+//    Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR        "..\.."
+$Macro GAMENAME     "VANCE"
+$Macro OUTBINNAME    "gamepadui"
+
+$Include "$SRCDIR\game\gamepadui\gamepadui_base.vpc"
+
+$Configuration
+{
+    $Compiler
+    {
+        $PreprocessorDefinitions            "$BASE;GAMEPADUI_GAME_HL2;GAMEPADUI_GAME_EPISODIC;GAMEPADUI_GAME_VANCE"
+    }
+}
+
+$Project "GamepadUI (VANCE)"
+{
+}

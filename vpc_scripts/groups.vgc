@@ -11,6 +11,7 @@
 $Group "game"
 {
 	"client"
+	"gamepadui"
 	"server"
 	"tier1"
 	"mathlib"
