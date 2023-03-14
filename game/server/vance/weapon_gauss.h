@@ -5,6 +5,7 @@
 //=============================================================================
 
 #include "basehlcombatweapon.h"
+#include "vance_baseweapon_shared.h"
 
 #ifndef WEAPON_GAUSS_H
 #define WEAPON_GAUSS_H
@@ -25,11 +26,11 @@
 // Gauss cannon
 //=============================================================================
 
-class CWeaponGaussGun : public CBaseHLCombatWeapon
+class CWeaponGaussGun : public CBaseVanceWeapon
 {
 	DECLARE_DATADESC();
 public:
-	DECLARE_CLASS( CWeaponGaussGun, CBaseHLCombatWeapon );
+	DECLARE_CLASS(CWeaponGaussGun, CBaseVanceWeapon);
 
 	CWeaponGaussGun( void );
 
