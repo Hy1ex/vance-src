@@ -24,7 +24,7 @@ CON_COMMAND(print_num_replaced_mats, "")
 	ConColorMsg(COLOR_GREEN, "%d replaced materials\n", matCount);
 }
 
-bool replMatPossible = false;
+bool replMatPossible = true;
 
 //-----------------------------------------------------------------------------
 // List of materials that should be replaced
