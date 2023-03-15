@@ -179,9 +179,9 @@ extern vgui::IInputInternal *g_InputInternal;
 #include "sixense/in_sixense.h"
 #endif
 
-#if defined( GAMEPADUI )
+/*#if defined( GAMEPADUI )
 #include "../gamepadui/igamepadui.h"
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -229,9 +229,9 @@ IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 IGamepadUI* g_pGamepadUI = nullptr;
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 
 IHaptics* haptics = NULL;// NVNT haptics system interface singleton
 
@@ -367,7 +367,7 @@ class IClientPurchaseInterfaceV2 *g_pClientPurchaseInterface = (class IClientPur
 
 static ConVar *g_pcv_ThreadMode = NULL;
 
-// GAMEPADUI TODO - put this somewhere better. (Madi)
+/*// GAMEPADUI TODO - put this somewhere better. (Madi)
 #if defined( GAMEPADUI )
 const bool IsSteamDeck()
 {
@@ -383,7 +383,7 @@ const bool IsSteamDeck()
 
 	return false;
 }
-#endif
+#endif*/
 
 //-----------------------------------------------------------------------------
 // Purpose: interface for gameui to modify voice bans
@@ -1267,7 +1267,7 @@ void CHLClient::PostInit()
 	}
 #endif
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (IsSteamDeck())
 	{
 		CSysModule* pGamepadUIModule = g_pFullFileSystem->LoadModule("gamepadui", "GAMEBIN", false);
@@ -1302,7 +1302,7 @@ void CHLClient::PostInit()
 			GamepadUI_Log("Unable to load gamepadui module\n");
 		}
 	}
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 }
 
 
@@ -1349,10 +1349,10 @@ void CHLClient::Shutdown( void )
 
 	IGameSystem::ShutdownAllSystems();
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
 			g_pGamepadUI->Shutdown();
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 	
 	gHUD.Shutdown();
 	VGui_Shutdown();
@@ -1452,10 +1452,10 @@ void CHLClient::HudUpdate( bool bActive )
 	}
 #endif
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
 		g_pGamepadUI->OnUpdate(frametime);
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 }
 
 
@@ -1820,10 +1820,10 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	}
 #endif
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
 		g_pGamepadUI->OnLevelInitializePreEntity();
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 }
 
 
@@ -1837,10 +1837,10 @@ void CHLClient::LevelInitPostEntity( )
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
 		g_pGamepadUI->OnLevelInitializePostEntity();
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 
 }
 
@@ -1908,10 +1908,10 @@ void CHLClient::LevelShutdown( void )
 	
 	StopAllRumbleEffects();
 
-#if defined(GAMEPADUI)
+/*#if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
 		g_pGamepadUI->OnLevelShutdown();
-#endif // GAMEPADUI
+#endif // GAMEPADUI*/
 
 	gHUD.LevelShutdown();
 	
