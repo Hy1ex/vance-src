@@ -18,6 +18,7 @@
 
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
 #include "weapon_hl2mpbasebasebludgeon.h"
+#include "vance_bludgeonweapon.h"
 
 
 #ifdef CLIENT_DLL

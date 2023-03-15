@@ -1351,7 +1351,7 @@ void CHLClient::Shutdown( void )
 
 #if defined(GAMEPADUI)
 	if (g_pGamepadUI != nullptr)
-		g_pGamepadUI->Shutdown();
+			g_pGamepadUI->Shutdown();
 #endif // GAMEPADUI
 	
 	gHUD.Shutdown();
