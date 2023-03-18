@@ -36,6 +36,7 @@
 #include <vgui/ILocalize.h>
 #include "hud_vote.h"
 #include "ienginevgui.h"
+#include "viewpostprocess.h"
 #include "sourcevr/isourcevirtualreality.h"
 #if defined( _X360 )
 #include "xbox/xbox_console.h"
@@ -65,6 +66,10 @@ extern ConVar replay_rendersetting_renderglow;
 #include "econ_item_description.h"
 #endif
 
+#ifdef GLOWS_ENABLE
+#include "clienteffectprecachesystem.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -77,6 +82,9 @@ class CHudVote;
 static vgui::HContext s_hVGuiContext = DEFAULT_VGUI_CONTEXT;
 
 ConVar cl_drawhud( "cl_drawhud", "1", FCVAR_CHEAT, "Enable the rendering of the hud" );
+#ifdef DEMO_AUTORECORD
+ConVar cl_autorecord("cl_autorecord", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Start recording demos automatically with an incremental name based on this value.");
+#endif
 ConVar hud_takesshots( "hud_takesshots", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Auto-save a scoreboard screenshot at the end of a map." );
 ConVar hud_freezecamhide( "hud_freezecamhide", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Hide the HUD during freeze-cam" );
 ConVar cl_show_num_particle_systems( "cl_show_num_particle_systems", "0", FCVAR_CLIENTDLL, "Display the number of active particle systems." );
@@ -85,12 +93,13 @@ extern ConVar v_viewmodel_fov;
 extern ConVar voice_modenable;
 
 extern bool IsInCommentaryMode( void );
-extern const char* GetWearLocalizationString( float flWear );
 
-CON_COMMAND( cl_reload_localization_files, "Reloads all localization files" )
-{
-	g_pVGuiLocalize->ReloadLocalizationFiles();
-}
+#ifdef GLOWS_ENABLE
+CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffectsGlow )
+CLIENTEFFECT_MATERIAL( "dev/glow_color" )
+CLIENTEFFECT_MATERIAL( "dev/halo_add_to_screen" )
+CLIENTEFFECT_REGISTER_END_CONDITIONAL( engine->GetDXSupportLevel() >= 90 )
+#endif
 
 #ifdef VOICE_VOX_ENABLE
 void VoxCallback( IConVar *var, const char *oldString, float oldFloat )
@@ -147,7 +156,7 @@ CON_COMMAND( hud_reloadscheme, "Reloads hud layout and animation scripts." )
 	if ( !mode )
 		return;
 
-	mode->ReloadScheme(true);
+	mode->ReloadScheme();
 }
 
 #ifdef _DEBUG
@@ -283,6 +292,12 @@ ClientModeShared::ClientModeShared()
 	m_pWeaponSelection = NULL;
 	m_nRootSize[ 0 ] = m_nRootSize[ 1 ] = -1;
 
+#ifdef MAPBASE // From Alien Swarm SDK
+	m_pCurrentPostProcessController = NULL;
+	m_PostProcessLerpTimer.Invalidate();
+	m_pCurrentColorCorrection = NULL;
+#endif
+
 #if defined( REPLAY_ENABLED )
 	m_pReplayReminderPanel = NULL;
 	m_flReplayStartRecordTime = 0.0f;
@@ -298,14 +313,8 @@ ClientModeShared::~ClientModeShared()
 	delete m_pViewport; 
 }
 
-void ClientModeShared::ReloadScheme( bool flushLowLevel )
+void ClientModeShared::ReloadScheme( void )
 {
-	// Invalidate the global cache first.
-	if (flushLowLevel)
-	{
-		KeyValuesSystem()->InvalidateCache();
-	}
-
 	m_pViewport->ReloadScheme( "resource/ClientScheme.res" );
 	ClearKeyValuesCache();
 }
@@ -347,7 +356,7 @@ void ClientModeShared::Init()
  	Assert( m_pReplayReminderPanel );
 #endif
 
-	ListenForGameEvent( "player_connect_client" );
+	ListenForGameEvent( "player_connect" );
 	ListenForGameEvent( "player_disconnect" );
 	ListenForGameEvent( "player_team" );
 	ListenForGameEvent( "server_cvar" );
@@ -433,7 +442,7 @@ void ClientModeShared::OverrideView( CViewSetup *pSetup )
 
 	if( ::input->CAM_IsThirdPerson() )
 	{
-		const Vector& cam_ofs = g_ThirdPersonManager.GetCameraOffsetAngles();
+		Vector cam_ofs = g_ThirdPersonManager.GetCameraOffsetAngles();
 		Vector cam_ofs_distance = g_ThirdPersonManager.GetFinalCameraOffset();
 
 		cam_ofs_distance *= g_ThirdPersonManager.GetDistanceFraction();
@@ -482,17 +491,8 @@ bool ClientModeShared::ShouldDrawEntity(C_BaseEntity *pEnt)
 	return true;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool ClientModeShared::ShouldDrawParticles( )
 {
-#ifdef TF_CLIENT_DLL
-	C_TFPlayer *pTFPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pTFPlayer && !pTFPlayer->ShouldPlayerDrawParticles() )
-		return false;
-#endif // TF_CLIENT_DLL
-
 	return true;
 }
 
@@ -611,6 +611,8 @@ void ClientModeShared::Update()
 		m_pViewport->SetVisible( cl_drawhud.GetBool() );
 	}
 
+	UpdatePostProcessingEffects();
+
 	UpdateRumbleEffects();
 
 	if ( cl_show_num_particle_systems.GetBool() )
@@ -635,6 +637,43 @@ void ClientModeShared::Update()
 		engine->Con_NPrintf( 0, "# Active particle systems: %i", nCount );
 	}
 }
+
+#ifdef MAPBASE // From Alien Swarm SDK
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void ClientModeShared::OnColorCorrectionWeightsReset( void )
+{
+	C_ColorCorrection *pNewColorCorrection = NULL;
+	C_ColorCorrection *pOldColorCorrection = m_pCurrentColorCorrection;
+	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
+	{
+		pNewColorCorrection = pPlayer->GetActiveColorCorrection();
+	}
+
+	if ( pNewColorCorrection != pOldColorCorrection )
+	{
+		if ( pOldColorCorrection )
+		{
+			pOldColorCorrection->EnableOnClient( false );
+		}
+		if ( pNewColorCorrection )
+		{
+			pNewColorCorrection->EnableOnClient( true, pOldColorCorrection == NULL );
+		}
+		m_pCurrentColorCorrection = pNewColorCorrection;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float ClientModeShared::GetColorCorrectionScale( void ) const
+{
+	return 1.0f;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // This processes all input before SV Move messages are sent
@@ -782,6 +821,10 @@ int ClientModeShared::HudElementKeyInput( int down, ButtonCode_t keynum, const c
 //-----------------------------------------------------------------------------
 bool ClientModeShared::DoPostScreenSpaceEffects( const CViewSetup *pSetup )
 {
+#ifdef GLOWS_ENABLE
+	g_GlowObjectManager.RenderGlowEffects( pSetup, 0 );
+#endif
+
 #if defined( REPLAY_ENABLED )
 	if ( engine->IsPlayingDemo() )
 	{
@@ -851,7 +894,53 @@ void ClientModeShared::LevelInit( const char *newmap )
 	// Reset any player explosion/shock effects
 	CLocalPlayerFilter filter;
 	enginesound->SetPlayerDSP( filter, 0, true );
+
+#ifdef DEMO_AUTORECORD
+	AutoRecord(newmap);
+#endif
 }
+
+#ifdef DEMO_AUTORECORD
+void ClientModeShared::AutoRecord(const char *map)
+{
+	if (!cl_autorecord.GetBool()) {
+		return;
+	}
+
+	if (map == nullptr) {
+		Warning("null map in ClientModeShared::AutoRecord");
+		return;
+	}
+
+	// stop any demo to make sure they're saved
+	engine->ClientCmd("stop");
+
+	// KLEMS: sanitize space in client name because having to type "" while playing back lots of demos is annoying
+	ConVarRef name("name");
+	char nameStr[128];
+	memset(nameStr, 0, sizeof(nameStr));
+	Q_snprintf(nameStr, sizeof(nameStr), "%s", name.GetString());
+	int i = 0;
+	while (nameStr[i]) {
+		char c = nameStr[i];
+		if (!(	(c >= '0' && c <= '9') ||
+				(c >= 'a' && c <= 'z') ||
+				(c >= 'A' && c <= 'Z'))) {
+			nameStr[i] = '_';
+		}
+		i++;
+	}
+	nameStr[127] = 0;
+
+	char cmd[256];
+	Q_snprintf(cmd, sizeof(cmd), "record \"%s_%04d_%s\"", nameStr, cl_autorecord.GetInt(), map);
+	cl_autorecord.SetValue(cl_autorecord.GetInt() + 1);
+	engine->ClientCmd(cmd);
+
+	// write to config to make sure the cvar is recorded
+	engine->ClientCmd("host_writeconfig");
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -871,6 +960,17 @@ void ClientModeShared::LevelShutdown( void )
  		s_hVGuiContext = DEFAULT_VGUI_CONTEXT;
 	}
 
+#ifdef MAPBASE
+	// Always reset post-processing on level unload
+	//if (m_pCurrentPostProcessController)
+	{
+		m_CurrentPostProcessParameters = PostProcessParameters_t();
+		m_LerpEndPostProcessParameters = PostProcessParameters_t();
+		m_pCurrentPostProcessController = NULL;
+		SetPostProcessParams( &m_CurrentPostProcessParameters );
+	}
+#endif
+
 	// Reset any player explosion/shock effects
 	CLocalPlayerFilter filter;
 	enginesound->SetPlayerDSP( filter, 0, true );
@@ -879,7 +979,7 @@ void ClientModeShared::LevelShutdown( void )
 
 void ClientModeShared::Enable()
 {
-	vgui::VPANEL pRoot = VGui_GetClientDLLRootPanel();
+	vgui::VPANEL pRoot = VGui_GetClientDLLRootPanel();;
 
 	// Add our viewport to the root panel.
 	if( pRoot != 0 )
@@ -906,7 +1006,7 @@ void ClientModeShared::Enable()
 
 void ClientModeShared::Disable()
 {
-	vgui::VPANEL pRoot = VGui_GetClientDLLRootPanel();
+	vgui::VPANEL pRoot = VGui_GetClientDLLRootPanel();;
 
 	// Remove our viewport from the root panel.
 	if( pRoot != 0 )
@@ -935,7 +1035,7 @@ void ClientModeShared::Layout()
 		m_pViewport->SetBounds(0, 0, wide, tall);
 		if ( changed )
 		{
-			ReloadScheme(false);
+			ReloadScheme();
 		}
 	}
 }
@@ -943,6 +1043,69 @@ void ClientModeShared::Layout()
 float ClientModeShared::GetViewModelFOV( void )
 {
 	return v_viewmodel_fov.GetFloat();
+}
+
+#ifdef MAPBASE
+extern bool g_bPostProcessNeedsRestore;
+#endif
+
+void ClientModeShared::UpdatePostProcessingEffects()
+{
+	C_PostProcessController* pNewPostProcessController = NULL;
+	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+
+	if (pPlayer)
+		pNewPostProcessController = pPlayer->GetActivePostProcessController();
+
+	if (!pNewPostProcessController)
+	{
+		m_CurrentPostProcessParameters = PostProcessParameters_t();
+		m_pCurrentPostProcessController = NULL;
+		SetPostProcessParams( &m_CurrentPostProcessParameters );
+		return;
+	}
+
+	if (pNewPostProcessController != m_pCurrentPostProcessController)
+		m_pCurrentPostProcessController = pNewPostProcessController;
+
+	// Start a lerp timer if the parameters changed, regardless of whether the controller changed
+	if (m_LerpEndPostProcessParameters != pNewPostProcessController->m_PostProcessParameters)
+	{
+		m_LerpStartPostProcessParameters = m_CurrentPostProcessParameters;
+		m_LerpEndPostProcessParameters = pNewPostProcessController ? pNewPostProcessController->m_PostProcessParameters : m_CurrentPostProcessParameters;
+
+		float flFadeTime = pNewPostProcessController ? pNewPostProcessController->m_PostProcessParameters.m_flParameters[PPPN_FADE_TIME] : 0.0f;
+		if (flFadeTime <= 0.0f)
+		{
+			flFadeTime = 0.001f;
+		}
+
+		m_PostProcessLerpTimer.Start( flFadeTime );
+	}
+#ifdef MAPBASE
+	// HACKHACK: Needs to be checked here because OnRestore() doesn't seem to run before a lerp begins
+	else if (g_bPostProcessNeedsRestore)
+	{
+		// The player just loaded a saved game.
+		// Don't fade parameters from 0; instead, take what's already there and assume they were already active.
+		// (we have no way of knowing if they were in the middle of a lerp)
+		m_PostProcessLerpTimer.Invalidate();
+		g_bPostProcessNeedsRestore = false;
+	}
+#endif
+
+	// Lerp between old and new parameters
+	float flLerpFactor = 1.0f - m_PostProcessLerpTimer.GetRemainingRatio();
+	for (int nParameter = 0; nParameter < POST_PROCESS_PARAMETER_COUNT; ++nParameter)
+	{
+		m_CurrentPostProcessParameters.m_flParameters[nParameter] =
+			Lerp(
+			flLerpFactor,
+			m_LerpStartPostProcessParameters.m_flParameters[nParameter],
+			m_LerpEndPostProcessParameters.m_flParameters[nParameter] );
+	}
+
+	SetPostProcessParams( &m_CurrentPostProcessParameters );
 }
 
 class CHudChat;
@@ -967,7 +1130,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 
 	const char *eventname = event->GetName();
 
-	if ( Q_strcmp( "player_connect_client", eventname ) == 0 )
+	if ( Q_strcmp( "player_connect", eventname ) == 0 )
 	{
 		if ( !hudChat )
 			return;
@@ -1127,7 +1290,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 		{
 			CBasePlayer *pSpectatorTarget = UTIL_PlayerByIndex( GetSpectatorTarget() );
 
-			if ( pSpectatorTarget && (GetSpectatorMode() == OBS_MODE_IN_EYE || GetSpectatorMode() == OBS_MODE_CHASE || GetSpectatorMode() == OBS_MODE_POI) )
+			if ( pSpectatorTarget && (GetSpectatorMode() == OBS_MODE_IN_EYE || GetSpectatorMode() == OBS_MODE_CHASE) )
 			{
 				if ( pSpectatorTarget->GetTeamNumber() == team )
 				{
@@ -1136,7 +1299,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 			}
 		}
 
-		if ( team == 0 && GetLocalTeam() > 0 )
+		if ( team == 0 && GetLocalTeam() )
 		{
 			bValidTeam = false;
 		}
@@ -1234,14 +1397,10 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 		entityquality_t iItemQuality = event->GetInt( "quality" );
 		int iMethod = event->GetInt( "method" );
 		int iItemDef = event->GetInt( "itemdef" );
-		bool bIsStrange = event->GetInt( "isstrange" );
-		bool bIsUnusual = event->GetInt( "isunusual" );
-		float flWear = event->GetFloat( "wear" );
-
 		C_BasePlayer *pPlayer = UTIL_PlayerByIndex( iPlayerIndex );
 		const GameItemDefinition_t *pItemDefinition = dynamic_cast<GameItemDefinition_t *>( GetItemSchema()->GetItemDefinition( iItemDef ) );
 
-		if ( !pPlayer || !pItemDefinition || pItemDefinition->IsHidden() )
+		if ( !pPlayer || !pItemDefinition )
 			return;
 
 		if ( g_PR )
@@ -1261,101 +1420,19 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 				_snwprintf( wszItemFound, ARRAYSIZE( wszItemFound ), L"%ls", g_pVGuiLocalize->Find( pszLocString ) );
 
 				wchar_t *colorMarker = wcsstr( wszItemFound, L"::" );
-				const CEconItemRarityDefinition* pItemRarity = GetItemSchema()->GetRarityDefinition( pItemDefinition->GetRarity() );
-
 				if ( colorMarker )
-				{	
-					if ( pItemRarity )
+				{
+					const char *pszQualityColorString = EconQuality_GetColorString( (EEconItemQuality)iItemQuality );
+					if ( pszQualityColorString )
 					{
-						attrib_colors_t colorRarity = pItemRarity->GetAttribColor();
-						vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-						vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( scheme );
-						Color color = pScheme->GetColor( GetColorNameForAttribColor( colorRarity ), Color( 255, 255, 255, 255 ) );
-						hudChat->SetCustomColor( color );
+						hudChat->SetCustomColor( pszQualityColorString );
+						*(colorMarker+1) = COLOR_CUSTOM;
 					}
-					else
-					{
-						const char *pszQualityColorString = EconQuality_GetColorString( (EEconItemQuality)iItemQuality );
-						if ( pszQualityColorString )
-						{
-							hudChat->SetCustomColor( pszQualityColorString );
-						}
-					}
-
-					*(colorMarker+1) = COLOR_CUSTOM;
 				}
 
 				// TODO: Update the localization strings to only have two format parameters since that's all we need.
 				wchar_t wszLocalizedString[256];
-				g_pVGuiLocalize->ConstructString( 
-					wszLocalizedString, 
-					sizeof( wszLocalizedString ), 
-					LOCCHAR( "%s1" ),
-					1, 
-					CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pItemDefinition, iItemQuality ).GetFullName()
-				);
-
-				locchar_t tempName[MAX_ITEM_NAME_LENGTH];
-				if ( pItemRarity )
-				{
-					// grade and Wear
-					loc_scpy_safe( tempName, wszLocalizedString );
-
-					const locchar_t *loc_WearText = LOCCHAR("");
-					const char *pszTooltipText = "TFUI_InvTooltip_Rarity";
-
-					if ( !IsWearableSlot( pItemDefinition->GetDefaultLoadoutSlot() ) )
-					{
-						loc_WearText = g_pVGuiLocalize->Find( GetWearLocalizationString( flWear ) );
-					}
-					else
-					{
-						pszTooltipText = "TFUI_InvTooltip_RarityNoWear";
-					}
-
-					g_pVGuiLocalize->ConstructString( wszLocalizedString,
-						ARRAYSIZE( wszLocalizedString ) * sizeof( locchar_t ),
-						g_pVGuiLocalize->Find( pszTooltipText ),
-						3,
-						g_pVGuiLocalize->Find( pItemRarity->GetLocKey() ),
-						tempName,
-						loc_WearText
-					);
-
-					if ( bIsUnusual )
-					{
-						loc_scpy_safe( tempName, wszLocalizedString );
-
-						g_pVGuiLocalize->ConstructString( wszLocalizedString,
-							ARRAYSIZE( wszLocalizedString ) * sizeof( locchar_t ),
-							LOCCHAR( "%s1 %s2" ),
-							2,
-							g_pVGuiLocalize->Find( "rarity4" ),
-							tempName 
-						);
-					}
-
-					if ( bIsStrange )
-					{
-						loc_scpy_safe( tempName, wszLocalizedString );
-
-						g_pVGuiLocalize->ConstructString( wszLocalizedString,
-							ARRAYSIZE( wszLocalizedString ) * sizeof( locchar_t ),
-							LOCCHAR( "%s1 %s2" ),
-							2,
-							g_pVGuiLocalize->Find( "strange" ),
-							tempName
-						);
-					}
-				}
-				
-				loc_scpy_safe( tempName, wszLocalizedString );
-				g_pVGuiLocalize->ConstructString(
-					wszLocalizedString,
-					sizeof( wszLocalizedString ),
-					wszItemFound,
-					3,
-					wszPlayerName, tempName, L"" );
+				g_pVGuiLocalize->ConstructString( wszLocalizedString, sizeof( wszLocalizedString ), wszItemFound, 3, wszPlayerName, CEconItemLocalizedFullNameGenerator( GLocalizationProvider(), pItemDefinition, iItemQuality ).GetFullName(), L"" );
 
 				char szLocalized[256];
 				g_pVGuiLocalize->ConvertUnicodeToANSI( wszLocalizedString, szLocalized, sizeof( szLocalized ) );

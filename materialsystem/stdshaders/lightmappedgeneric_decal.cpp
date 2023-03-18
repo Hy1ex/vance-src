@@ -7,19 +7,15 @@
 //=============================================================================//
 
 #include "BaseVSShader.h"
-#ifndef VANCE
+
 #include "lightmappedgeneric_decal.inc"
-#else
-#include "lightmappedgeneric_decal_ps30.inc"
-#include "lightmappedgeneric_decal_vs30.inc"
-#endif // !VANCE
 #include "mathlib/bumpvects.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 
-BEGIN_VS_SHADER(SDK_LightmappedGeneric_Decal,
+BEGIN_VS_SHADER( LightmappedGeneric_Decal,
 			  "Help for LightmappedGeneric_Decal" )
 
 	BEGIN_SHADER_PARAMS
@@ -93,7 +89,7 @@ BEGIN_VS_SHADER(SDK_LightmappedGeneric_Decal,
 			int pTexCoords[3] = { 2, 2, 1 };
 			pShaderShadow->VertexShaderVertexFormat( VERTEX_POSITION | VERTEX_COLOR, 3, pTexCoords, 0 );
 
-			lightmappedgeneric_decal_vs30_Static_Index vshIndex;
+			lightmappedgeneric_decal_Static_Index vshIndex;
 			pShaderShadow->SetVertexShader( "LightmappedGeneric_Decal", vshIndex.GetIndex() );
 			pShaderShadow->SetPixelShader( "LightmappedGeneric_Decal" );
 			FogToFogColor();
@@ -117,7 +113,7 @@ BEGIN_VS_SHADER(SDK_LightmappedGeneric_Decal,
 			SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, BASETEXTURETRANSFORM );
 			SetModulationPixelShaderDynamicState( 3 );
 
-			lightmappedgeneric_decal_vs30_Dynamic_Index vshIndex;
+			lightmappedgeneric_decal_Dynamic_Index vshIndex;
 			vshIndex.SetDOWATERFOG( pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 			pShaderAPI->SetVertexShaderIndex( vshIndex.GetIndex() );
 		}
@@ -125,15 +121,13 @@ BEGIN_VS_SHADER(SDK_LightmappedGeneric_Decal,
 	}
 
 	SHADER_DRAW
-	{ 
-#ifndef VANCE
+	{
 		if( UsingFlashlight( params ) )
 		{
 			DrawFlashlight_dx80( params, pShaderAPI, pShaderShadow, false, -1, -1, -1, 
 				FLASHLIGHTTEXTURE, FLASHLIGHTTEXTUREFRAME, true, false, 0, -1, -1 );
 		}
 		else
-#endif
 		{
 			DrawDecal( params, pShaderAPI, pShaderShadow );
 		}

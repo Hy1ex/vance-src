@@ -15,12 +15,7 @@ $Configuration
 	$Compiler
 	{
 		$Create/UsePrecompiledHeader		"Use Precompiled Header (/Yu)"
-		$PrecompiledHeaderFile				"$(IntDir)/vrad_launcher.pch"
-	}
-
-	$Linker [$WIN32]
-	{
-		$EnableLargeAddresses				"Support Addresses Larger Than 2 Gigabytes (/LARGEADDRESSAWARE)"
+		$PrecompiledHeaderFile				"Debug/vrad_launcher.pch"
 	}
 }
 

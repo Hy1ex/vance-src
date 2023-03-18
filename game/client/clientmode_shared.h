@@ -42,6 +42,10 @@ class CReplayReminderPanel;
 
 #define USERID2PLAYER(i) ToBasePlayer( ClientEntityList().GetEnt( engine->GetPlayerForUserID( i ) ) )	
 
+#ifdef MAPBASE
+#define DEMO_AUTORECORD 1
+#endif
+
 extern IClientMode *GetClientModeNormal(); // must be implemented
 
 // This class implements client mode functionality common to HL2 and TF2.
@@ -62,11 +66,15 @@ public:
 	virtual void	LevelInit( const char *newmap );
 	virtual void	LevelShutdown( void );
 
+#ifdef DEMO_AUTORECORD
+	virtual void	AutoRecord( const char *map );
+#endif
+
 	virtual void	Enable();
 	virtual void	Disable();
 	virtual void	Layout();
 
-	virtual void	ReloadScheme( bool flushLowLevel );
+	virtual void	ReloadScheme( void );
 	virtual void	OverrideView( CViewSetup *pSetup );
 	virtual bool	ShouldDrawDetailObjects( );
 	virtual bool	ShouldDrawEntity(C_BaseEntity *pEnt);
@@ -83,6 +91,11 @@ public:
 	virtual void	ProcessInput(bool bActive);
 	virtual bool	CreateMove( float flInputSampleTime, CUserCmd *cmd );
 	virtual void	Update();
+#ifdef MAPBASE // From Alien Swarm SDK
+	virtual void	OnColorCorrectionWeightsReset( void );
+	virtual float	GetColorCorrectionScale( void ) const;
+	virtual void	ClearCurrentColorCorrection() { m_pCurrentColorCorrection = NULL; }
+#endif
 
 	// Input
 	virtual int		KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding );
@@ -156,6 +169,17 @@ private:
 	vgui::HCursor			m_CursorNone;
 	CBaseHudWeaponSelection *m_pWeaponSelection;
 	int						m_nRootSize[2];
+
+#ifdef MAPBASE // From Alien Swarm SDK
+	void UpdatePostProcessingEffects();
+
+	const C_PostProcessController* m_pCurrentPostProcessController;
+	PostProcessParameters_t m_CurrentPostProcessParameters;
+	PostProcessParameters_t m_LerpStartPostProcessParameters, m_LerpEndPostProcessParameters;
+	CountdownTimer m_PostProcessLerpTimer;
+
+	CHandle<C_ColorCorrection> m_pCurrentColorCorrection;
+#endif
 };
 
 #endif // CLIENTMODE_NORMAL_H

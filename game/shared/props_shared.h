@@ -32,6 +32,9 @@
 #define SF_PHYSPROP_ALWAYS_PICK_UP				0x100000		// Physcannon can always pick this up, no matter what mass or constraints may apply.
 #define SF_PHYSPROP_NO_COLLISIONS				0x200000		// Don't enable collisions on spawn
 #define SF_PHYSPROP_IS_GIB						0x400000		// Limit # of active gibs
+#ifdef MAPBASE
+#define SF_PHYSPROP_NO_ZOMBIE_SWAT				0x800000		// Zombies are not allowed to swat this
+#endif
 
 // Any barrel farther away than this is ignited rather than exploded.
 #define PROP_EXPLOSION_IGNITE_RADIUS			32.0f
@@ -217,7 +220,6 @@ struct breakmodel_t
 	bool		placementIsBone;
 	bool		isMotionDisabled;
 	mp_break_t	mpBreakMode;
-	Vector		velocity;
 };
 
 struct breakablepropparams_t
@@ -243,13 +245,11 @@ struct breakablepropparams_t
 
 const char *GetMassEquivalent(float flMass);
 int  GetAutoMultiplayerPhysicsMode( Vector size, float mass );
-void BuildPropList( const char *pszBlockName, CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup );
 void BreakModelList( CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup );
 void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const breakablepropparams_t &params, CBaseEntity *pEntity, int iPrecomputedBreakableCount, bool bIgnoreGibLImit, bool defaultLocation = true );
 void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const Vector &origin, const QAngle &angles, const Vector &velocity, const AngularImpulse &angularVelocity, float impactEnergyScale, float burstScale, int collisionGroup, CBaseEntity *pEntity = NULL, bool defaultLocation = true );
 
 // Player gibs.
-void PrecachePropsForModel( int iModel, const char *pszBlockName );
 void PrecacheGibsForModel( int iModel );
 void BuildGibList( CUtlVector<breakmodel_t> &list, int modelindex, float defBurstScale, int defCollisionGroup );
 CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex, IPhysicsObject *pPhysics, const breakablepropparams_t &params, CBaseEntity *pEntity, int iPrecomputedBreakableCount, bool bIgnoreGibLImit, bool defaultLocation = true, CUtlVector<EHANDLE> *pGibList = NULL, bool bBurning = false );

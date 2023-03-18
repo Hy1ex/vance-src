@@ -10,6 +10,7 @@
 //  SKIP: !$FASTPATH && $FASTPATHENVMAPTINT
 //  SKIP: !$BUMPMAP && $DIFFUSEBUMPMAP
 //	SKIP: !$BUMPMAP && $BUMPMAP2
+//	SKIP: !$BUMPMAP2 && $BUMPMASK
 //	SKIP: $ENVMAPMASK && $BUMPMAP2
 //	SKIP: $BASETEXTURENOENVMAP && ( !$BASETEXTURE2 || !$CUBEMAP )
 //	SKIP: $BASETEXTURE2NOENVMAP && ( !$BASETEXTURE2 || !$CUBEMAP )
@@ -23,10 +24,19 @@
 //	SKIP: !$BUMPMAP && ($NORMAL_DECODE_MODE == 2)
 //	SKIP: !$BUMPMAP && ($NORMALMASK_DECODE_MODE == 1)
 //	SKIP: !$BUMPMAP && ($NORMALMASK_DECODE_MODE == 2)
-//  NOSKIP: $FANCY_BLENDING && (!$FASTPATH)
 
 // 360 compiler craps out on some combo in this family.  Content doesn't use blendmode 10 anyway
-//  SKIP: $FASTPATH && $PIXELFOGTYPE && $BASETEXTURE2 && $DETAILTEXTURE && $CUBEMAP && ($DETAIL_BLEND_MODE == 10 ) [XBOX]
+//  SKIP: $FASTPATH && $PIXELFOGTYPE && $BASETEXTURE2 && $DETAILTEXTURE && $CUBEMAP && ($DETAIL_BLEND_MODE == 10 )
+
+// Too many instructions to do this all at once:
+//  SKIP: $FANCY_BLENDING && $BUMPMAP && $DETAILTEXTURE
+
+//  SKIP: $BASETEXTURETRANSFORM2 && !$BASETEXTURE2
+//  SKIP: $BASETEXTURETRANSFORM2 && $SEAMLESS
+
+//  SKIP: $SWAP_VERTEX_BLEND && !$BASETEXTURE2
+
+//  SKIP: !$FANCY_BLENDING && $MASKEDBLENDING
 
 // debug crap:
 // NOSKIP: $DETAILTEXTURE
@@ -40,7 +50,6 @@
 #include "common_ps_fxc.h"
 #include "common_flashlight_fxc.h"
 #include "common_lightmappedgeneric_fxc.h"
-#include "deferred_shadows.h"
 
 #if SEAMLESS
 #define USE_FAST_PATH 1
@@ -91,12 +100,11 @@ const float4 g_DetailTint_and_BlendFactor	: register( c8 );
 #define g_DetailTint (g_DetailTint_and_BlendFactor.rgb)
 #define g_DetailBlendFactor (g_DetailTint_and_BlendFactor.w)
 
-const float4 g_EnvmapOrigin_and_Radius		: register( c20 );
-#define g_EnvmapOrigin (g_EnvmapOrigin_and_Radius.xyz)
-#define g_EnvmapRadius (g_EnvmapOrigin_and_Radius.w)
-const float g_EnvmapSize					: register( c21 );
+const float4 g_EyePos_MinLight				: register( c10 );
+#define g_EyePos g_EyePos_MinLight.xyz
+#define g_fMinLighting g_EyePos_MinLight.w
 
-const HALF3 g_EyePos						: register( c10 );
+
 const HALF4 g_FogParams						: register( c11 );
 const float4 g_TintValuesAndLightmapScale	: register( c12 );
 
@@ -106,6 +114,20 @@ const float4 g_FlashlightAttenuationFactors	: register( c13 );
 const float3 g_FlashlightPos				: register( c14 );
 const float4x4 g_FlashlightWorldToTexture	: register( c15 ); // through c18
 const float4 g_ShadowTweaks					: register( c19 );
+
+#if PARALLAXCORRECT
+// Parallax cubemaps
+const float4 cubemapPos						: register(c21);
+const float4x4 obbMatrix					: register(c22); //through c25
+#define g_BlendInverted cubemapPos.w
+#else
+// Blixibon - Hammer apparently has a bug that causes the vertex blend to get swapped.
+// Hammer uses a special internal shader to nullify this, but it doesn't work with custom shaders.
+// Downfall got around this by swapping around the base textures in the DLL code when drawn by the editor.
+// Doing it here in the shader itself allows us to retain other properties, like FANCY_BLENDING.
+// TODO: This may be inefficent usage of a constant
+const HALF g_BlendInverted					: register(c21);
+#endif
 
 
 sampler BaseTextureSampler		: register( s0 );
@@ -158,150 +180,18 @@ sampler ShadowDepthSampler		: register( s14 );
 sampler RandRotSampler			: register( s15 );
 #endif
 
-#if CSM == 1
-sampler ShadowDepthSampler		: register( s13 ); // CSM Depth
-
-const float4x4 g_CSMWorldToTexture : register( c22 );
-const float4 g_CascadeFwd		: register( c26 );
-const float4 g_CascadeLight		: register( c27 );
-const float4 g_CascadeAmbient	: register( c1 );
-const float2 g_CascadeBias		: register( c5 );
-const float2 g_CascadeResolution : register( c6 );
-const float4 g_CascadeSize		: register( c9 );
-#endif
-
-#if CSM == 1
-float DoCSM( sampler DepthSampler, const float3 vProjCoords, float vViewDepth, float LdN )
-{
-	float2 rtSize = g_CascadeResolution; //float2(4096.0f * 4.0f, 4096.0f) * 2.0f;
-	float fEpsilonX = 1.0f / rtSize.y;
-	float fEpsilonY = 1.0f / rtSize.x;
-
-	#if CSM_PERF < 1
-	float3 cascade0 = float3( float2( ( vProjCoords.x / 4 ), vProjCoords.y ), vProjCoords.z );
-	float3 cascade1 = float3(
-		float2( ( vProjCoords.x / 4 ) + ( g_CascadeSize.y - 2 - 1.0f / 8.0f - 0.5 ), vProjCoords.y + ( g_CascadeSize.y - 1 ) / 2 ) /
-			g_CascadeSize.y,
-		vProjCoords.z );
-	#endif
-	#if CSM_PERF < 2
-	float3 cascade2 =
-		float3( float2( ( vProjCoords.x / 4 ) + ( g_CascadeSize.z - 3 - 1.0f / 8.0f ), vProjCoords.y + ( g_CascadeSize.z - 1 ) / 2 ) /
-					g_CascadeSize.z,
-				vProjCoords.z );
-	#endif
-	float3 cascade3 =
-		float3( float2( ( vProjCoords.x / 4 ) + ( g_CascadeSize.w - 4 - 1.0f / 8.0f ), vProjCoords.y + ( g_CascadeSize.w - 1 ) / 2 ) /
-					g_CascadeSize.w,
-				vProjCoords.z );
-
-	float projMask = 1.0f;
-	if ( vViewDepth >= g_CascadeSize.w * g_CascadeSize.x - 100 )
-	{
-		projMask = 0.0f;
-	}
-
-	float4 vShadowTweaks = float4( fEpsilonX, fEpsilonY, 0.0f, 0.0f );
-	#if CSM_PERF < 1
-	float shadowProjDiff0 = 1;
-	float3 shadowMapCenter_objDepth0 = cascade0;
-	float2 shadowMapCenter0 = shadowMapCenter_objDepth0.xy;
-	float objDepth0 = shadowMapCenter_objDepth0.z + g_CascadeBias.y * ( g_CascadeBias.x * LdN ) * shadowProjDiff0;
-	float3 vShadowPos0 = float3( shadowMapCenter0, objDepth0 );
-
-	float shadowProjDiff1 = g_CascadeSize.y;
-	float3 shadowMapCenter_objDepth1 = cascade1;
-	float2 shadowMapCenter1 = shadowMapCenter_objDepth1.xy;
-	float objDepth1 = shadowMapCenter_objDepth1.z + g_CascadeBias.y * ( g_CascadeBias.x * LdN ) * shadowProjDiff1;
-	float3 vShadowPos1 = float3( shadowMapCenter1, objDepth1 );
-	#endif
-
-	#if CSM_PERF < 2
-	float shadowProjDiff2 = g_CascadeSize.z;
-	float3 shadowMapCenter_objDepth2 = cascade2;
-	float2 shadowMapCenter2 = shadowMapCenter_objDepth2.xy;
-	float objDepth2 = shadowMapCenter_objDepth2.z + g_CascadeBias.y * ( g_CascadeBias.x * LdN ) * shadowProjDiff2;
-	float3 vShadowPos2 = float3( shadowMapCenter2, objDepth2 );
-	#endif
-
-	float shadowProjDiff3 = g_CascadeSize.w;
-	float3 shadowMapCenter_objDepth3 = cascade3;
-	float2 shadowMapCenter3 = shadowMapCenter_objDepth3.xy;
-	float objDepth3 = shadowMapCenter_objDepth3.z + g_CascadeBias.y * ( g_CascadeBias.x * LdN ) * shadowProjDiff3;
-	float3 vShadowPos3 = float3( shadowMapCenter3, objDepth3 );
-
-	/*float shadow0 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter0.xy, objDepth0);
-	float shadow1 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter1.xy, objDepth1);
-	float shadow2 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter2.xy, objDepth2);
-	float shadow3 = tex2DprojBilinear(DepthSampler,rtSize, shadowMapCenter3.xy, objDepth3);*/
-
-	float shadow3 = PCF( DepthSampler, rtSize, shadowMapCenter3.xy, objDepth3 );
-
-	#if CSM_PERF < 2
-	float shadow2 = PCF( DepthSampler, rtSize, shadowMapCenter2.xy, objDepth2 );
-	#else
-	float shadow2 = shadow3;
-	#endif
-
-	#if CSM_PERF < 1
-	float shadow1 = PCF( DepthSampler, rtSize, shadowMapCenter1.xy, objDepth1 );
-	float shadow0 = PCF( DepthSampler, rtSize, shadowMapCenter0.xy, objDepth0 );
-	#else
-	float shadow1 = shadow2;
-	float shadow0 = shadow2;
-	#endif
-
-	/*float shadow0 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos0, vShadowTweaks);
-	float shadow1 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos1, vShadowTweaks);
-	float shadow2 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos2, vShadowTweaks);
-	float shadow3 = DoShadowNvidiaPCF5x5GaussianEx(DepthSampler, vShadowPos3, vShadowTweaks);
-
-	float shadow0 = DoShadowRAWZ(DepthSampler, float4(vShadowPos0, 1.0f));
-	float shadow1 = DoShadowRAWZ(DepthSampler, float4(vShadowPos1, 1.0f));
-	float shadow2 = DoShadowRAWZ(DepthSampler, float4(vShadowPos2, 1.0f));
-	float shadow3 = DoShadowRAWZ(DepthSampler, float4(vShadowPos3, 1.0f));*/
-
-	float shadow01 = lerp( shadow0, shadow1, pow( saturate( vViewDepth / ( g_CascadeSize.x - 6 ) ), 20.0f ) );
-	float shadow012 = lerp( shadow01, shadow2, pow( saturate( vViewDepth / ( g_CascadeSize.y * g_CascadeSize.x - 6 ) ), 20.0f ) );
-	float shadow0123 = lerp( shadow012, shadow3, pow( saturate( vViewDepth / ( g_CascadeSize.z * g_CascadeSize.x - 6 ) ), 20.0f ) );
-
-	float shadow = shadow0123;
-
-	if ( projMask == 1.0f )
-	{
-		float smoothCSMMask = pow( saturate( vViewDepth / ( g_CascadeSize.w * g_CascadeSize.x - 100 ) ), 20.0f );
-		float shadowFinal = lerp( shadow, 1.0f, smoothCSMMask );
-		return shadowFinal;
-	}
-	else
-	{
-		return 1.0f;
-	}
-}
-
-float3 DoCSMLight( in float3 worldPos, in float3 worldNormal, float3 albedo, float ViewZ )
-{
-	float3 Out;
-	float LdN = max( 1.0f - saturate( dot( worldNormal, -g_CascadeFwd.xyz ) ), 0.01 );
-	float4 flashlightSpacePosition = mul( float4( worldPos, 1.0f ), g_CSMWorldToTexture );
-	float3 vProjCoords = flashlightSpacePosition.xyz / flashlightSpacePosition.w;
-	float3 flShadow = DoCSM( ShadowDepthSampler, vProjCoords, ViewZ, LdN );
-	float diffuse = dot( worldNormal, -g_CascadeFwd.xyz );
-	diffuse = saturate( diffuse );
-
-	Out = albedo * g_CascadeLight.rgb * diffuse * flShadow;
-	return Out;
-}
-#endif
-
-
 struct PS_INPUT
 {
 #if SEAMLESS
 	float3 SeamlessTexCoord         : TEXCOORD0;            // zy xz
 	float4 detailOrBumpAndEnvmapMaskTexCoord : TEXCOORD1;   // envmap mask
 #else
+#if BASETEXTURETRANSFORM2
+	// Blixibon - Using two extra floats for $basetexturetransform2
+	HALF4 baseTexCoord				: TEXCOORD0;
+#else
 	HALF2 baseTexCoord				: TEXCOORD0;
+#endif
 	// detail textures and bumpmaps are mutually exclusive so that we have enough texcoords.
 #if ( RELIEF_MAPPING == 0 )
 	HALF4 detailOrBumpAndEnvmapMaskTexCoord	: TEXCOORD1;
@@ -325,20 +215,10 @@ struct PS_INPUT
 #endif
 };
 
-struct PS_OUTPUT
-{
-	float4 MainOut : COLOR0;
-	float4 Normal : COLOR1;
-	float4 MRAO : COLOR2;
-	float4 Albedo : COLOR3;
-};
-
 #if LIGHTING_PREVIEW == 2
 LPREVIEW_PS_OUT main( PS_INPUT i ) : COLOR
-#elif LIGHTING_PREVIEW == 1
-HALF4 main(PS_INPUT i) : COLOR
 #else
-PS_OUTPUT main( PS_INPUT i ) : COLOR
+HALF4 main( PS_INPUT i ) : COLOR
 #endif
 {
 	bool bBaseTexture2 = BASETEXTURE2 ? true : false;
@@ -364,14 +244,27 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	baseTexCoords.xy = i.baseTexCoord.xy;
 #endif
 
+#if BASETEXTURETRANSFORM2
+	// Blixibon - Simpler version of GetBaseTextureAndNormal() that supports $basetexturetransform2
+	// (make this its own function in common_lightmappedgeneric_fxc.h if this becomes more widespread)
+	// 
+	// Also, not sure where else to put this, but we're using an entire BASETEXTURETRANSFORM2 combo
+	// because in DX9, $basetexture2 would update from the original $basetexturetransform, so
+	// keeping this code separate retains that original behavior.
+	baseColor = tex2D( BaseTextureSampler, baseTexCoords.xy );
+	baseColor2 = tex2D( BaseTextureSampler2, i.baseTexCoord.wz );
+	if ( bBumpmap || bNormalMapAlphaEnvmapMask )
+	{
+		vNormal  = tex2D( BumpmapSampler, baseTexCoords.xy );
+	}
+#else
 	GetBaseTextureAndNormal( BaseTextureSampler, BaseTextureSampler2, BumpmapSampler, bBaseTexture2, bBumpmap || bNormalMapAlphaEnvmapMask, 
 		baseTexCoords, i.vertexColor.rgb, baseColor, baseColor2, vNormal );
+#endif
 
 #if BUMPMAP == 1	// not ssbump
 	vNormal.xyz = vNormal.xyz * 2.0f - 1.0f;					// make signed if we're not ssbump
 #endif
-
-	PS_OUTPUT output = (PS_OUTPUT)0;
 
 	HALF3 lightmapColor1 = HALF3( 1.0f, 1.0f, 1.0f );
 	HALF3 lightmapColor2 = HALF3( 1.0f, 1.0f, 1.0f );
@@ -466,26 +359,31 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 #if MASKEDBLENDING
 	float blendfactor=0.5;
 #else
+	
 	float blendfactor=i.vertexBlendX_fogFactorW.r;
+
+	// See g_BlendInverted's declaration for more info on this
+	if (g_BlendInverted > 0.0)
+	{
+		blendfactor=1.0f-blendfactor;
+	}
+
 #endif
 
 	if( bBaseTexture2 )
 	{
 #if (SELFILLUM == 0) && (PIXELFOGTYPE != PIXEL_FOG_TYPE_HEIGHT) && (FANCY_BLENDING)
-		float4 modt=tex2D(BlendModulationSampler,i.lightmapTexCoord3.zw);
+		float4 modt=tex2D(BlendModulationSampler,baseTexCoords);
 #if MASKEDBLENDING
-		// FXC is unable to optimize this, despite blendfactor=0.5 above
-		//float minb=modt.g-modt.r;
-		//float maxb=modt.g+modt.r;
-		//blendfactor=smoothstep(minb,maxb,blendfactor);
-		blendfactor=modt.g;
+		float minb=modt.g-modt.r;
+		float maxb=modt.g+modt.r;
 #else
-		float minb=saturate(modt.g-modt.r);
-		float maxb=saturate(modt.g+modt.r);
+		float minb=max(0,modt.g-modt.r);
+		float maxb=min(1,modt.g+modt.r);
+#endif
 		blendfactor=smoothstep(minb,maxb,blendfactor);
 #endif
-#endif
-		baseColor.rgb = lerp( baseColor, baseColor2.rgb, blendfactor );
+		baseColor.rgb = lerp( baseColor.rgb, baseColor2.rgb, blendfactor );
 		blendedAlpha = lerp( baseColor.a, baseColor2.a, blendfactor );
 	}
 
@@ -569,17 +467,17 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	albedo *= baseColor;
 	if( !bBaseAlphaEnvmapMask && !bSelfIllum )
 	{
-		alpha *= baseColor.a;
+		alpha *= blendedAlpha; // Blixibon - Replaced baseColor.a with blendedAlpha
 	}
 
 	if( bDetailTexture )
 	{
-		albedo = TextureCombine( albedo, detailColor, 0, g_DetailBlendFactor );
+		albedo = TextureCombine( albedo, detailColor, DETAIL_BLEND_MODE, g_DetailBlendFactor );
 	}
 
 	// The vertex color contains the modulation color + vertex color combined
 #if ( SEAMLESS == 0 )
-	albedo.xyz *= i.vertexColor;
+	albedo.xyz *= i.vertexColor.xyz;
 #endif
 	alpha *= i.vertexColor.a * g_flAlpha2; // not sure about this one
 
@@ -602,11 +500,14 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 		vNormal.xyz = normalize( bumpBasis[0]*vNormal.x + bumpBasis[1]*vNormal.y + bumpBasis[2]*vNormal.z);
 #else
 		float3 dp;
-		dp.x = saturate( dot( vNormal, bumpBasis[0] ) );
-		dp.y = saturate( dot( vNormal, bumpBasis[1] ) );
-		dp.z = saturate( dot( vNormal, bumpBasis[2] ) );
+		dp.x = saturate( dot( vNormal.xyz, bumpBasis[0] ) );
+		dp.y = saturate( dot( vNormal.xyz, bumpBasis[1] ) );
+		dp.z = saturate( dot( vNormal.xyz, bumpBasis[2] ) );
 		dp *= dp;
 		
+#if ( DETAIL_BLEND_MODE == TCOMBINE_SSBUMP_BUMP )
+		dp *= 2*detailColor;
+#endif
 		diffuseLighting = dp.x * lightmapColor1 +
 						  dp.y * lightmapColor2 +
 						  dp.z * lightmapColor3;
@@ -627,11 +528,23 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	diffuseLighting *= 2.0*tex2D(WarpLightingSampler,float2(len,0));
 #endif
 
-//#if CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
-	float3 worldSpaceNormal = mul( vNormal, i.tangentSpaceTranspose );
-//#endif
+#if 1 //CUBEMAP || LIGHTING_PREVIEW || ( defined( _X360 ) && FLASHLIGHT )
+	float3x3 tangentSpaceTranspose = i.tangentSpaceTranspose;
+	
+	float3 worldSpaceNormal = mul( vNormal.xyz, i.tangentSpaceTranspose );
+#endif
 
+	float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
+
+#if FOGTYPE == 2 || FLASHLIGHT != 0
 	float3 diffuseComponent = albedo.xyz * diffuseLighting;
+#else
+	float3 vEyeDir = normalize( worldVertToEyeVector );
+	float flFresnelMinlight = saturate( dot( worldSpaceNormal, vEyeDir ) );
+
+	float3 diffuseComponent = albedo.xyz * lerp( diffuseLighting, 1, g_fMinLighting * flFresnelMinlight );
+#endif
+
 
 #if defined( _X360 ) && FLASHLIGHT
 
@@ -642,9 +555,9 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	float3 worldPosToLightVector = g_FlashlightPos - i.worldPos_projPosZ.xyz;
 
 	float3 tangentPosToLightVector;
-	tangentPosToLightVector.x = dot( worldPosToLightVector, i.tangentSpaceTranspose[0] );
-	tangentPosToLightVector.y = dot( worldPosToLightVector, i.tangentSpaceTranspose[1] );
-	tangentPosToLightVector.z = dot( worldPosToLightVector, i.tangentSpaceTranspose[2] );
+	tangentPosToLightVector.x = dot( worldPosToLightVector, tangentSpaceTranspose[0] );
+	tangentPosToLightVector.y = dot( worldPosToLightVector, tangentSpaceTranspose[1] );
+	tangentPosToLightVector.z = dot( worldPosToLightVector, tangentSpaceTranspose[2] );
 
 	tangentPosToLightVector = normalize( tangentPosToLightVector );
 
@@ -666,30 +579,16 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 
 	if( bSelfIllum )
 	{
-		float3 selfIllumComponent = g_SelfIllumTint * albedo.xyz;
-		diffuseComponent = lerp( diffuseComponent, selfIllumComponent, baseColor.a );
+		float3 selfIllumComponent = g_SelfIllumTint.xyz * albedo.xyz;
+		diffuseComponent = lerp( diffuseComponent, selfIllumComponent, blendedAlpha ); // Blixibon - Replaced baseColor.a with blendedAlpha
 	}
 
 	HALF3 specularLighting = HALF3( 0.0f, 0.0f, 0.0f );
 #if CUBEMAP
 	if( bCubemap )
 	{
-		float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
-#if CUBEMAPCORRECTED == 0
+		//float3 worldVertToEyeVector = g_EyePos - i.worldPos_projPosZ.xyz;
 		float3 reflectVect = CalcReflectionVectorUnnormalized( worldSpaceNormal, worldVertToEyeVector );
-#else
-		float3 reflectVect = CalcReflectionVectorUnnormalized( worldSpaceNormal, worldVertToEyeVector );
-		float3 BoxSize = float3(g_EnvmapRadius,g_EnvmapRadius,g_EnvmapRadius);
-		float3 BoxMax = BoxSize + g_EnvmapOrigin;
-		float3 BoxMin = -BoxSize + g_EnvmapOrigin;
-		float3 firstPlaneIntersect = (BoxMax - i.worldPos_projPosZ.xyz) / reflectVect;
-		float3 secondPlaneIntersect = (BoxMin - i.worldPos_projPosZ.xyz) / reflectVect;
-		float3 furthestPlane = max(firstPlaneIntersect, secondPlaneIntersect);
-		float planeDist = min(min(furthestPlane.x, furthestPlane.y), furthestPlane.z);
-		float3 intersectPositionWS = i.worldPos_projPosZ.xyz + reflectVect * planeDist;
-		reflectVect = intersectPositionWS - g_EnvmapOrigin;
-		//reflectVect = ((i.worldPos_projPosZ.xyz - g_EnvmapOrigin) *  (0.5f) + reflectVect);
-#endif
 
 		// Calc Fresnel factor
 		half3 eyeVect = normalize(worldVertToEyeVector);
@@ -697,10 +596,27 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 		fresnel = pow( fresnel, 5.0 );
 		fresnel = fresnel * g_OneMinusFresnelReflection + g_FresnelReflection;
 		
+#if PARALLAXCORRECT
+		//Parallax correction (2_0b and beyond)
+        //Adapted from http://seblagarde.wordpress.com/2012/09/29/image-based-lighting-approaches-and-parallax-corrected-cubemap/
+        float3 worldPos = i.worldPos_projPosZ.xyz;
+        float3 positionLS = mul(float4(worldPos, 1), obbMatrix);
+        float3 rayLS = mul(reflectVect, (float3x3) obbMatrix);
+
+        float3 firstPlaneIntersect = (float3(1.0f, 1.0f, 1.0f) - positionLS) / rayLS;
+        float3 secondPlaneIntersect = (-positionLS) / rayLS;
+        float3 furthestPlane = max(firstPlaneIntersect, secondPlaneIntersect);
+        float distance = min(furthestPlane.x, min(furthestPlane.y, furthestPlane.z));
+
+        // Use distance in WS directly to recover intersection
+        float3 intersectPositionWS = worldPos + reflectVect * distance;
+        reflectVect = intersectPositionWS - cubemapPos;
+#endif
+		
 		specularLighting = ENV_MAP_SCALE * texCUBE( EnvmapSampler, reflectVect );
 		specularLighting *= specularFactor;
 								   
-		specularLighting *= g_EnvmapTint;
+		specularLighting *= g_EnvmapTint.rgb;
 #if FANCY_BLENDING == 0
 		HALF3 specularLightingSquared = specularLighting * specularLighting;
 		specularLighting = lerp( specularLighting, specularLightingSquared, g_EnvmapContrast );
@@ -708,22 +624,13 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 		specularLighting = lerp( greyScale, specularLighting, g_EnvmapSaturation );
 #endif
 		specularLighting *= fresnel;
-
-#if CUBEMAPCORRECTED == 1
-		float fallof = saturate(length(g_EnvmapOrigin - i.worldPos_projPosZ.xyz) / g_EnvmapRadius);
-		fallof = 1.0f - pow(fallof, 5.0f);
-		specularLighting *= fallof;
-#endif
 	}
 #endif
 
-#if CSM == 1
-	diffuseComponent += DoCSMLight( i.worldPos_projPosZ.xyz, worldSpaceNormal.xyz, baseColor.rgb, length(i.worldPos_projPosZ.xyz - g_EyePos));
-#endif	
 	HALF3 result = diffuseComponent + specularLighting;
 	
 #if LIGHTING_PREVIEW
-	worldSpaceNormal = mul( vNormal, i.tangentSpaceTranspose );
+	worldSpaceNormal = mul( vNormal, tangentSpaceTranspose );
 #	if LIGHTING_PREVIEW == 1
 	float dotprod = 0.7+0.25 * dot( worldSpaceNormal, normalize( float3( 1, 2, -.5 ) ) );
 	return FinalOutput( HALF4( dotprod*albedo.xyz, alpha ), 0, PIXEL_FOG_TYPE_NONE, TONEMAP_SCALE_NONE );
@@ -745,16 +652,13 @@ PS_OUTPUT main( PS_INPUT i ) : COLOR
 	bWriteDepthToAlpha = ( WRITE_DEPTH_TO_DESTALPHA != 0 ) && ( WRITEWATERFOGTODESTALPHA == 0 );
 #endif
 
-	float fogFactor = CalcPixelFogFactor( PIXELFOGTYPE, g_FogParams, g_EyePos.z, i.worldPos_projPosZ.z, i.worldPos_projPosZ.w );
+	float fogFactor = CalcPixelFogFactor( PIXELFOGTYPE, g_FogParams, g_EyePos.xyz, i.worldPos_projPosZ.xyz, i.worldPos_projPosZ.w );
 
 #if WRITEWATERFOGTODESTALPHA && (PIXELFOGTYPE == PIXEL_FOG_TYPE_HEIGHT)
 	alpha = fogFactor;
 #endif
-	output.MainOut = FinalOutput(float4(result.rgb, alpha), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w);
-	output.Normal = float4(worldSpaceNormal.xyz, 1.0f);
-	output.MRAO = float4(0.0f, 1.0f, 1.0f, 1.0f);
-    output.Albedo = float4(baseColor.xyz, 1.0f);
-	return output;
+
+	return FinalOutput( float4( result.rgb, alpha ), fogFactor, PIXELFOGTYPE, TONEMAP_SCALE_LINEAR, bWriteDepthToAlpha, i.worldPos_projPosZ.w );
 
 #endif
 }

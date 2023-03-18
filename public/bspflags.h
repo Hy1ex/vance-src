@@ -146,7 +146,4 @@
 // UNDONE: Not used yet / may be deleted
 #define	MASK_DEADSOLID				(CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_GRATE)
 
-// Things projectile bullets should collide with
-#define MASK_BULLETSCANTOUCH		(MASK_ALL - CONTENTS_GRATE)
-
 #endif // BSPFLAGS_H

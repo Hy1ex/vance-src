@@ -15,7 +15,9 @@
 #include "basetypes.h"
 #include "dbgflag.h"
 #include "platform.h"
+#if _MSC_VER < 1900
 #include <math.h>
+#endif
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -221,9 +223,6 @@ typedef void (*AssertFailedNotifyFunc_t)( const char *pchFile, int nLine, const 
 DBG_INTERFACE void SetAssertFailedNotifyFunc( AssertFailedNotifyFunc_t func );
 DBG_INTERFACE void CallAssertFailedNotifyFunc( const char *pchFile, int nLine, const char *pchMessage );
 
-/* True if -hushasserts was passed on command line. */
-DBG_INTERFACE bool HushAsserts();
-
 #if defined( USE_SDL )
 DBG_INTERFACE void SetAssertDialogParent( struct SDL_Window *window );
 DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
@@ -250,10 +249,10 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 			if (!(_exp)) 													\
 			{ 																\
 				_SpewInfo( SPEW_ASSERT, __TFILE__, __LINE__ );				\
-				SpewRetval_t ret = _SpewMessage("%s", static_cast<const char*>( _msg ));	\
+				SpewRetval_t _ret = _SpewMessage("%s", static_cast<const char*>( _msg ));	\
 				CallAssertFailedNotifyFunc( __TFILE__, __LINE__, _msg );					\
 				_executeExp; 												\
-				if ( ret == SPEW_DEBUGGER)									\
+				if ( _ret == SPEW_DEBUGGER)									\
 				{															\
 					if ( !ShouldUseNewAssertDialog() || DoNewAssertDialog( __TFILE__, __LINE__, _msg ) ) \
 					{														\
@@ -394,36 +393,18 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 #define  AssertAlways( _exp )           							_AssertMsg( _exp, _T("Assertion Failed: ") _T(#_exp), ((void)0), false )
 #define  AssertMsgAlways( _exp, _msg )  							_AssertMsg( _exp, _msg, ((void)0), false )
 
-// Stringify a number
-#define V_STRINGIFY_INTERNAL(x) #x
-// Extra level of indirection needed when passing in a macro to avoid getting the macro name instead of value
-#define V_STRINGIFY(x) V_STRINGIFY_INTERNAL(x)
-
-// Macros to help decorate warnings or errors with the location in code
-#define FILE_LINE_FUNCTION_STRING __FILE__ "(" V_STRINGIFY(__LINE__) "):" __FUNCTION__ ":"
-#define FILE_LINE_STRING __FILE__ "(" V_STRINGIFY(__LINE__) "):"
-#define FUNCTION_LINE_STRING __FUNCTION__ "(" V_STRINGIFY(__LINE__) "): "
-
-// Handy define for inserting clickable messages into the build output.
-// Use like this:
-// #pragma MESSAGE("Some message")
-#define MESSAGE(msg) message(__FILE__ "(" V_STRINGIFY(__LINE__) "): " msg)
-
 
 #if !defined( _X360 ) || !defined( _RETAIL )
 
 /* These are always compiled in */
 DBG_INTERFACE void Msg( PRINTF_FORMAT_STRING const tchar* pMsg, ... ) FMTFUNCTION( 1, 2 );
 DBG_INTERFACE void DMsg( const tchar *pGroupName, int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 3, 4 );
-DBG_INTERFACE void MsgV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist );
 
 DBG_INTERFACE void Warning( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
 DBG_INTERFACE void DWarning( const tchar *pGroupName, int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 3, 4 );
-DBG_INTERFACE void WarningV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist );
 
 DBG_INTERFACE void Log( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
 DBG_INTERFACE void DLog( const tchar *pGroupName, int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 3, 4 );
-DBG_INTERFACE void LogV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist );
 
 #ifdef Error
 // p4.cpp does a #define Error Warning and in that case the Error prototype needs to
@@ -431,23 +412,17 @@ DBG_INTERFACE void LogV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist
 DBG_INTERFACE void Error( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
 #else
 DBG_INTERFACE void NORETURN Error( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
-DBG_INTERFACE void NORETURN ErrorV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist );
-
 #endif
 
 #else
 
 inline void Msg( ... ) {}
 inline void DMsg( ... ) {}
-inline void MsgV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist ) {}
 inline void Warning( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) {}
-inline void WarningV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist ) {}
 inline void DWarning( ... ) {}
 inline void Log( ... ) {}
 inline void DLog( ... ) {}
-inline void LogV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist ) {}
 inline void Error( ... ) {}
-inline void ErrorV( PRINTF_FORMAT_STRING const tchar *pMsg, va_list arglist ) {}
 
 #endif
 

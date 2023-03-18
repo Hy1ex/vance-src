@@ -54,8 +54,6 @@ struct StaticPropBuild_t
 	float	m_flForcedFadeScale;
 	unsigned short	m_nMinDXLevel;
 	unsigned short	m_nMaxDXLevel;
-	int		m_LightmapResolutionX;
-	int		m_LightmapResolutionY;
 };
  
 
@@ -104,6 +102,7 @@ isstaticprop_ret IsStaticProp( studiohdr_t* pHdr )
 	if (!(pHdr->flags & STUDIOHDR_FLAGS_STATIC_PROP))
 		return RET_FAIL_NOT_MARKED_STATIC_PROP;
 
+#ifndef MAPBASE
 	// If it's got a propdata section in the model's keyvalues, it's not allowed to be a prop_static
 	KeyValues *modelKeyValues = new KeyValues(pHdr->pszName());
 	if ( StudioKeyValues( pHdr, modelKeyValues ) )
@@ -119,6 +118,7 @@ isstaticprop_ret IsStaticProp( studiohdr_t* pHdr )
 		}
 	}
 	modelKeyValues->deleteThis();
+#endif
 
 	return RET_VALID;
 }
@@ -167,7 +167,7 @@ bool LoadStudioModel( char const* pModelName, char const* pEntityType, CUtlBuffe
 		return false;
 	}
 
-	/*isstaticprop_ret isStaticProp = IsStaticProp(pHdr);
+	isstaticprop_ret isStaticProp = IsStaticProp(pHdr);
 	if ( isStaticProp != RET_VALID )
 	{
 		if ( isStaticProp == RET_FAIL_NOT_MARKED_STATIC_PROP )
@@ -180,7 +180,7 @@ bool LoadStudioModel( char const* pModelName, char const* pEntityType, CUtlBuffe
 			Warning("Error! %s using model \"%s\", which must be used on a dynamic entity (i.e. prop_physics). Deleted.\n", pEntityType, pModelName );
 		}
 		return false;
-	}*/
+	}
 
 	// ensure reset
 	pHdr->pVertexBase = NULL;
@@ -518,9 +518,6 @@ static void AddStaticPropToLump( StaticPropBuild_t const& build )
 		}
 	}
 
-	propLump.m_nLightmapResolutionX = build.m_LightmapResolutionX;
-	propLump.m_nLightmapResolutionY = build.m_LightmapResolutionY;
-
 	// Add the leaves to the leaf lump
 	for (int j = 0; j < leafList.Size(); ++j)
 	{
@@ -528,7 +525,6 @@ static void AddStaticPropToLump( StaticPropBuild_t const& build )
 		insert.m_Leaf = leafList[j];
 		s_StaticPropLeafLump.AddToTail( insert );
 	}
-
 }
 
 
@@ -569,6 +565,10 @@ static void SetLumpData( )
 
 void EmitStaticProps()
 {
+#ifdef MAPBASE
+	Msg("Placing static props...\n");
+#endif
+
 	CreateInterfaceFn physicsFactory = GetPhysicsFactory();
 	if ( physicsFactory )
 	{
@@ -592,13 +592,43 @@ void EmitStaticProps()
 	for ( i = 0; i < num_entities; ++i)
 	{
 		char* pEntity = ValueForKey(&entities[i], "classname");
+#ifdef MAPBASE
+		const int iInsertAsStatic = IntForKey( &entities[i], "insertasstaticprop" ); // If the key is absent, IntForKey will return 0.
+		bool bInsertAsStatic = g_bPropperInsertAllAsStatic;
+
+		// 1 = No, 2 = Yes;  Any other number will just use what g_bPropperInsertAllAsStatic is set as.
+		if ( iInsertAsStatic == 1 ) { bInsertAsStatic = false; }
+		else if ( iInsertAsStatic == 2 ) { bInsertAsStatic = true; }
+
+		if ( !strcmp( pEntity, "static_prop" ) || !strcmp( pEntity, "prop_static" ) || ( !strcmp( pEntity, "propper_model" ) && bInsertAsStatic ) )
+#else
 		if (!strcmp(pEntity, "static_prop") || !strcmp(pEntity, "prop_static"))
+#endif
 		{
 			StaticPropBuild_t build;
 
 			GetVectorForKey( &entities[i], "origin", build.m_Origin );
 			GetAnglesForKey( &entities[i], "angles", build.m_Angles );
+#ifdef MAPBASE
+			if ( !strcmp( pEntity, "propper_model" ) )
+			{
+				char* pModelName = ValueForKey( &entities[i], "modelname" );
+			
+				// The modelname keyvalue lacks 'models/' at the start and '.mdl' at the end, so we have to add them.	
+				char modelpath[MAX_VALUE];
+				sprintf( modelpath, "models/%s.mdl", pModelName );
+
+				Msg( "Inserting propper_model (%.0f %.0f %.0f) as prop_static: %s\n", build.m_Origin[0], build.m_Origin[1], build.m_Origin[2], modelpath );
+
+				build.m_pModelName = modelpath;
+			}
+			else // Otherwise we just assume it's a normal prop_static
+			{
+				build.m_pModelName = ValueForKey( &entities[i], "model" );
+			}
+#else
 			build.m_pModelName = ValueForKey( &entities[i], "model" );
+#endif
 			build.m_Solid = IntForKey( &entities[i], "solid" );
 			build.m_Skin = IntForKey( &entities[i], "skin" );
 			build.m_FadeMaxDist = FloatForKey( &entities[i], "fademaxdist" );
@@ -623,18 +653,6 @@ void EmitStaticProps()
 			if (IntForKey( &entities[i], "screenspacefade" ) == 1)
 			{
 				build.m_Flags |= STATIC_PROP_SCREEN_SPACE_FADE;
-			}
-
-			if (IntForKey( &entities[i], "generatelightmaps") == 0)
-			{
-				build.m_Flags |= STATIC_PROP_NO_PER_TEXEL_LIGHTING;			
-				build.m_LightmapResolutionX = 0;
-				build.m_LightmapResolutionY = 0;
-			}
-			else
-			{
-				build.m_LightmapResolutionX = IntForKey( &entities[i], "lightmapresolutionx" );
-				build.m_LightmapResolutionY = IntForKey( &entities[i], "lightmapresolutiony" );
 			}
 
 			const char *pKey = ValueForKey( &entities[i], "fadescale" );
@@ -667,6 +685,13 @@ void EmitStaticProps()
 			// strip this ent from the .bsp file
 			entities[i].epairs = 0;
 		}
+#ifdef MAPBASE
+		else if ( g_bPropperStripEntities && !strncmp( pEntity, "propper_", 8 ) ) // Strip out any entities with 'propper_' in their classname, as they don't actually exist in-game.
+		{
+			Warning( "Not including %s in BSP compile due to it being a propper entity that isn't used in-game.\n", pEntity );
+			entities[i].epairs = 0;
+		}
+#endif
 	}
 
 	// Strip out lighting origins; has to be done here because they are used when

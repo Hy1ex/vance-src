@@ -55,6 +55,10 @@ ConVar player_limit_jump_speed( "player_limit_jump_speed", "1", FCVAR_REPLICATED
 // duck controls. Its value is meaningless anytime we don't have the options window open.
 ConVar option_duck_method("option_duck_method", "1", FCVAR_REPLICATED|FCVAR_ARCHIVE );// 0 = HOLD to duck, 1 = Duck is a toggle
 
+#ifdef MAPBASE
+ConVar player_crouch_multiplier( "player_crouch_multiplier", "0.33333333", FCVAR_NONE );
+#endif
+
 #ifdef STAGING_ONLY
 #ifdef CLIENT_DLL
 ConVar debug_latch_reset_onduck( "debug_latch_reset_onduck", "1", FCVAR_CHEAT );
@@ -518,7 +522,7 @@ void CGameMovement::DiffPrint( char const *fmt, ... )
 #endif // !PREDICTION_ERROR_CHECK_LEVEL
 
 #ifndef _XBOX
-void COM_Log( const char *pszFile, const char *fmt, ...)
+void COM_Log( char *pszFile, const char *fmt, ...)
 {
 	va_list		argptr;
 	char		string[1024];
@@ -2147,7 +2151,7 @@ void CGameMovement::FullObserverMove( void )
 {
 	int mode = player->GetObserverMode();
 
-	if ( mode == OBS_MODE_IN_EYE || mode == OBS_MODE_CHASE || mode == OBS_MODE_POI )
+	if ( mode == OBS_MODE_IN_EYE || mode == OBS_MODE_CHASE )
 	{
 		CBaseEntity * target = player->GetObserverTarget();
 
@@ -2420,15 +2424,6 @@ bool CGameMovement::CheckJumpButton( void )
     SetGroundEntity( NULL );
 	
 	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
-#ifdef VANCE
-	CPASAttenuationFilter filter(player);
-	filter.UsePredictionRules();
-	if (random->RandomInt(0, 3) == 0)
-	{
-		player->EmitSound(filter, player->entindex(), "AlyxPlayer.Jump");
-	}
-	player->EmitSound(filter, player->entindex(), "AlyxPlayer.JumpGear");
-#endif
 	
 	MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
 
@@ -2849,7 +2844,7 @@ inline bool CGameMovement::OnLadder( trace_t &trace )
 // HPE_BEGIN
 // [sbodenbender] make ladders easier to climb in cstrike
 //=============================================================================
-#if defined (CSTRIKE_DLL)
+#if defined (CSTRIKE_DLL) || defined(HL2_USES_FUNC_LADDER_CODE)
 ConVar sv_ladder_dampen ( "sv_ladder_dampen", "0.2", FCVAR_REPLICATED, "Amount to dampen perpendicular movement on a ladder", true, 0.0f, true, 1.0f );
 ConVar sv_ladder_angle( "sv_ladder_angle", "-0.707", FCVAR_REPLICATED, "Cos of angle of incidence to ladder perpendicular for applying ladder_dampen", true, -1.0f, true, 1.0f );
 #endif
@@ -3911,12 +3906,24 @@ void CGameMovement::CheckFalling( void )
 	if ( player->GetGroundEntity() == NULL || player->m_Local.m_flFallVelocity <= 0 )
 		return;
 
+#ifdef MAPBASE
+	if ( player->m_bInTriggerFall )
+	{
+		// This value lets the existing fall damage functions ensure a fatal fall.
+		player->m_Local.m_flFallVelocity += (PLAYER_FATAL_FALL_SPEED + PLAYER_LAND_ON_FLOATING_OBJECT);
+	}
+#endif
+
 	if ( !IsDead() && player->m_Local.m_flFallVelocity >= PLAYER_FALL_PUNCH_THRESHOLD )
 	{
 		bool bAlive = true;
 		float fvol = 0.5;
 
+#ifdef MAPBASE
+		if ( player->GetWaterLevel() > 0 && !player->m_bInTriggerFall )
+#else
 		if ( player->GetWaterLevel() > 0 )
+#endif
 		{
 			// They landed in water.
 		}
@@ -3983,14 +3990,7 @@ void CGameMovement::PlayerRoughLandingEffects( float fvol )
 
 		// Play step sound for current texture.
 		player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, fvol, true );
-#ifdef VANCE
-		if (fvol > 0.25f)
-		{
-			CPASAttenuationFilter filter(player);
-			filter.UsePredictionRules();
-			player->EmitSound(filter, player->entindex(), "AlyxPlayer.Land");
-		}
-#endif
+
 		//
 		// Knock the screen around a little bit, temporary effect.
 		//
@@ -4309,7 +4309,8 @@ void CGameMovement::HandleDuckingSpeedCrop( void )
 {
 	if ( !( m_iSpeedCropped & SPEED_CROPPED_DUCK ) && ( player->GetFlags() & FL_DUCKING ) && ( player->GetGroundEntity() != NULL ) )
 	{
-		float frac = 0.33333333f;
+		// Mapbase makes this an adjustable convar
+		float frac = player_crouch_multiplier.GetFloat();
 		mv->m_flForwardMove	*= frac;
 		mv->m_flSideMove	*= frac;
 		mv->m_flUpMove		*= frac;

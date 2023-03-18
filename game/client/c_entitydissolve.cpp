@@ -575,10 +575,7 @@ void C_EntityDissolve::ClientThink( void )
 #ifdef TF_CLIENT_DLL
 			else
 			{
-				// Hide the ragdoll -- don't actually delete it or else things get unhappy when
-				// we get a message from the server telling us to delete it
-				pEnt->AddEffects( EF_NODRAW );
-				pEnt->ParticleProp()->StopEmission();
+				pEnt->Release();
 			}
 #endif
 		}

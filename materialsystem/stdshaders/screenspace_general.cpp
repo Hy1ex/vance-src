@@ -6,8 +6,8 @@
 //=============================================================================//
 
 #include "BaseVSShader.h"
-#include "IDeferredExt.h"
-#include "SDK_screenspaceeffect_vs30.inc"
+
+#include "SDK_screenspaceeffect_vs20.inc"
 
 DEFINE_FALLBACK_SHADER( SDK_screenspace_general, SDK_screenspace_general_dx9 )
 BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_general", SHADER_NOT_EDITABLE )
@@ -39,7 +39,6 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 		SHADER_PARAM( LINEARREAD_TEXTURE2, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 		SHADER_PARAM( LINEARREAD_TEXTURE3, SHADER_PARAM_TYPE_INTEGER, "0", "" )
 		SHADER_PARAM( LINEARWRITE,SHADER_PARAM_TYPE_INTEGER,"0","")
-		SHADER_PARAM( USES_VIEWPROJ, SHADER_PARAM_TYPE_INTEGER, "0", "")
 		SHADER_PARAM( X360APPCHOOSER, SHADER_PARAM_TYPE_INTEGER, "0", "Needed for movies in 360 launcher" )
 	END_SHADER_PARAMS
 
@@ -85,7 +84,7 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 				ITexture *txtr=params[BASETEXTURE]->GetTextureValue();
 				ImageFormat fmt=txtr->GetImageFormat();
 				if ((fmt==IMAGE_FORMAT_RGBA16161616F) || (fmt==IMAGE_FORMAT_RGBA16161616))
-					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0,true);
+					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0,false);
 				else
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0, !params[LINEARREAD_BASETEXTURE]->IsDefined() || !params[LINEARREAD_BASETEXTURE]->GetIntValue() );
 			}				
@@ -95,7 +94,7 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 				ITexture *txtr=params[TEXTURE1]->GetTextureValue();
 				ImageFormat fmt=txtr->GetImageFormat();
 				if ((fmt==IMAGE_FORMAT_RGBA16161616F) || (fmt==IMAGE_FORMAT_RGBA16161616))
-					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER1, true);
+					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER1,false);
 				else
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER1, !params[LINEARREAD_TEXTURE1]->IsDefined() || !params[LINEARREAD_TEXTURE1]->GetIntValue() );
 			}				
@@ -105,7 +104,7 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 				ITexture *txtr=params[TEXTURE2]->GetTextureValue();
 				ImageFormat fmt=txtr->GetImageFormat();
 				if ((fmt==IMAGE_FORMAT_RGBA16161616F) || (fmt==IMAGE_FORMAT_RGBA16161616))
-					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER2, true);
+					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER2,false);
 				else
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER2, !params[LINEARREAD_TEXTURE2]->IsDefined() || !params[LINEARREAD_TEXTURE2]->GetIntValue() );
 			}				
@@ -115,7 +114,7 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 				ITexture *txtr=params[TEXTURE3]->GetTextureValue();
 				ImageFormat fmt=txtr->GetImageFormat();
 				if ((fmt==IMAGE_FORMAT_RGBA16161616F) || (fmt==IMAGE_FORMAT_RGBA16161616))
-					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER3, true);
+					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER3,false);
 				else
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER3, !params[LINEARREAD_TEXTURE3]->IsDefined() || !params[LINEARREAD_TEXTURE3]->GetIntValue() );
 			}				
@@ -135,10 +134,10 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 			pShaderShadow->EnableSRGBWrite( srgb_write );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
 			SET_STATIC_VERTEX_SHADER_COMBO( X360APPCHOOSER, IS_PARAM_DEFINED( X360APPCHOOSER ) ? params[X360APPCHOOSER]->GetIntValue() : 0 );
 			vsh_forgot_to_set_static_X360APPCHOOSER = 0; // This is a dirty workaround to the shortcut [= 0] in the fxc
-			SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
 
 			if (params[DISABLE_COLOR_WRITES]->GetIntValue())
 			{
@@ -218,34 +217,15 @@ BEGIN_VS_SHADER_FLAGS( SDK_screenspace_general_dx9, "Help for screenspace_genera
 
 			pShaderAPI->SetPixelShaderConstant( 0, c0, ARRAYSIZE(c0)/4 );
 
-			if (params[BASETEXTURE]->IsDefined())
-			{
-				float flResolution[2] = {
-					params[BASETEXTURE]->GetTextureValue()->GetActualWidth(),
-					params[BASETEXTURE]->GetTextureValue()->GetActualHeight()
-				};
-
-				pShaderAPI->SetPixelShaderConstant(4, flResolution);
-			}
-
-			if (USES_VIEWPROJ != -1 && params[USES_VIEWPROJ]->GetIntValue() != 0)
-			{
-				pShaderAPI->SetPixelShaderConstant(6, GetDeferredExt()->GetOriginBase());
-
-				pShaderAPI->SetPixelShaderConstant(8, GetDeferredExt()->m_matViewInv.Base(), 4);
-				pShaderAPI->SetPixelShaderConstant(12, GetDeferredExt()->m_matProjInv.Base(), 4);
-				pShaderAPI->SetPixelShaderConstant(16, GetDeferredExt()->m_matView.Base(), 4);
-				pShaderAPI->SetPixelShaderConstant(20, GetDeferredExt()->m_matProj.Base(), 4);
-
-				float zPlanes[2] = { GetDeferredExt()->GetZDistNear(), GetDeferredExt()->GetZDistFar() };
-				pShaderAPI->SetPixelShaderConstant(24, zPlanes);
-			}
+			float eyePos[4];
+			pShaderAPI->GetWorldSpaceCameraPosition( eyePos );
+			pShaderAPI->SetPixelShaderConstant( 10, eyePos, 1 );
 
 			pShaderAPI->SetVertexShaderIndex( 0 );
 			pShaderAPI->SetPixelShaderIndex( 0 );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
-			SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
 		}
 		Draw();
 	}

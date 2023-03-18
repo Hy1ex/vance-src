@@ -73,7 +73,6 @@ struct facelight_t
 	int			numsamples;
 	sample_t	*sample;			
 	LightingValue_t *light[MAXLIGHTMAPS][NUM_BUMP_VECTS+1];	// result of direct illumination, indexed by sample
-	LightingValue_t* radiosity[MAXLIGHTMAPS][NUM_BUMP_VECTS + 1];	// result of sun direct illumination, indexed by sample
 
 	// regularly spaced lightmap grid
 	int			numluxels;			

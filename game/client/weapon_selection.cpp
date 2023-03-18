@@ -101,7 +101,6 @@ void CBaseHudWeaponSelection::Reset(void)
 	// Start hidden
 	m_bSelectionVisible = false;
 	m_flSelectionTime = gpGlobals->curtime;
-	gHUD.UnlockRenderGroup( gHUD.LookupRenderGroupIndexByName( "weapon_selection" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -208,7 +207,6 @@ bool CBaseHudWeaponSelection::IsInSelectionMode()
 void CBaseHudWeaponSelection::OpenSelection( void )
 {
 	m_bSelectionVisible = true;
-	gHUD.LockRenderGroup( gHUD.LookupRenderGroupIndexByName( "weapon_selection" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -217,7 +215,6 @@ void CBaseHudWeaponSelection::OpenSelection( void )
 void CBaseHudWeaponSelection::HideSelection( void )
 {
 	m_bSelectionVisible = false;
-	gHUD.UnlockRenderGroup( gHUD.LookupRenderGroupIndexByName( "weapon_selection" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -252,9 +249,14 @@ int	CBaseHudWeaponSelection::KeyInput( int down, ButtonCode_t keynum, const char
 		return 0;
 	}
 
-	if ( down >= 1 && keynum >= KEY_1 && keynum <= KEY_9 )
+	//Tony; check 0 as well, otherwise you have to have 0 bound to slot10 no matter what.
+	if ( down >= 1 && keynum >= KEY_0 && keynum <= KEY_9 )
 	{
-		if ( HandleHudMenuInput( keynum - KEY_0 ) )
+		//Tony; 0 is actually '10' (slot10)
+		if (keynum == KEY_0)
+			keynum = KEY_A; //Dealing with button codes, so just use KEY_A, which is equal to 11  anyway.
+
+		if ( HandleHudMenuInput( keynum - 1 ) )
 			return 0;
 	}
 

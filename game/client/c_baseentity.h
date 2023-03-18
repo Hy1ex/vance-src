@@ -36,6 +36,9 @@
 #include "toolframework/itoolentity.h"
 #include "tier0/threadtools.h"
 
+#include "vscript/ivscript.h"
+#include "vscript_shared.h"
+
 class C_Team;
 class IPhysicsObject;
 class IClientVehicle;
@@ -58,7 +61,6 @@ class C_BaseCombatCharacter;
 class CEntityMapData;
 class ConVar;
 class CDmgAccumulator;
-class IHasAttributes;
 
 struct CSoundParameters;
 
@@ -159,6 +161,15 @@ struct thinkfunc_t
 	int			m_nLastThinkTick;
 };
 
+#ifdef MAPBASE_VSCRIPT
+struct scriptthinkfunc_t
+{
+	float		m_flNextThink;
+	HSCRIPT		m_hfnThink;
+	unsigned	m_iContextHash;
+};
+#endif
+
 #define CREATE_PREDICTED_ENTITY( className )	\
 	C_BaseEntity::CreatePredictedEntityByName( className, __FILE__, __LINE__ );
 
@@ -184,6 +195,8 @@ public:
 	DECLARE_DATADESC();
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+	// script description
+	DECLARE_ENT_SCRIPTDESC();
 
 									C_BaseEntity();
 	virtual							~C_BaseEntity();
@@ -192,7 +205,6 @@ public:
 	
 	// FireBullets uses shared code for prediction.
 	virtual void					FireBullets( const FireBulletsInfo_t &info );
-	virtual void					FireBulletProjectiles(const ProjectileBulletsInfo_t& info);
 	virtual void					ModifyFireBulletsDamage( CTakeDamageInfo* dmgInfo ) {}
 	virtual bool					ShouldDrawUnderwaterBulletBubbles();
 	virtual bool					ShouldDrawWaterImpacts( void ) { return true; }
@@ -257,6 +269,35 @@ public:
 	virtual void					SetClassname( const char *className );
 
 	string_t						m_iClassname;
+
+#ifdef MAPBASE_VSCRIPT
+	// VSCRIPT
+	bool ValidateScriptScope();
+	bool CallScriptFunction( const char* pFunctionName, ScriptVariant_t* pFunctionReturn );
+
+	HSCRIPT GetOrCreatePrivateScriptScope();
+	HSCRIPT GetScriptScope() { return m_ScriptScope; }
+
+	HSCRIPT LookupScriptFunction(const char* pFunctionName);
+	bool CallScriptFunctionHandle(HSCRIPT hFunc, ScriptVariant_t* pFunctionReturn);
+
+	bool RunScriptFile( const char* pScriptFile, bool bUseRootScope = false );
+	bool RunScript( const char* pScriptText, const char* pDebugFilename = "C_BaseEntity::RunScript" );
+#endif
+
+	HSCRIPT					GetScriptOwnerEntity();
+	virtual void			SetScriptOwnerEntity(HSCRIPT pOwner);
+
+	HSCRIPT GetScriptInstance();
+
+	HSCRIPT			m_hScriptInstance;
+	string_t		m_iszScriptId;
+#ifdef MAPBASE_VSCRIPT
+	CScriptScope	m_ScriptScope;
+
+	static ScriptHook_t g_Hook_UpdateOnRemove;
+	static ScriptHook_t g_Hook_ModifyEmitSoundParams;
+#endif
 
 // IClientUnknown overrides.
 public:
@@ -337,7 +378,6 @@ public:
 	// save out interpolated values
 	virtual void					PreDataUpdate( DataUpdateType_t updateType );
 	virtual void					PostDataUpdate( DataUpdateType_t updateType );
-	virtual void					OnDataUnchangedInPVS();
 
 	virtual void					ValidateModelIndex( void );
 
@@ -359,6 +399,11 @@ public:
 	bool							IsMarkedForDeletion( void );
 
 	virtual int						entindex( void ) const;
+
+#ifdef MAPBASE_VSCRIPT
+	// "I don't know why but wrapping entindex() works, while calling it directly crashes."
+	inline int GetEntityIndex() const { return entindex(); }
+#endif
 	
 	// This works for client-only entities and returns the GetEntryIndex() of the entity's handle,
 	// so the sound system can get an IClientEntity from it.
@@ -519,7 +564,6 @@ public:
 
 	// Used when the collision prop is told to ask game code for the world-space surrounding box
 	virtual void					ComputeWorldSpaceSurroundingBox( Vector *pVecWorldMins, Vector *pVecWorldMaxs );
-	virtual float						GetHealthBarHeightOffset() const { return 0.f; }
 
 	// Returns the entity-to-world transform
 	matrix3x4_t						&EntityToWorldTransform();
@@ -690,7 +734,7 @@ public:
 
 	virtual bool					ShouldDraw();
 	inline	bool					IsVisible() const { return m_hRender != INVALID_CLIENT_RENDER_HANDLE; }
-	virtual void					UpdateVisibility();
+			void					UpdateVisibility();
 	
 	// Returns true if the entity changes its position every frame on the server but it doesn't
 	// set animtime. In that case, the client returns true here so it copies the server time to
@@ -747,8 +791,7 @@ public:
 	virtual void					SetHealth(int iHealth) {}
 	virtual int						GetHealth() const { return 0; }
 	virtual int						GetMaxHealth() const { return 1; }
-	virtual bool					IsVisibleToTargetID( void ) const { return false; }
-	virtual bool					IsHealthBarVisible( void ) const { return false; }
+	virtual bool					IsVisibleToTargetID( void ) { return false; }
 
 	// Returns the health fraction
 	float							HealthFraction() const;
@@ -863,6 +906,7 @@ public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
 	char const						*GetDebugName( void );
+	virtual const char				*GetPlayerName() const { return NULL; }
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );
 	static void						PrefetchSound( const char *name );
@@ -1005,6 +1049,7 @@ public:
 	/////////////////
 
 	virtual bool					IsPlayer( void ) const { return false; };
+	virtual bool						IsBot( void ) const { return ((GetFlags() & FL_FAKECLIENT) == FL_FAKECLIENT) ? true : false; }
 	virtual bool					IsBaseCombatCharacter( void ) { return false; };
 	virtual C_BaseCombatCharacter	*MyCombatCharacterPointer( void ) { return NULL; }
 	virtual bool					IsNPC( void ) { return false; }
@@ -1022,6 +1067,11 @@ public:
 	virtual Vector			EyePosition( void );
 	virtual const QAngle&	EyeAngles( void );		// Direction of eyes
 	virtual const QAngle&	LocalEyeAngles( void );	// Direction of eyes in local space (pl.v_angle)
+
+#ifdef MAPBASE
+	// Created for script_intro and info_player_view_proxy
+	virtual void			GetEyePosition( Vector &vecOrigin, QAngle &angAngles ) { vecOrigin = EyePosition(); angAngles = EyeAngles(); }
+#endif
 	
 	// position of ears
 	virtual Vector		EarPosition( void );
@@ -1115,9 +1165,67 @@ public:
 	bool				IsFollowingEntity();
 	CBaseEntity			*GetFollowedEntity();
 
+#ifdef MAPBASE_VSCRIPT
+	void ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge );
+	HSCRIPT ScriptGetFollowedEntity();
+#endif
+
 	// For shadows rendering the correct body + sequence...
 	virtual int GetBody() { return 0; }
 	virtual int GetSkin() { return 0; }
+
+	const Vector& ScriptGetForward(void) { static Vector vecForward; GetVectors(&vecForward, NULL, NULL); return vecForward; }
+#ifdef MAPBASE_VSCRIPT
+	const Vector& ScriptGetRight(void) { static Vector vecRight; GetVectors(NULL, &vecRight, NULL); return vecRight; }
+#endif
+	const Vector& ScriptGetLeft(void)  { static Vector vecRight; GetVectors(NULL, &vecRight, NULL); return vecRight; }
+
+	const Vector& ScriptGetUp(void) { static Vector vecUp; GetVectors(NULL, NULL, &vecUp); return vecUp; }
+
+#ifdef MAPBASE_VSCRIPT
+	const char* ScriptGetModelName( void ) const { return STRING(GetModelName()); }
+
+	void ScriptStopSound(const char* soundname);
+	void ScriptEmitSound(const char* soundname);
+	float ScriptSoundDuration(const char* soundname, const char* actormodel);
+
+	void VScriptPrecacheScriptSound(const char* soundname);
+
+	const Vector& ScriptEyePosition(void) { static Vector vec; vec = EyePosition(); return vec; }
+	const QAngle& ScriptEyeAngles(void) { static QAngle ang; ang = EyeAngles(); return ang; }
+	void ScriptSetForward( const Vector& v ) { QAngle angles; VectorAngles( v, angles ); SetAbsAngles( angles ); }
+
+	const Vector& ScriptGetBoundingMins( void ) { return m_Collision.OBBMins(); }
+	const Vector& ScriptGetBoundingMaxs( void ) { return m_Collision.OBBMaxs(); }
+
+	HSCRIPT ScriptEntityToWorldTransform( void );
+
+	HSCRIPT ScriptGetPhysicsObject( void );
+
+	void ScriptSetParent( HSCRIPT hParent, const char *szAttachment );
+	HSCRIPT ScriptGetMoveParent( void );
+	HSCRIPT ScriptGetRootMoveParent();
+	HSCRIPT ScriptFirstMoveChild( void );
+	HSCRIPT ScriptNextMovePeer( void );
+
+	const Vector& ScriptGetColorVector();
+	int ScriptGetColorR()	{ return m_clrRender.GetR(); }
+	int ScriptGetColorG()	{ return m_clrRender.GetG(); }
+	int ScriptGetColorB()	{ return m_clrRender.GetB(); }
+	int ScriptGetAlpha()	{ return m_clrRender.GetA(); }
+	void ScriptSetColorVector( const Vector& vecColor );
+	void ScriptSetColor( int r, int g, int b );
+	void ScriptSetColorR( int iVal )	{ SetRenderColorR( iVal ); }
+	void ScriptSetColorG( int iVal )	{ SetRenderColorG( iVal ); }
+	void ScriptSetColorB( int iVal )	{ SetRenderColorB( iVal ); }
+	void ScriptSetAlpha( int iVal )		{ SetRenderColorA( iVal ); }
+
+	int ScriptGetRenderMode() { return GetRenderMode(); }
+	void ScriptSetRenderMode( int nRenderMode ) { SetRenderMode( (RenderMode_t)nRenderMode ); }
+
+	int ScriptGetMoveType() { return GetMoveType(); }
+	void ScriptSetMoveType( int iMoveType ) { SetMoveType( (MoveType_t)iMoveType ); }
+#endif
 
 	// Stubs on client
 	void	NetworkStateManualMode( bool activate )		{ }
@@ -1156,7 +1264,7 @@ public:
 #ifdef _DEBUG
 	void FunctionCheck( void *pFunction, const char *name );
 
-	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, char *name ) 
+	ENTITYFUNCPTR TouchSet( ENTITYFUNCPTR func, const char *name ) 
 	{ 
 		//COMPILE_TIME_ASSERT( sizeof(func) == 4 );
 		m_pfnTouch = func; 
@@ -1177,17 +1285,7 @@ public:
 	// Sets the origin + angles to match the last position received
 	void MoveToLastReceivedPosition( bool force = false );
 
-	// Return the IHasAttributes interface for this base entity. Removes the need for:
-	//	dynamic_cast< IHasAttributes * >( pEntity );
-	// Which is remarkably slow.
-	// GetAttribInterface( CBaseEntity *pEntity ) in attribute_manager.h uses
-	//  this function, tests for NULL, and Asserts m_pAttributes == dynamic_cast.
-	inline IHasAttributes *GetHasAttributesInterfacePtr() const { return m_pAttributes; }
-
 protected:
-	// NOTE: m_pAttributes needs to be set in the leaf class constructor.
-	IHasAttributes *m_pAttributes;
-
 	// Only meant to be called from subclasses
 	void DestroyModelInstance();
 
@@ -1227,7 +1325,7 @@ protected:
 
 public:
 	// Accessors for above
-	static int						GetPredictionRandomSeed( bool bUseUnSyncedServerPlatTime = false );
+	static int						GetPredictionRandomSeed( void );
 	static void						SetPredictionRandomSeed( const CUserCmd *cmd );
 	static C_BasePlayer				*GetPredictionPlayer( void );
 	static void						SetPredictionPlayer( C_BasePlayer *player );
@@ -1276,6 +1374,7 @@ public:
 	void SetRenderMode( RenderMode_t nRenderMode, bool bForceUpdate = false );
 	RenderMode_t GetRenderMode() const;
 
+	const char* GetEntityName();
 public:	
 
 	// Determine what entity this corresponds to
@@ -1289,6 +1388,11 @@ public:
 	unsigned short					m_EntClientFlags;
 
 	CNetworkColor32( m_clrRender );
+
+#ifdef MAPBASE
+	int								m_iViewHideFlags;
+	bool							m_bDisableFlashlight;
+#endif
 
 private:
 	
@@ -1395,7 +1499,6 @@ public:
 
 	virtual bool					IsDeflectable() { return false; }
 
-	bool			IsCombatCharacter() { return MyCombatCharacterPointer() == NULL ? false : true; }
 protected:
 	int								m_nFXComputeFrame;
 
@@ -1429,6 +1532,15 @@ protected:
 	CUtlVector< thinkfunc_t >		m_aThinkFunctions;
 	int								m_iCurrentThinkContext;
 
+#ifdef MAPBASE_VSCRIPT
+public:
+	void							ScriptSetContextThink( const char* szContext, HSCRIPT hFunc, float time );
+	void							ScriptContextThink();
+private:
+	CUtlVector< scriptthinkfunc_t* > m_ScriptThinkFuncs;
+public:
+#endif
+
 	// Object eye position
 	Vector							m_vecViewOffset;
 
@@ -1443,8 +1555,6 @@ public:
 	// This can be used to setup the entity as a client-only entity. It gets an entity handle,
 	// a render handle, and is put into the spatial partition.
 	bool InitializeAsClientEntityByIndex( int iIndex, RenderGroup_t renderGroup );
-
-	void TrackAngRotation( bool bTrack );
 
 private:
 	friend void OnRenderStart();
@@ -1657,6 +1767,8 @@ private:
 	// The owner!
 	EHANDLE							m_hOwnerEntity;
 	EHANDLE							m_hEffectEntity;
+
+	char							m_iName[MAX_PATH];
 	
 	// This is a random seed used by the networking code to allow client - side prediction code
 	//  randon number generators to spit out the same random numbers on both sides for a particular
@@ -2211,6 +2323,12 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 	return true;
 #endif
 }
+
+inline const char *C_BaseEntity::GetEntityName() 
+{ 
+	return m_iName; 
+}
+
 
 C_BaseEntity *CreateEntityByName( const char *className );
 

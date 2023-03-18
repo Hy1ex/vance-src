@@ -77,33 +77,27 @@ struct CubemapSideData_t
 
 static CubemapSideData_t s_aCubemapSideData[MAX_MAP_BRUSHSIDES];
 
-struct cubemapCorrectionData_t
-{
-	Vector origin;
-	float radius = -1; // -1 = No cubemap correction
-};
 
-static cubemapCorrectionData_t	s_CubemapCorrected[MAX_MAP_CUBEMAPSAMPLES];
 
 inline bool SideHasCubemapAndWasntManuallyReferenced( int iSide )
 {
 	return s_aCubemapSideData[iSide].bHasEnvMapInMaterial && !s_aCubemapSideData[iSide].bManuallyPickedByAnEnvCubemap;
 }
 
-
-void Cubemap_InsertSample( const Vector& origin, int size, float radius )
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+char* g_pParallaxObbStrs[MAX_MAP_CUBEMAPSAMPLES];
+void Cubemap_InsertSample( const Vector& origin, int size, char* pParallaxObbStr = "" )
 {
+	g_pParallaxObbStrs[g_nCubemapSamples] = pParallaxObbStr;
+#else
+void Cubemap_InsertSample( const Vector& origin, int size )
+{
+#endif
 	dcubemapsample_t *pSample = &g_CubemapSamples[g_nCubemapSamples];
 	pSample->origin[0] = ( int )origin[0];	
 	pSample->origin[1] = ( int )origin[1];	
 	pSample->origin[2] = ( int )origin[2];	
 	pSample->size = size;
-	cubemapCorrectionData_t* pCorrrectionData = &s_CubemapCorrected[g_nCubemapSamples];
-	pCorrrectionData->origin = origin;
-	pCorrrectionData->radius = radius;
-
-	Msg("Filling Parallax corrected cubemap info: id%d [%d %d %d] %d\n", g_nCubemapSamples, (int)pCorrrectionData->origin[0], (int)pCorrrectionData->origin[1], (int)pCorrrectionData->origin[2], (int)pCorrrectionData->radius);
-
 	g_nCubemapSamples++;
 }
 
@@ -289,7 +283,15 @@ void VTFNameToHDRVTFName( const char *pSrcName, char *pDest, int maxLen, bool bH
 	Q_strncpy( pDot, ".hdr.vtf", maxLen - ( pDot - pDest ) );
 }
 
-#define DEFAULT_CUBEMAP_SIZE g_SkyboxCubemapRes
+#ifdef MAPBASE
+
+extern bool g_bSkyboxCubemaps;
+extern int g_iDefaultCubemapSize;
+#define DEFAULT_CUBEMAP_SIZE g_iDefaultCubemapSize
+
+#else
+#define DEFAULT_CUBEMAP_SIZE 32
+#endif
 
 void CreateDefaultCubemaps( bool bHDR )
 {
@@ -314,7 +316,7 @@ void CreateDefaultCubemaps( bool bHDR )
 	IVTFTexture *pSrcVTFTextures[6];
 
 	int unionTextureFlags = 0;
-	if( !LoadSrcVTFFiles( pSrcVTFTextures, skyboxMaterialName, &unionTextureFlags,/*bHDR*/ false ) )
+	if( !LoadSrcVTFFiles( pSrcVTFTextures, skyboxMaterialName, &unionTextureFlags, bHDR ) )
 	{
 		Warning( "Can't load skybox file %s to build the default cubemap!\n", skyboxMaterialName );
 		return;
@@ -352,12 +354,18 @@ void CreateDefaultCubemaps( bool bHDR )
 				int iSize = pDstCubemap->ComputeMipSize( iMip );
 				int iSrcMipSize = pSrcVTFTextures[iFace]->ComputeMipSize( iMip + iMipLevelOffset );
 
-				if (!g_SkyboxCubemap)
+#ifdef MAPBASE
+				if (!g_bSkyboxCubemaps)
 				{
-					// !!! FIXME: Set this to black until HDR cubemaps are built properly!
 					memset( pDstBits, 0, iSize );
 					continue;
 				}
+#else
+				// !!! FIXME: Set this to black until HDR cubemaps are built properly!
+				memset( pDstBits, 0, iSize );
+				continue;
+#endif
+
 				if ( ( pSrcVTFTextures[iFace]->Width() == 4 ) && ( pSrcVTFTextures[iFace]->Height() == 4 ) ) // If texture is 4x4 square
 				{
 					// Force mip level 2 to get the 1x1 face
@@ -429,7 +437,7 @@ void CreateDefaultCubemaps( bool bHDR )
 	if( !bHDR )
 	{
 		// Convert the cube to format that we can apply tools to it...
-		pDstCubemap->ConvertImageFormat(IMAGE_FORMAT_DEFAULT, false );
+		pDstCubemap->ConvertImageFormat( IMAGE_FORMAT_DEFAULT, false );
 	}
 
 	// Fixup the cubemap facing
@@ -444,11 +452,13 @@ void CreateDefaultCubemaps( bool bHDR )
 		pDstCubemap->ConvertImageFormat( originalFormat, false );
 	}
 
-	// FIXME: uncomment these lines if you want to match the seams on cubemap
-	// Convert the cube to format that we can apply tools to it...
-	//pDstCubemap->ConvertImageFormat(IMAGE_FORMAT_RGBA8888, false);
-	//pDstCubemap->MatchCubeMapBorders(1, IMAGE_FORMAT_RGBA8888, false);
-	//pDstCubemap->MatchCubeMapBorders(2, originalFormat, false);
+#ifdef MAPBASE
+	// Apply a seam fix
+	pDstCubemap->ConvertImageFormat( IMAGE_FORMAT_RGBA8888, false );
+
+	pDstCubemap->MatchCubeMapBorders( 1, IMAGE_FORMAT_RGBA8888, false );
+	pDstCubemap->MatchCubeMapBorders( 2, originalFormat, false );
+#endif
 
 	// Write the puppy out!
 	char dstVTFFileName[1024];
@@ -466,13 +476,6 @@ void CreateDefaultCubemaps( bool bHDR )
 	{
 		Warning( "Error serializing default cubemap %s\n", dstVTFFileName );
 		return;
-	}
-
-	if (g_SkyboxCubemapDump)
-	{
-		FileHandle_t outFile = g_pFileSystem->Open(dstVTFFileName, "w");
-		g_pFileSystem->Write(outputBuf.Base(), outputBuf.TellPut(), outFile);
-		g_pFileSystem->Close(outFile);
 	}
 
 	IZip *pak = GetPakFile();
@@ -556,7 +559,11 @@ static void GeneratePatchedName( const char *pMaterialName, const PatchInfo_t &i
 //-----------------------------------------------------------------------------
 // Patches the $envmap for a material and all its dependents, returns true if any patching happened
 //-----------------------------------------------------------------------------
-static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, const PatchInfo_t &info, const char *pCubemapTexture, float radius )
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, const PatchInfo_t &info, const char *pCubemapTexture, const char *pParallaxObbMatrix = "" )
+#else
+static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, const PatchInfo_t &info, const char *pCubemapTexture )
+#endif
 {
 	// Do *NOT* patch the material if there is an $envmap specified and it's not 'env_cubemap'
 
@@ -574,7 +581,11 @@ static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, cons
 	const char *pDependentMaterial = FindDependentMaterial( pMaterialName, &pDependentMaterialVar );
 	if ( pDependentMaterial )
 	{
-		bDependentMaterialPatched = PatchEnvmapForMaterialAndDependents( pDependentMaterial, info, pCubemapTexture, radius );
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+		bDependentMaterialPatched = PatchEnvmapForMaterialAndDependents( pDependentMaterial, info, pCubemapTexture, pParallaxObbMatrix );
+#else
+		bDependentMaterialPatched = PatchEnvmapForMaterialAndDependents( pDependentMaterial, info, pCubemapTexture );
+#endif
 	}
 
 	// If we have neither to patch, we're done
@@ -585,31 +596,46 @@ static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, cons
 	char pPatchedMaterialName[1024];
 	GeneratePatchedName( pMaterialName, info, true, pPatchedMaterialName, 1024 );
 
-	MaterialPatchInfo_t pPatchInfo[4];
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+	MaterialPatchInfo_t pPatchInfo[7];
+#else
+	MaterialPatchInfo_t pPatchInfo[2];
+#endif
 	int nPatchCount = 0;
 	if ( bShouldPatchEnvCubemap )
 	{
-		char originAppendedString[1024] = "";
-		char radiusppendedString[256] = "";
-
 		pPatchInfo[nPatchCount].m_pKey = "$envmap";
 		pPatchInfo[nPatchCount].m_pRequiredOriginalValue = "env_cubemap";
 		pPatchInfo[nPatchCount].m_pValue = pCubemapTexture;
-		Msg("$envmap: %s\n", pCubemapTexture);
+		++nPatchCount;
+	}
+
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+	// Parallax cubemap matrix
+	CUtlVector<char *> matRowList;
+	if (pParallaxObbMatrix[0] != '\0')
+	{
+		V_SplitString( pParallaxObbMatrix, ";", matRowList );
+
+		// Needed for editor
+		pPatchInfo[nPatchCount].m_pKey = "$envMapParallax";
+		pPatchInfo[nPatchCount].m_pValue = "1";
 		++nPatchCount;
 
-		Q_snprintf(originAppendedString, 1024, "[%d %d %d]", info.m_pOrigin[0], info.m_pOrigin[1], info.m_pOrigin[2]);
-		pPatchInfo[nPatchCount].m_pKey = "$envmaporigin";
-		pPatchInfo[nPatchCount].m_pValue = originAppendedString;
-		Msg("$envmaporigin: %s\n", originAppendedString);
-		nPatchCount++;
-
-		Q_snprintf(radiusppendedString, 256, "%d", (int)radius);
-		pPatchInfo[nPatchCount].m_pKey = "$envmapradius";
-		pPatchInfo[nPatchCount].m_pValue = radiusppendedString;
-		Msg("$envmapradius: %s\n", radiusppendedString);
-		nPatchCount++;
+		pPatchInfo[nPatchCount].m_pKey = "$envMapParallaxOBB1";
+		pPatchInfo[nPatchCount].m_pValue = matRowList[0];
+		++nPatchCount;
+		pPatchInfo[nPatchCount].m_pKey = "$envMapParallaxOBB2";
+		pPatchInfo[nPatchCount].m_pValue = matRowList[1];
+		++nPatchCount;
+		pPatchInfo[nPatchCount].m_pKey = "$envMapParallaxOBB3";
+		pPatchInfo[nPatchCount].m_pValue = matRowList[2];
+		++nPatchCount;
+		pPatchInfo[nPatchCount].m_pKey = "$envMapOrigin";
+		pPatchInfo[nPatchCount].m_pValue = matRowList[3];
+		++nPatchCount;
 	}
+#endif
 
 	char pDependentPatchedMaterialName[1024];
 	if ( bDependentMaterialPatched )
@@ -622,7 +648,14 @@ static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, cons
 		++nPatchCount;
 	}
 
-	CreateMaterialPatch( pMaterialName, pPatchedMaterialName, nPatchCount, pPatchInfo, PATCH_INSERT);
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+	CreateMaterialPatch( pMaterialName, pPatchedMaterialName, nPatchCount, pPatchInfo, PATCH_INSERT );
+
+	// Clean up parallax stuff
+	matRowList.PurgeAndDeleteElements();
+#else
+	CreateMaterialPatch( pMaterialName, pPatchedMaterialName, nPatchCount, pPatchInfo, PATCH_REPLACE );
+#endif
 
 	return true;
 }
@@ -641,7 +674,11 @@ static bool PatchEnvmapForMaterialAndDependents( const char *pMaterialName, cons
 // default (skybox) cubemap into this file so the cubemap doesn't have the pink checkerboard at
 // runtime before they run buildcubemaps.
 //-----------------------------------------------------------------------------
-static int Cubemap_CreateTexInfo( int originalTexInfo, int origin[3], float radius )
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+static int Cubemap_CreateTexInfo( int originalTexInfo, int origin[3], int cubemapIndex )
+#else
+static int Cubemap_CreateTexInfo( int originalTexInfo, int origin[3] )
+#endif
 {
 	// Don't make cubemap tex infos for nodes
 	if ( originalTexInfo == TEXINFO_NODE )
@@ -673,6 +710,15 @@ static int Cubemap_CreateTexInfo( int originalTexInfo, int origin[3], float radi
 	char pGeneratedTexDataName[1024];
 	GeneratePatchedName( pMaterialName, info, true, pGeneratedTexDataName, 1024 );
 
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+	// Append origin info if this cubemap has a parallax OBB
+	char originAppendedString[1024] = "";
+	if (g_pParallaxObbStrs[cubemapIndex] && g_pParallaxObbStrs[cubemapIndex][0] != '\0')
+	{
+		Q_snprintf(originAppendedString, 1024, "%s;[%d %d %d]", g_pParallaxObbStrs[cubemapIndex], origin[0], origin[1], origin[2]);
+	}
+#endif
+
 	// Make sure the texdata doesn't already exist.
 	int nTexDataID = FindTexData( pGeneratedTexDataName );
 	bool bHasTexData = (nTexDataID != -1);
@@ -684,7 +730,11 @@ static int Cubemap_CreateTexInfo( int originalTexInfo, int origin[3], float radi
 
 		// Hook the texture into the material and all dependent materials
 		// but if no hooking was necessary, exit out
-		if ( !PatchEnvmapForMaterialAndDependents(pMaterialName, info, pTextureName, radius) )
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+		if ( !PatchEnvmapForMaterialAndDependents( pMaterialName, info, pTextureName, originAppendedString ) )
+#else
+		if ( !PatchEnvmapForMaterialAndDependents( pMaterialName, info, pTextureName ) )
+#endif
 			return originalTexInfo;
 		
 		// Store off the name of the cubemap that we need to create since we successfully patched
@@ -774,7 +824,11 @@ void Cubemap_FixupBrushSidesMaterials( void )
 			}
 #endif
 			
-			pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[cubemapID].origin, s_CubemapCorrected[cubemapID].radius);
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+			pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[cubemapID].origin, cubemapID );
+#else
+			pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[cubemapID].origin );
+#endif
 			if ( pSide->pMapDisp )
 			{
 				pSide->pMapDisp->face.texinfo = pSide->texinfo;
@@ -990,7 +1044,11 @@ void Cubemap_AttachDefaultCubemapToSpecularSides( void )
 			Assert( pSide->texinfo == pSide->pMapDisp->face.texinfo );
 		}
 #endif				
-		pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[iCubemap].origin, s_CubemapCorrected[iCubemap].radius);
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+		pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[iCubemap].origin, iCubemap );
+#else
+		pSide->texinfo = Cubemap_CreateTexInfo( pSide->texinfo, g_CubemapSamples[iCubemap].origin );
+#endif
 		if ( pSide->pMapDisp )
 		{
 			pSide->pMapDisp->face.texinfo = pSide->texinfo;

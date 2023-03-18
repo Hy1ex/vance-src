@@ -23,6 +23,10 @@
 #include "hintsystem.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "c_env_fog_controller.h"
+#ifdef MAPBASE // From Alien Swarm SDK
+#include "c_postprocesscontroller.h"
+#include "c_colorcorrection.h"
+#endif
 #include "igameevents.h"
 #include "GameEventListener.h"
 
@@ -37,6 +41,7 @@ class C_BaseViewModel;
 class C_FuncLadder;
 class CFlashlightEffect;
 class C_EconWearable;
+class C_PostProcessController;
 
 extern int g_nKillCamMode;
 extern int g_nKillCamTarget1;
@@ -169,7 +174,7 @@ public:
 	virtual IRagdoll* GetRepresentativeRagdoll() const;
 
 	// override the initial bone position for ragdolls
-	virtual bool GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt ) OVERRIDE;
+	virtual void GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt );
 
 	// Returns eye vectors
 	void			EyeVectors( Vector *pForward, Vector *pRight = NULL, Vector *pUp = NULL );
@@ -182,19 +187,8 @@ public:
 	virtual void	TeamChange( int iNewTeam );
 
 	// Flashlight
-	void	Flashlight(void);
-	virtual void	UpdateFlashlight(void);
-	void	TurnOffFlashlight(void);
-	virtual const char* GetFlashlightTextureName(void) const { return NULL; }
-	virtual float GetFlashlightFOV(void) const { return 0.0f; }
-	virtual float GetFlashlightFarZ(void) const { return 0.0f; }
-	virtual float GetFlashlightLinearAtten(void) const { return 0.0f; }
-	virtual bool CastsFlashlightShadows(void) const { return false; }
-	virtual void GetFlashlightOffset(const Vector& vecForward, const Vector& vecRight, const Vector& vecUp, Vector* pVecOffset) const;
-	Vector	m_vecFlashlightOrigin;
-	Vector	m_vecFlashlightForward;
-	Vector	m_vecFlashlightUp;
-	Vector	m_vecFlashlightRight;
+	void	Flashlight( void );
+	virtual void	UpdateFlashlight( void );
 
 	// Weapon selection code
 	virtual bool				IsAllowedToSwitchWeapons( void ) { return !IsObserver(); }
@@ -213,6 +207,11 @@ public:
 	void						SetMaxSpeed( float flMaxSpeed ) { m_flMaxspeed = flMaxSpeed; }
 	float						MaxSpeed() const		{ return m_flMaxspeed; }
 
+#ifdef MAPBASE
+	// See c_baseplayer.cpp
+	virtual ShadowType_t		ShadowCastType();
+	virtual bool				ShouldReceiveProjectedTextures( int flags );
+#else
 	// Should this object cast shadows?
 	virtual ShadowType_t		ShadowCastType() { return SHADOWS_NONE; }
 
@@ -220,6 +219,7 @@ public:
 	{
 		return false;
 	}
+#endif
 
 
 	bool						IsLocalPlayer( void ) const;
@@ -390,6 +390,11 @@ public:
 	void					UpdateFogController( void );
 	void					UpdateFogBlend( void );
 
+#ifdef MAPBASE // From Alien Swarm SDK
+	C_PostProcessController* GetActivePostProcessController() const;
+	C_ColorCorrection*		GetActiveColorCorrection() const;
+#endif
+
 	float					GetFOVTime( void ){ return m_flFOVTime; }
 
 	virtual void			OnAchievementAchieved( int iAchievement ) {}
@@ -399,7 +404,7 @@ public:
 
 #if defined USES_ECON_ITEMS
 	// Wearables
-	virtual void			UpdateWearables();
+	void					UpdateWearables();
 	C_EconWearable			*GetWearable( int i ) { return m_hMyWearables[i]; }
 	int						GetNumWearables( void ) { return m_hMyWearables.Count(); }
 #endif
@@ -454,20 +459,35 @@ public:
 	float			m_flConstraintWidth;
 	float			m_flConstraintSpeedFactor;
 
+#ifdef MAPBASE
+	// Transmitted from the server for internal player spawnflags.
+	// See baseplayer_shared.h for more details.
+	int				m_spawnflags;
+
+	inline bool		HasSpawnFlags( int flags ) { return (m_spawnflags & flags) != 0; }
+	inline void		RemoveSpawnFlags( int flags ) { m_spawnflags &= ~flags; }
+	inline void		AddSpawnFlags( int flags ) { m_spawnflags |= flags; }
+
+	// Allows the player's model to draw on non-main views, like monitors or mirrors.
+	bool			m_bDrawPlayerModelExternally;
+
+	bool			m_bInTriggerFall;
+#endif
+
 protected:
 
+	//Tony; made all of these virtual so mods can override.
 	virtual void		CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
-	void				CalcVehicleView(IClientVehicle *pVehicle, Vector& eyeOrigin, QAngle& eyeAngles,
-							float& zNear, float& zFar, float& fov );
+	virtual void		CalcVehicleView(IClientVehicle *pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov );
 	virtual void		CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 	virtual Vector		GetChaseCamViewOffset( CBaseEntity *target );
-	void				CalcChaseCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
+	virtual void		CalcChaseCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 	virtual void		CalcInEyeCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 
 	virtual float		GetDeathCamInterpolationTime();
 
 	virtual void		CalcDeathCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
-	void				CalcRoamingView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
+	virtual void		CalcRoamingView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
 	virtual void		CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 
 	// Check to see if we're in vgui input mode...
@@ -536,8 +556,9 @@ private:
 
 	bool			m_bFiredWeapon;
 
+
 	// Player flashlight dynamic light pointers
-	bool			m_bFlashlightEnabled;
+	CFlashlightEffect *m_pFlashlight;
 
 	typedef CHandle<C_BaseCombatWeapon> CBaseCombatWeaponHandle;
 	CNetworkVar( CBaseCombatWeaponHandle, m_hLastWeapon );
@@ -595,7 +616,7 @@ protected:
 	virtual bool IsDucked( void ) const { return m_Local.m_bDucked; }
 	virtual bool IsDucking( void ) const { return m_Local.m_bDucking; }
 	virtual float GetFallVelocity( void ) { return m_Local.m_flFallVelocity; }
-	bool ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOut, float curtimeOffset );
+	void ForceSetupBonesAtTimeFakeInterpolation( matrix3x4_t *pBonesOut, float curtimeOffset );
 
 	float m_flLaggedMovementValue;
 
@@ -621,7 +642,6 @@ protected:
 	float			m_flNextAchievementAnnounceTime;
 
 	int				m_nForceVisionFilterFlags; // Force our vision filter to a specific setting
-	int				m_nLocalPlayerVisionFlags;
 
 #if defined USES_ECON_ITEMS
 	// Wearables
@@ -638,6 +658,11 @@ private:
 	};
 	// One for left and one for right side of step
 	StepSoundCache_t		m_StepSoundCache[ 2 ];
+
+#ifdef MAPBASE // From Alien Swarm SDK
+	CNetworkHandle( C_PostProcessController, m_hPostProcessCtrl );	// active postprocessing controller
+	CNetworkHandle( C_ColorCorrection, m_hColorCorrectionCtrl );	// active FXVolume color correction
+#endif
 
 public:
 

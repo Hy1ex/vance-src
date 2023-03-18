@@ -32,28 +32,6 @@ enum
 #define SMOOTHING_GROUP_HARD_EDGE	0xff000000
 
 //==========================================================================//
-// Give surfaces a softer look instead of the harsher linear N.L look
-//==========================================================================//
-float SoftenCosineTerm(float flDot)
-{
-	if (!do_soften)
-		return flDot;
-
-	flDot = MAX(flDot, 0.0f);
-	return (flDot + (flDot * flDot)) * 0.5f; // This is cheaper than an exponent in shader code
-}
-
-fltx4 SoftenCosineTerm(fltx4 dots)
-{
-	if (!do_soften)
-		return dots;
-
-	dots = MaxSIMD(dots, Four_Zeros);
-	fltx4 dotsSquared = MulSIMD(dots, dots);
-	return MulSIMD(AddSIMD(dots, dotsSquared), Four_PointFives);
-}
-
-//==========================================================================//
 // CNormalList.
 //==========================================================================//
 
@@ -1152,7 +1130,7 @@ static void ParseLightGeneric( entity_t *e, directlight_t *dl )
 	dl->light.style = (int)FloatForKey (e, "style");
 	
 	// get intenfsity
-	if( g_bHDR && LightForKey( e, "_light", dl->light.intensity ) ) 
+	if( g_bHDR && LightForKey( e, "_lightHDR", dl->light.intensity ) ) 
 	{
 	}
 	else
@@ -1502,8 +1480,6 @@ static void ParseLightEnvironment( entity_t* e, directlight_t* dl )
 
 	ParseLightGeneric( e, dl );
 
-	// always true for now
-	dl->m_bStatic = true;
 	char *angle_str=ValueForKeyWithDefault( e, "SunSpreadAngle" );
 	if (angle_str)
 	{
@@ -1520,7 +1496,7 @@ static void ParseLightEnvironment( entity_t* e, directlight_t* dl )
 		// Sky ambient light.
 		gAmbient = AllocDLight( dl->light.origin, false );
 		gAmbient->light.type = emit_skyambient;
-		if( g_bHDR && LightForKey( e, "_ambient", gAmbient->light.intensity ) )
+		if( g_bHDR && LightForKey( e, "_ambientHDR", gAmbient->light.intensity ) )
 		{
 			// we have a valid HDR ambient light value
 		}
@@ -1554,65 +1530,6 @@ static void ParseLightPoint( entity_t* e, directlight_t* dl )
 	dl->light.type = emit_point;
 
 	SetLightFalloffParams(e,dl);
-}
-
-static void ParseLightProjectedTexture(entity_t* e, directlight_t* dl)
-{
-	Vector dest;
-	GetVectorForKey(e, "origin", dest);
-	dl = AllocDLight(dest, true);
-
-	LightForKey(e, "lightcolor", dl->light.intensity);
-	dl->m_bStatic = true;
-	// point down angle
-	Vector angles;
-	GetVectorForKey(e, "angles", angles);
-	float angle = FloatForKey(e, "angle");
-	SetupLightNormalFromProps(QAngle(angles.x, angles.y, angles.z), angle, -angles.x, dl->light.normal);
-
-	dl->light.type = emit_spotlight;
-
-	dl->light.stopdot2 = FloatForKey(e, "lightfov") / 2.0f;
-
-	dl->light.stopdot = dl->light.stopdot2 - 5.0f;
-
-		// Clamp to 90, that's all DX8 can handle! 
-	if (dl->light.stopdot > 90)
-	{
-		Warning("WARNING: light_spot at (%i %i %i) has inner angle larger than 90 degrees! Clamping to 90...\n",
-			(int)dl->light.origin[0], (int)dl->light.origin[1], (int)dl->light.origin[2]);
-		dl->light.stopdot = 90;
-	}
-
-	if (dl->light.stopdot2 > 90)
-	{
-		Warning("WARNING: light_spot at (%i %i %i) has outer angle larger than 90 degrees! Clamping to 90...\n",
-			(int)dl->light.origin[0], (int)dl->light.origin[1], (int)dl->light.origin[2]);
-		dl->light.stopdot2 = 90;
-	}
-
-	dl->light.stopdot2 = (float)cos(dl->light.stopdot2 / 180 * M_PI);
-	dl->light.stopdot = (float)cos(dl->light.stopdot / 180 * M_PI);
-	dl->light.exponent = 1.0f;
-
-	dl->m_flStartFadeDistance = 0;
-	dl->m_flEndFadeDistance = -1;
-	dl->m_flCapDist = 1.0e22;
-	dl->light.constant_attn = FloatForKey(e, "constant");
-	dl->light.linear_attn = FloatForKey(e, "linear");
-	dl->light.quadratic_attn = FloatForKey(e, "quadratic");
-
-	dl->light.radius = 0.0f;
-
-	if (dl->light.constant_attn < EQUAL_EPSILON && dl->light.linear_attn < EQUAL_EPSILON && dl->light.quadratic_attn < EQUAL_EPSILON)
-		dl->light.constant_attn = 1;
-
-	// scale intensity for unit 100 distance
-	float ratio = (dl->light.constant_attn + 100 * dl->light.linear_attn + 100 * 100 * dl->light.quadratic_attn);
-	if (ratio > 0)
-	{
-		VectorScale(dl->light.intensity, ratio, dl->light.intensity);
-	}
 }
 
 /*
@@ -1671,17 +1588,6 @@ void CreateDirectLights (void)
 	{
 		e = &entities[i];
 		name = ValueForKey (e, "classname");
-
-		// env_projectedtexture is an exception, we want to have baked radiosity for it, so we have to include it here (if its set to be static)
-		if (!strcmp(name, "env_projectedtexture"))
-		{
-			if (IntForKey(e, "static"))
-			{
-				ParseLightProjectedTexture(e, dl);
-				continue;
-			}
-		}
-
 		if (strncmp (name, "light", 5))
 			continue;
 
@@ -1726,10 +1632,6 @@ void ExportDirectLightsToWorldLights()
 
 	for (dl = activelights; dl != NULL; dl = dl->next )
 	{
-		// no need to have direct lighting being computed in the engine/shaderapi, its handled in the game
-		if (dl->m_bStatic)
-			continue;
-
 		dworldlight_t *wl = &dworldlights[(*pNumworldlights)++];
 
 		if (*pNumworldlights > MAX_MAP_WORLDLIGHTS)
@@ -1792,10 +1694,8 @@ void GatherSampleSkyLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, i
 	if ( g_SunAngularExtent > 0.0f )
 	{
 		nsamples = NSAMPLES_SUN_AREA_LIGHT;
-		if (do_fast || force_fast)
+		if ( do_fast || force_fast )
 			nsamples /= 4;
-
-		nsamples *= g_flSunSampleScale;
 	}
 
 	fltx4 totalFractionVisible = Four_Zeros;
@@ -1809,12 +1709,7 @@ void GatherSampleSkyLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, i
 		// serach back to see if we can hit a sky brush
 		Vector delta;
 		VectorScale( dl->light.normal, -MAX_TRACE_LENGTH, delta );
-
-		bool shouldSample = !do_fastsample || roundf(((float)rand() / VALVE_RAND_MAX) * (nsamples - 1)) == d;
-		if (!shouldSample)
-			continue;
-
-		if ( d || do_fastsample )
+		if ( d )
 		{
 			// jitter light source location
 			Vector ofs = sampler.NextValue();
@@ -1825,12 +1720,12 @@ void GatherSampleSkyLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, i
 		delta4.DuplicateVector ( delta );
 		delta4 += pos;
 
+		TestLine_DoesHitSky ( pos, delta4, &fractionVisible, true, static_prop_index_to_ignore );
 
-		TestLine_DoesHitSky(pos, delta4, &fractionVisible, true, static_prop_index_to_ignore);
-		totalFractionVisible = AddSIMD(totalFractionVisible, fractionVisible);
+		totalFractionVisible = AddSIMD ( totalFractionVisible, fractionVisible );
 	}
 
-	fltx4 seeAmount = MulSIMD ( totalFractionVisible, ReplicateX4 ( 1.0f / (do_fastsample ? 1 : nsamples) ) );
+	fltx4 seeAmount = MulSIMD ( totalFractionVisible, ReplicateX4 ( 1.0f / nsamples ) );
 	out.m_flDot[0] = MulSIMD ( dot, seeAmount );
 	out.m_flFalloff = Four_Ones;
 	out.m_flSunAmount = MulSIMD ( seeAmount, ReplicateX4( 10000.0f ) );
@@ -1871,17 +1766,13 @@ void GatherSampleAmbientSkySSE( SSE_sampleLightOutput_t &out, directlight_t *dl,
 	int nsky_samples = NUMVERTEXNORMALS;
 	if (do_fast || force_fast )
 		nsky_samples /= 4;
-
-	nsky_samples *= g_flSkySampleScale;
+	else
+		nsky_samples *= g_flSkySampleScale;
 
 	for (int j = 0; j < nsky_samples; j++)
 	{
 		FourVectors anorm;
 		anorm.DuplicateVector( sampler.NextValue() );
-
-		bool shouldSample = !do_fastsample || roundf(((float)rand() / VALVE_RAND_MAX) * (nsky_samples - 1)) == j;
-		if (!shouldSample)
-			continue;
 
 		if ( bIgnoreNormals )
 			dots[0] = ReplicateX4( CONSTANT_DOT );
@@ -1919,12 +1810,13 @@ void GatherSampleAmbientSkySSE( SSE_sampleLightOutput_t &out, directlight_t *dl,
 		surfacePos -= offset;
 
 		fltx4 fractionVisible = Four_Ones;
-		TestLine_DoesHitSky(surfacePos, delta, &fractionVisible, true, static_prop_index_to_ignore);
-		for (int i = 0; i < normalCount; i++)
+		TestLine_DoesHitSky( surfacePos, delta, &fractionVisible, true, static_prop_index_to_ignore );
+		for ( int i = 0; i < normalCount; i++ )
 		{
-			fltx4 addedAmount = MulSIMD(fractionVisible, dots[i]);
-			ambient_intensity[i] = AddSIMD(ambient_intensity[i], addedAmount);
+			fltx4 addedAmount = MulSIMD( fractionVisible, dots[i] );
+			ambient_intensity[i] = AddSIMD( ambient_intensity[i], addedAmount );
 		}
+
 	}
 
 	out.m_flFalloff = Four_Ones;
@@ -1970,8 +1862,6 @@ void GatherSampleStandardLightSSE( SSE_sampleLightOutput_t &out, directlight_t *
 	if ( !bIgnoreNormals )
 		dot = delta * pNormals[0];
 	dot = MaxSIMD( Four_Zeros, dot );
-
-	dot = SoftenCosineTerm(dot);
 
 	// Affix dot to zero if past fade distz
 	bool bHasHardFalloff = ( dl->m_flEndFadeDistance > dl->m_flStartFadeDistance );
@@ -2110,11 +2000,11 @@ void GatherSampleStandardLightSSE( SSE_sampleLightOutput_t &out, directlight_t *
 // normal - surface normal of sample
 // out.m_flDot[] - returned dot products with light vector and each normal
 // out.m_flFalloff - amount of light falloff
-bool GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int facenum, 
+void GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int facenum, 
 					   FourVectors const& pos, FourVectors *pNormals, int normalCount, int iThread,
 					   int nLFlags,
 					   int static_prop_index_to_ignore,
-					   float flEpsilon, bool fastsample )
+					   float flEpsilon )
 {
 	for ( int b = 0; b < normalCount; b++ )
 		out.m_flDot[b] = Four_Zeros;
@@ -2122,16 +2012,12 @@ bool GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int 
 	out.m_flSunAmount = Four_Zeros;
 	Assert( normalCount <= (NUM_BUMP_VECTS+1) );
 
-	bool shouldSample = !fastsample || (roundf(((float)rand() / VALVE_RAND_MAX) * (numdlights - 1)) == dl->index) || dl->light.type == emit_skylight || dl->light.type == emit_skyambient;
-	if (!shouldSample)
-		return false;
-
 	// skylights work fundamentally differently than normal lights
 	switch( dl->light.type )
 	{
 	case emit_skylight:
-		GatherSampleSkyLightSSE(out, dl, facenum, pos, pNormals, normalCount,
-								iThread, nLFlags, static_prop_index_to_ignore, flEpsilon);
+		GatherSampleSkyLightSSE( out, dl, facenum, pos, pNormals, normalCount,
+		                         iThread, nLFlags, static_prop_index_to_ignore, flEpsilon );
 		break;
 	case emit_skyambient:
 		GatherSampleAmbientSkySSE( out, dl, facenum, pos, pNormals, normalCount,
@@ -2145,7 +2031,7 @@ bool GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int 
 		break;
 	default:
 		Error ("Bad dl->light.type");
-		return false;
+		return;
 	}
 
 	// NOTE: Notice here that if the light is on the back side of the face
@@ -2160,7 +2046,6 @@ bool GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int 
 		out.m_flDot[n] = AndSIMD( out.m_flDot[n], notZero );
 	}
 
-	return true;
 }
 
 /*
@@ -2502,7 +2387,6 @@ static inline void AllocateLightstyleSamples( facelight_t* fl, int styleIndex, i
 	for (int n = 0; n < numnormals; ++n)
 	{
 		fl->light[styleIndex][n] = ( LightingValue_t* )calloc( fl->numsamples, sizeof(LightingValue_t ) );
-		fl->radiosity[styleIndex][n] = (LightingValue_t*)calloc(fl->numsamples, sizeof(LightingValue_t));
 	}
 }
 
@@ -2622,18 +2506,10 @@ static void GatherSampleLightAt4Points( SSE_SampleInfo_t& info, int sampleIdx, i
 				skipLight = false;
 			}
 		}
-
-		//if (dl->light.type == emit_skylight)
-		//	skipLight = true;
-
-		if (dl->m_bStatic == true)
-			skipLight = true;
-
 		if ( skipLight )
 			continue;
 
-		if(!GatherSampleLightSSE( out, dl, info.m_FaceNum, info.m_Points, info.m_PointNormals, info.m_NormalCount, info.m_iThread, 0, -1, 0.0f, do_fastsample ))
-			continue;
+		GatherSampleLightSSE( out, dl, info.m_FaceNum, info.m_Points, info.m_PointNormals, info.m_NormalCount, info.m_iThread );
 		
 		// Apply the PVS check filter and compute falloff x dot
 		fltx4 fxdot[NUM_BUMP_VECTS + 1];
@@ -2682,84 +2558,12 @@ static void GatherSampleLightAt4Points( SSE_SampleInfo_t& info, int sampleIdx, i
 		{
 			for ( int i = 0; i < numSamples; i++ )
 			{
-				pLightmaps[n][sampleIdx + i].AddLight( SubFloat( fxdot[n], i ) * (1.0f / fastsamples), dl->light.intensity, SubFloat( out.m_flSunAmount, i ) );
+				pLightmaps[n][sampleIdx + i].AddLight( SubFloat( fxdot[n], i ), dl->light.intensity, SubFloat( out.m_flSunAmount, i ) );
 			}
 		}
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Iterates over all lights and computes sun light at up to 4 sample points
-//-----------------------------------------------------------------------------
-static void GatherSampleRadiosityOnlyAt4Points(SSE_SampleInfo_t& info, int sampleIdx, int numSamples)
-{
-	SSE_sampleLightOutput_t out;
-
-	// Iterate over all direct lights and add them to the particular sample
-	for (directlight_t* dl = activelights; dl != NULL; dl = dl->next)
-	{
-		// is this lights cluster visible?
-		fltx4 dotMask = Four_Zeros;
-		bool skipLight = true;
-		for (int s = 0; s < numSamples; s++)
-		{
-			if (PVSCheck(dl->pvs, info.m_Clusters[s]))
-			{
-				dotMask = SetComponentSIMD(dotMask, s, 1.0f);
-				skipLight = false;
-			}
-		}
-
-		if (dl->m_bStatic == false)
-			skipLight = true;
-
-		if (skipLight)
-			continue;
-
-		GatherSampleLightSSE(out, dl, info.m_FaceNum, info.m_Points, info.m_PointNormals, info.m_NormalCount, info.m_iThread);
-		
-		// Apply the PVS check filter and compute falloff x dot
-		fltx4 fxdot[NUM_BUMP_VECTS + 1];
-		skipLight = true;
-		for (int b = 0; b < info.m_NormalCount; b++)
-		{
-			fxdot[b] = MulSIMD(out.m_flDot[b], dotMask);
-			fxdot[b] = MulSIMD(fxdot[b], out.m_flFalloff);
-			if (!IsAllZeros(fxdot[b]))
-			{
-				skipLight = false;
-			}
-		}
-		if (skipLight)
-			continue;
-
-		// Figure out the lightstyle for this particular sample
-		int lightStyleIndex = FindOrAllocateLightstyleSamples(info.m_pFace, info.m_pFaceLight,
-			dl->light.style, info.m_NormalCount);
-		if (lightStyleIndex < 0)
-		{
-			if (info.m_WarnFace != info.m_FaceNum)
-			{
-				Warning("\nWARNING: Too many light styles on a face at (%f, %f, %f)\n",
-					info.m_Points.x.m128_f32[0], info.m_Points.y.m128_f32[0], info.m_Points.z.m128_f32[0]);
-				info.m_WarnFace = info.m_FaceNum;
-			}
-			continue;
-		}
-
-		// pLightmaps is an array of the lightmaps for each normal direction,
-		// here's where the result of the sample gathering goes
-		LightingValue_t** pLightmaps = info.m_pFaceLight->radiosity[lightStyleIndex];
-
-		for (int n = 0; n < info.m_NormalCount; ++n)
-		{
-			for (int i = 0; i < numSamples; i++)
-			{
-				pLightmaps[n][sampleIdx + i].AddLight(SubFloat(fxdot[n], i), dl->light.intensity, SubFloat(out.m_flSunAmount, i));
-			}
-		}
-	}
-}
 
 
 //-----------------------------------------------------------------------------
@@ -2768,6 +2572,15 @@ static void GatherSampleRadiosityOnlyAt4Points(SSE_SampleInfo_t& info, int sampl
 static void ResampleLightAt4Points( SSE_SampleInfo_t& info, int lightStyleIndex, int flags, LightingValue_t pLightmap[4][NUM_BUMP_VECTS+1] )
 {
 	SSE_sampleLightOutput_t out;
+
+	// Clear result
+	for ( int i = 0; i < 4; ++i )
+	{
+		for ( int n = 0; n < info.m_NormalCount; ++n )
+		{
+			pLightmap[i][n].Zero();
+		}
+	}
 
 	// Iterate over all direct lights and add them to the particular sample
 	for (directlight_t *dl = activelights; dl != NULL; dl = dl->next)
@@ -2795,9 +2608,6 @@ static void ResampleLightAt4Points( SSE_SampleInfo_t& info, int lightStyleIndex,
 				skipLight = false;
 			}
 		}
-		if (dl->m_bStatic)
-			skipLight = true;
-
 		if ( skipLight )
 			continue;
 
@@ -2805,8 +2615,7 @@ static void ResampleLightAt4Points( SSE_SampleInfo_t& info, int lightStyleIndex,
 		// (tested by checking the dot product of the face normal and the light position)
 		// we don't want it to contribute to *any* of the bumped lightmaps. It glows
 		// in disturbing ways if we don't do this.
-		if(!GatherSampleLightSSE( out, dl, info.m_FaceNum, info.m_Points, info.m_PointNormals, info.m_NormalCount, info.m_iThread ))
-			continue;
+		GatherSampleLightSSE( out, dl, info.m_FaceNum, info.m_Points, info.m_PointNormals, info.m_NormalCount, info.m_iThread );
 
 		// Apply the PVS check filter and compute falloff x dot
 		fltx4 fxdot[NUM_BUMP_VECTS + 1];
@@ -2898,18 +2707,6 @@ static int SupersampleLightAtPoint( lightinfo_t& l, SSE_SampleInfo_t& info,
 	FourVectors superSampleLightCoord;
 	FourVectors superSamplePosition;
 
-
-	// Resample the light at this point...
-	LightingValue_t result[4][NUM_BUMP_VECTS + 1];
-	// Clear result
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int n = 0; n < info.m_NormalCount; ++n)
-		{
-			result[i][n].Zero();
-		}
-	}
-
 	if ( flags & NON_AMBIENT_ONLY )
 	{
 		float aRow[4];
@@ -2939,17 +2736,18 @@ static int SupersampleLightAtPoint( lightinfo_t& l, SSE_SampleInfo_t& info,
 			// We're assuming the flat normal is the same for all supersamples
 			ComputeIlluminationPointAndNormalsSSE( l, superSamplePosition, superSampleNormal, &info, 4 );
 
-			ResampleLightAt4Points(info, lightStyleIndex, NON_AMBIENT_ONLY, result);
+			// Resample the non-ambient light at this point...
+			LightingValue_t result[4][NUM_BUMP_VECTS+1];
+			ResampleLightAt4Points( info, lightStyleIndex, NON_AMBIENT_ONLY, result );
 
 			// Got more subsamples
-			for (int i = 0; i < 4; i++)
+			for ( int i = 0; i < 4; i++ )
 			{
-				if (!((invalidBits >> i) & 0x1))
+				if ( !( ( invalidBits >> i ) & 0x1 ) )
 				{
-					for (int n = 0; n < info.m_NormalCount; ++n)
+					for ( int n = 0; n < info.m_NormalCount; ++n )
 					{
-						result[i][n].Scale(1.0f / max(1, fastsamples));
-						pLight[n].AddLight(result[i][n]);
+						pLight[n].AddLight( result[i][n] );
 					}
 					++subsampleCount;
 				}
@@ -2972,27 +2770,17 @@ static int SupersampleLightAtPoint( lightinfo_t& l, SSE_SampleInfo_t& info,
 
 		ComputeIlluminationPointAndNormalsSSE( l, superSamplePosition, superSampleNormal, &info, 4 );
 
-		if (!do_fastsample)
-		{
-			ResampleLightAt4Points(info, lightStyleIndex, AMBIENT_ONLY, result);
-		}
-		else
-		{
-			for (int i = 0; i < fastsamples; i++)
-			{
-				ResampleLightAt4Points(info, lightStyleIndex, AMBIENT_ONLY, result);
-			}
-		}
+		LightingValue_t result[4][NUM_BUMP_VECTS+1];
+		ResampleLightAt4Points( info, lightStyleIndex, AMBIENT_ONLY, result );
 
 		// Got more subsamples
-		for (int i = 0; i < 4; i++)
+		for ( int i = 0; i < 4; i++ )
 		{
-			if (!((invalidBits >> i) & 0x1))
+			if ( !( ( invalidBits >> i ) & 0x1 ) )
 			{
-				for (int n = 0; n < info.m_NormalCount; ++n)
+				for ( int n = 0; n < info.m_NormalCount; ++n )
 				{
-					result[i][n].Scale(1.0f / max(1, fastsamples));
-					pLight[n].AddLight(result[i][n]);
+					pLight[n].AddLight( result[i][n] );
 				}
 				++subsampleCount;
 			}
@@ -3129,7 +2917,7 @@ static void BuildSupersampleFaceLights( lightinfo_t& l, SSE_SampleInfo_t& info, 
 				continue;
 
 			// Don't supersample if the lighting is pretty uniform near the sample
-			if (pGradient[i] < 0.01)
+			if (pGradient[i] < 0.0625)
 				continue;
 
 			// Joy! We're supersampling now, and we therefore must do another pass
@@ -3159,10 +2947,9 @@ static void BuildSupersampleFaceLights( lightinfo_t& l, SSE_SampleInfo_t& info, 
 				// Add the ambient + directional terms together, stick it back into the lightmap
 				for (int n = 0; n < info.m_NormalCount; ++n)
 				{
-					//ppLightSamples[n][i].Zero();
+					ppLightSamples[n][i].Zero();
 					ppLightSamples[n][i].AddWeighted( pDirectLight[n],1.0f / directSupersampleCount );
 					ppLightSamples[n][i].AddWeighted( pAmbientLight[n], 1.0f / ambientSupersampleCount );
-					ppLightSamples[n][i].Scale(1.0f / 2.0f);
 				}
 
 				// Recompute the luxel intensity based on the supersampling
@@ -3326,11 +3113,11 @@ void BuildFacelights (int iThread, int facenum)
 	f->styles[0] = 0;
 	AllocateLightstyleSamples( fl, 0, sampleInfo.m_NormalCount );
 
-	srand(facenum); // this is NOT GOOD
 	// sample the lights at each sample location
 	for ( int grp = 0; grp < numGroups; ++grp )
 	{
 		int nSample = 4 * grp;
+
 		sample_t *sample = sampleInfo.m_pFaceLight->sample + nSample;
 		int numSamples = min ( 4, sampleInfo.m_pFaceLight->numsamples - nSample );
 
@@ -3355,47 +3142,7 @@ void BuildFacelights (int iThread, int facenum)
 		}
 
 		// Iterate over all the lights and add their contribution to this group of spots
-		if (!do_fastsample)
-		{
-			GatherSampleLightAt4Points(sampleInfo, nSample, numSamples);
-			GatherSampleRadiosityOnlyAt4Points(sampleInfo, nSample, numSamples);
-		}
-		else
-		{
-			for (int i = 0; i < fastsamples; i++)
-			{
-				GatherSampleLightAt4Points(sampleInfo, nSample, numSamples);
-			}
-
-			/*for (int k = 0; k < MAXLIGHTMAPS; k++)
-			{
-				LightingValue_t** pLightmaps = sampleInfo.m_pFaceLight->light[k];
-				if (*pLightmaps)
-				{
-					for (int n = 0; n < sampleInfo.m_NormalCount; ++n)
-					{
-						for (int i = 0; i < numSamples; i++)
-						{
-							pLightmaps[n][nSample + i].Scale(1.0f / max(1, fastsamples) );
-						}
-					}
-				}
-			}*/
-		}
-	}
-
-	// get rid of the -extra functionality on displacement surfaces
-	if (do_extra && !sampleInfo.m_IsDispFace)
-	{
-		// For each lightstyle, perform a supersampling pass
-		for (i = 0; i < MAXLIGHTMAPS; ++i)
-		{
-			// Stop when we run out of lightstyles
-			if (f->styles[i] == 255)
-				break;
-
-			BuildSupersampleFaceLights(l, sampleInfo, i);
-		}
+		GatherSampleLightAt4Points( sampleInfo, nSample, numSamples );
 	}
 	
 	// Tell the incremental light manager that we're done with this face.
@@ -3411,6 +3158,20 @@ void BuildFacelights (int iThread, int facenum)
 		// Don't have to deal with patch lights (only direct lighting is used)
 		// or supersampling
 		return;
+	}
+
+	// get rid of the -extra functionality on displacement surfaces
+	if (do_extra && !sampleInfo.m_IsDispFace)
+	{
+		// For each lightstyle, perform a supersampling pass
+		for ( i = 0; i < MAXLIGHTMAPS; ++i )
+		{
+			// Stop when we run out of lightstyles
+			if (f->styles[i] == 255)
+				break;
+
+			BuildSupersampleFaceLights( l, sampleInfo, i );
+		}
 	}
 
 	if (!g_bUseMPI) 
@@ -3453,7 +3214,6 @@ void BuildPatchLights( int facenum )
 	for (i = 0; i < fl->numsamples; i++)
 	{
 		AddSampleToPatch( &fl->sample[i], fl->light[k][0][i], facenum);
-		AddSampleToPatch(&fl->sample[i], fl->radiosity[k][0][i], facenum);
 	}
 
 	// check for a valid face
@@ -3788,51 +3548,30 @@ static void LinearToBumpedLightmap(
 // Convert a RGBExp32 to a RGBA8888
 // This matches the engine's conversion, so the lighting result is consistent.
 //-----------------------------------------------------------------------------
-void ConvertRGBExp32ToRGBA8888( const ColorRGBExp32 *pSrc, unsigned char *pDst, Vector* _optOutLinear )
+void ConvertRGBExp32ToRGBA8888( const ColorRGBExp32 *pSrc, unsigned char *pDst )
 {
 	Vector		linearColor;
+	Vector		vertexColor;
 
 	// convert from ColorRGBExp32 to linear space
 	linearColor[0] = TexLightToLinear( ((ColorRGBExp32 *)pSrc)->r, ((ColorRGBExp32 *)pSrc)->exponent );
 	linearColor[1] = TexLightToLinear( ((ColorRGBExp32 *)pSrc)->g, ((ColorRGBExp32 *)pSrc)->exponent );
 	linearColor[2] = TexLightToLinear( ((ColorRGBExp32 *)pSrc)->b, ((ColorRGBExp32 *)pSrc)->exponent );
 
-	ConvertLinearToRGBA8888( &linearColor, pDst );
-	if ( _optOutLinear )
-		*_optOutLinear = linearColor;
-}
-
-//-----------------------------------------------------------------------------
-// Converts a RGBExp32 to a linear color value.
-//-----------------------------------------------------------------------------
-void ConvertRGBExp32ToLinear(const ColorRGBExp32 *pSrc, Vector* pDst)
-{
-
-	(*pDst)[0] = TexLightToLinear(((ColorRGBExp32 *)pSrc)->r, ((ColorRGBExp32 *)pSrc)->exponent);
-	(*pDst)[1] = TexLightToLinear(((ColorRGBExp32 *)pSrc)->g, ((ColorRGBExp32 *)pSrc)->exponent);
-	(*pDst)[2] = TexLightToLinear(((ColorRGBExp32 *)pSrc)->b, ((ColorRGBExp32 *)pSrc)->exponent);
-}
-
-//-----------------------------------------------------------------------------
-// Converts a linear color value (suitable for combining linearly) to an RBGA8888 value expected by the engine.
-//-----------------------------------------------------------------------------
-void ConvertLinearToRGBA8888(const Vector *pSrcLinear, unsigned char *pDst)
-{
-	Vector		vertexColor;
-
 	// convert from linear space to lightmap space
 	// cannot use mathlib routine directly because it doesn't match
 	// the colorspace version found in the engine, which *is* the same sequence here
-	vertexColor[0] = LinearToVertexLight((*pSrcLinear)[0]);
-	vertexColor[1] = LinearToVertexLight((*pSrcLinear)[1]);
-	vertexColor[2] = LinearToVertexLight((*pSrcLinear)[2]);
+	vertexColor[0] = LinearToVertexLight( linearColor[0] );
+	vertexColor[1] = LinearToVertexLight( linearColor[1] );
+	vertexColor[2] = LinearToVertexLight( linearColor[2] );
 
 	// this is really a color normalization with a floor
-	ColorClamp(vertexColor);
+	ColorClamp( vertexColor );
 
 	// final [0..255] scale
-	pDst[0] = RoundFloatToByte(vertexColor[0] * 255.0f);
-	pDst[1] = RoundFloatToByte(vertexColor[1] * 255.0f);
-	pDst[2] = RoundFloatToByte(vertexColor[2] * 255.0f);
+	pDst[0] = RoundFloatToByte( vertexColor[0] * 255.0f );
+	pDst[1] = RoundFloatToByte( vertexColor[1] * 255.0f );
+	pDst[2] = RoundFloatToByte( vertexColor[2] * 255.0f );
 	pDst[3] = 255;
 }
+

@@ -43,6 +43,9 @@ enum eyeState_t
 #define SF_FLOOR_TURRET_FASTRETIRE			0x00000080
 #define SF_FLOOR_TURRET_OUT_OF_AMMO			0x00000100
 #define SF_FLOOR_TURRET_CITIZEN				0x00000200	// Citizen modified turret
+#ifdef MAPBASE
+#define SF_FLOOR_TURRET_NO_SPRITE			0x00000400
+#endif
 
 class CTurretTipController;
 class CBeam;
@@ -67,11 +70,6 @@ public:
 	virtual void	PlayerPenetratingVPhysics( void );
 	virtual int		VPhysicsTakeDamage( const CTakeDamageInfo &info );
 	virtual bool	CanBecomeServerRagdoll( void ) { return false; }
-
-#ifdef VANCE
-	virtual bool	IsHackable(void) { return true; }
-	virtual void	Hack(void);
-#endif
 
 #ifdef HL2_EPISODIC
 	// We don't want to be NPCSOLID because we'll collide with NPC clips
@@ -136,6 +134,11 @@ public:
 	void	InputDepleteAmmo( inputdata_t &inputdata );
 	void	InputRestoreAmmo( inputdata_t &inputdata );
 	void	InputSelfDestruct( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void	InputCreateSprite( inputdata_t &inputdata );
+	void	InputDestroySprite( inputdata_t &inputdata );
+	void	InputPowerdown( inputdata_t &inputdata ) { InputSelfDestruct(inputdata); }
+#endif
 
 	virtual bool	IsValidEnemy( CBaseEntity *pEnemy );
 	bool			CanBeAnEnemyOf( CBaseEntity *pEnemy );
@@ -173,13 +176,20 @@ public:
 	int		DrawDebugTextOverlays( void );
 
 	// INPCInteractive Functions
+#ifdef MAPBASE
+	virtual bool	CanInteractWith( CAI_BaseNPC *pUser );
+#else
 	virtual bool	CanInteractWith( CAI_BaseNPC *pUser ) { return false; } // Disabled for now (sjb)
+#endif
 	virtual	bool	HasBeenInteractedWith()	{ return m_bHackedByAlyx; }
 	virtual void	NotifyInteraction( CAI_BaseNPC *pUser )
 	{
 		// For now, turn green so we can tell who is hacked.
 		SetRenderColor( 0, 255, 0 );
 		m_bHackedByAlyx = true; 
+#ifdef MAPBASE
+		m_OnHacked.FireOutput(pUser, this);
+#endif
 	}
 
 	static float	fMaxTipControllerVelocity;
@@ -225,7 +235,9 @@ protected:
 	bool	m_bCarriedByPlayer;
 	bool	m_bUseCarryAngles;
 	float	m_flPlayerDropTime;
+#ifndef MAPBASE // Replaced with m_nSkin.
 	int		m_iKeySkin;
+#endif
 
 	CHandle<CBaseCombatCharacter> m_hLastNPCToKickMe;		// Stores the last NPC who tried to knock me over
 	float	m_flKnockOverFailedTime;						// Time at which we should tell the NPC that he failed to knock me over

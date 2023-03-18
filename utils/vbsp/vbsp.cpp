@@ -20,6 +20,11 @@
 #include "byteswap.h"
 #include "worldvertextransitionfixup.h"
 
+#ifdef MAPBASE_VSCRIPT
+#include "vscript/ivscript.h"
+#include "vscript_vbsp.h"
+#endif
+
 extern float		g_maxLightmapDimension;
 
 char		source[1024];
@@ -43,7 +48,11 @@ qboolean	noshare;
 qboolean	nosubdiv;
 qboolean	notjunc;
 qboolean	noopt;
+#ifdef MAPBASE
+qboolean	noleaktest;
+#else
 qboolean	leaktest;
+#endif
 qboolean	verboseentities;
 qboolean	dumpcollide = false;
 qboolean	g_bLowPriority = false;
@@ -56,20 +65,26 @@ bool		g_NodrawTriggers = false;
 bool		g_DisableWaterLighting = false;
 bool		g_bAllowDetailCracks = false;
 bool		g_bNoVirtualMesh = false;
+bool		g_bNoHiddenManifestMaps = false;
+#ifdef MAPBASE
+bool		g_bNoDefaultCubemaps = true;
+bool		g_bSkyboxCubemaps = false;
+bool		g_bPropperInsertAllAsStatic = false;
+bool		g_bPropperStripEntities = false;
+int			g_iDefaultCubemapSize = 32;
+#endif
+#ifdef MAPBASE_VSCRIPT
+ScriptLanguage_t	g_iScripting = SL_NONE;
+#endif
 
 float		g_defaultLuxelSize = DEFAULT_LUXEL_SIZE;
 float		g_luxelScale = 1.0f;
 float		g_minLuxelScale = 1.0f;
 bool		g_BumpAll = false;
-bool		g_SkyboxCubemap = false;
-bool		g_SkyboxCubemapDump = false;
-int			g_SkyboxCubemapRes = 32;
 
 int			g_nDXLevel = 0; // default dxlevel if you don't specify it on the command-line.
 CUtlVector<int> g_SkyAreas;
 char		outbase[32];
-
-char		g_szEmbedDir[MAX_PATH] = { 0 };
 
 // HLTOOLS: Introduce these calcs to make the block algorithm proportional to the proper 
 // world coordinate extents.  Assumes square spatial constraints.
@@ -299,7 +314,11 @@ void ProcessWorldModel (void)
 			Warning( ("**** leaked ****\n") );
 			leaked = true;
 			LeakFile (tree);
+#ifdef MAPBASE
+			if (!noleaktest)
+#else
 			if (leaktest)
+#endif
 			{
 				Warning( ("--- MAP LEAKED ---\n") );
 				exit (0);
@@ -673,6 +692,7 @@ void SetOccluderArea( int nOccluder, int nArea, int nEntityNum )
 	{
 		g_OccluderData[nOccluder].area = nArea;
 	}
+#ifndef MAPBASE
 	else if ( (nArea != 0) && (g_OccluderData[nOccluder].area != nArea) )
 	{
 		const char *pTargetName = ValueForKey( &entities[nEntityNum], "targetname" );
@@ -682,6 +702,7 @@ void SetOccluderArea( int nOccluder, int nArea, int nEntityNum )
 		}
 		Warning("Occluder \"%s\" straddles multiple areas. This is invalid!\n", pTargetName );
 	}
+#endif
 }
 
 
@@ -862,7 +883,12 @@ void ProcessModels (void)
 	}
 
 	// Turn the skybox into a cubemap in case we don't build env_cubemap textures.
+#ifdef MAPBASE
+	if (!g_bNoDefaultCubemaps)
+		Cubemap_CreateDefaultCubemaps();
+#else
 	Cubemap_CreateDefaultCubemaps();
+#endif
 	EndBSPFile ();
 }
 
@@ -900,12 +926,6 @@ int RunVBSP( int argc, char **argv )
 	Q_StripExtension( ExpandArg( argv[ argc-1 ] ), source, sizeof( source ) );
 	Q_FileBase( source, mapbase, sizeof( mapbase ) );
 	strlwr( mapbase );
-
-	// Maintaining legacy behavior here to avoid breaking tools: regardless of the extension we are passed, we strip it
-	// to get the "source" name, and append extensions as desired...
-	char		mapFile[1024];
-	V_strncpy( mapFile, source, sizeof( mapFile ) );
-	V_strncat( mapFile, ".bsp", sizeof( mapFile ) );
 
 	LoadCmdLineFromFile( argc, argv, mapbase, "vbsp" );
 
@@ -1003,11 +1023,19 @@ int RunVBSP( int argc, char **argv )
 			Msg ("microvolume = %f\n", microvolume);
 			i++;
 		}
+#ifdef MAPBASE
+		else if (!Q_stricmp(argv[i], "-noleaktest"))
+		{
+			Msg ("noleaktest = true\n");
+			noleaktest = true;
+		}
+#else
 		else if (!Q_stricmp(argv[i], "-leaktest"))
 		{
 			Msg ("leaktest = true\n");
 			leaktest = true;
 		}
+#endif
 		else if (!Q_stricmp(argv[i], "-verboseentities"))
 		{
 			Msg ("verboseentities = true\n");
@@ -1077,8 +1105,8 @@ int RunVBSP( int argc, char **argv )
 		else if( !strcmp( argv[i], "-minluxelscale" ) )
 		{
 			g_minLuxelScale = atof( argv[i+1] );
-			//if (g_minLuxelScale < 1)
-			//	g_minLuxelScale = 1;
+			if (g_minLuxelScale < 1)
+				g_minLuxelScale = 1;
 			i++;
 		}
 		else if( !Q_stricmp( argv[i], "-dxlevel" ) )
@@ -1106,7 +1134,7 @@ int RunVBSP( int argc, char **argv )
 		{
 			// nothing to do here, but don't bail on this option
 		}
-		else if ( !Q_stricmp( argv[i], "-vproject" ) || !Q_stricmp( argv[i], "-game" ) || !Q_stricmp( argv[i], "-insert_search_path" ) )
+		else if ( !Q_stricmp( argv[i], "-vproject" ) || !Q_stricmp( argv[i], "-game" ) )
 		{
 			++i;
 		}
@@ -1140,32 +1168,108 @@ int RunVBSP( int argc, char **argv )
 		{
 			EnableFullMinidumps( true );
 		}
-		else if ( !Q_stricmp( argv[i], "-embed" ) && i < argc - 1 )
+		else if ( !Q_stricmp( argv[i], "-nohiddenmaps" ) )
 		{
-			V_MakeAbsolutePath( g_szEmbedDir, sizeof( g_szEmbedDir ), argv[++i], "." );
-			V_FixSlashes( g_szEmbedDir );
-			if ( !V_RemoveDotSlashes( g_szEmbedDir ) )
-			{
-				Error( "Bad -embed - Can't resolve pathname for '%s'", g_szEmbedDir );
-				break;
-			}
-			V_StripTrailingSlash( g_szEmbedDir );
-			g_pFullFileSystem->AddSearchPath( g_szEmbedDir, "GAME", PATH_ADD_TO_TAIL );
-			g_pFullFileSystem->AddSearchPath( g_szEmbedDir, "MOD", PATH_ADD_TO_TAIL );
+			g_bNoHiddenManifestMaps = true;
 		}
-		else if (!Q_stricmp(argv[i], "-skyboxcubemap"))
+#ifdef MAPBASE
+		// Thanks to Mapbase's shader changes, default all-black cubemaps are no longer needed.
+		// The command has been switched from "-nodefaultcubemap" to "-defaultcubemap",
+		// meaning maps are compiled without them by default.
+		else if ( !Q_stricmp( argv[i], "-defaultcubemap" ) )
 		{
-			g_SkyboxCubemap = true;
+			g_bNoDefaultCubemaps = false;
 		}
-		else if (!Q_stricmp(argv[i], "-skyboxcubemapdump"))
+		// Default cubemaps are supposed to show the sky texture, but Valve disabled this
+		// because they didn't get it working for HDR cubemaps. As a result, all default
+		// cubemaps appear as all-black textures. However, this parameter has been added to
+		// re-enable skybox cubemaps for LDR cubemaps. (HDR skybox cubemaps are not supported)
+		else if ( !Q_stricmp( argv[i], "-skyboxcubemap" ) )
 		{
-			g_SkyboxCubemapDump = true;
+			g_bNoDefaultCubemaps = false;
+			g_bSkyboxCubemaps = true;
 		}
-		else if (!Q_stricmp(argv[i], "-skyboxcubemapres"))
+		else if ( !Q_stricmp( argv[i], "-defaultcubemapres" ) )
 		{
-			g_SkyboxCubemapRes = atoi(argv[i + 1]);
+			g_iDefaultCubemapSize = atoi( argv[i + 1] );
+			Msg( "Default cubemap size = %i\n", g_iDefaultCubemapSize );
 			i++;
 		}
+		else if ( !Q_stricmp( argv[i], "-defaultproppermodelsstatic" ) )
+		{
+			g_bPropperInsertAllAsStatic = true;
+		}
+		else if ( !Q_stricmp( argv[i], "-strippropperentities" ) )
+		{
+			g_bPropperStripEntities = true;
+		}
+#endif
+#ifdef MAPBASE_VSCRIPT
+		else if ( !Q_stricmp( argv[i], "-scripting" ) )
+		{
+			const char *pszScriptLanguage = argv[i + 1];
+			if( pszScriptLanguage[0] == '-')
+			{
+				// It's another command. Just use default
+				g_iScripting = SL_DEFAULT;
+			}
+			else
+			{
+				// Use a specific language
+				if( !Q_stricmp(pszScriptLanguage, "gamemonkey") )
+				{
+					g_iScripting = SL_GAMEMONKEY;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "squirrel") )
+				{
+					g_iScripting = SL_SQUIRREL;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "python") )
+				{
+					g_iScripting = SL_PYTHON;
+				}
+				else if( !Q_stricmp(pszScriptLanguage, "lua") )
+				{
+					g_iScripting = SL_LUA;
+				}
+				else
+				{
+					DevWarning("-server_script does not recognize a language named '%s'. virtual machine did NOT start.\n", pszScriptLanguage );
+					g_iScripting = SL_NONE;
+				}
+				i++;
+			}
+		}
+		else if ( !Q_stricmp( argv[i], "-doc" ) )
+		{
+			// Only print the documentation
+
+			if (g_iScripting)
+			{
+				scriptmanager = (IScriptManager*)Sys_GetFactoryThis()(VSCRIPT_INTERFACE_VERSION, NULL);
+				VScriptVBSPInit();
+
+				const char *pszArg1 = argv[i + 1];
+				if (pszArg1[0] == '-')
+				{
+					// It's another command. Just use *
+					pszArg1 = "*";
+				}
+
+				char szCommand[512];
+				_snprintf( szCommand, sizeof( szCommand ), "__Documentation.PrintHelp( \"%s\" );", pszArg1 );
+				g_pScriptVM->Run( szCommand );
+			}
+			else
+			{
+				Warning("Cannot print documentation without scripting enabled!\n");
+			}
+
+			DeleteCmdLine( argc, argv );
+			CmdLib_Cleanup();
+			CmdLib_Exit( 1 );
+		}
+#endif
 		else if (argv[i][0] == '-')
 		{
 			Warning("VBSP: Unknown option \"%s\"\n\n", argv[i]);
@@ -1199,9 +1303,6 @@ int RunVBSP( int argc, char **argv )
 			"                what affects visibility.\n"
 			"  -nowater    : Get rid of water brushes.\n"
 			"  -low        : Run as an idle-priority process.\n"
-			"  -embed <directory>  : Use <directory> as an additional search path for assets\n"
-			"                        and embed all assets in this directory into the compiled\n"
-			"                        map\n"
 			"\n"
 			"  -vproject <directory> : Override the VPROJECT environment variable.\n"
 			"  -game <directory>     : Same as -vproject.\n"
@@ -1252,23 +1353,10 @@ int RunVBSP( int argc, char **argv )
 				"  -nox360		   : Disable generation Xbox360 version of vsp (default)\n"
 				"  -replacematerials : Substitute materials according to materialsub.txt in content\\maps\n"
 				"  -FullMinidumps  : Write large minidumps on crash.\n"
-				"  -skyboxcubemap  : Generate default cubemap based on skybox texture.\n"
-				"  -skyboxcubemapres  : Resolution of the generated cubemap texture (default: 32).\n"
-				"  -skyboxcubemapdump : Save generated cubemap texture in 'materials/maps/map_name/'.\n"
+				"  -nohiddenmaps   : Exclude manifest maps if they are currently hidden.\n"
 				);
 			}
 
-		DeleteCmdLine( argc, argv );
-		CmdLib_Cleanup();
-		CmdLib_Exit( 1 );
-	}
-
-	// Sanity check
-	if ( *g_szEmbedDir && ( onlyents || onlyprops ) )
-	{
-		Warning( "-embed only makes sense alongside full BSP compiles.\n"
-		         "\n"
-		         "Use the bspzip utility to update embedded files.\n" );
 		DeleteCmdLine( argc, argv );
 		CmdLib_Cleanup();
 		CmdLib_Exit( 1 );
@@ -1316,6 +1404,15 @@ int RunVBSP( int argc, char **argv )
 	InitMaterialSystem( materialPath, CmdLib_GetFileSystemFactory() );
 	Msg( "materialPath: %s\n", materialPath );
 
+#ifdef MAPBASE_VSCRIPT
+	if (g_iScripting)
+	{
+		scriptmanager = (IScriptManager*)Sys_GetFactoryThis()(VSCRIPT_INTERFACE_VERSION, NULL);
+
+		VScriptVBSPInit();
+	}
+#endif
+	
 	// delete portal and line files
 	sprintf (path, "%s.prt", source);
 	remove (path);
@@ -1334,6 +1431,9 @@ int RunVBSP( int argc, char **argv )
 		}
 	}
 
+	char platformBSPFileName[1024];
+	GetPlatformMapPath( source, platformBSPFileName, g_nDXLevel, 1024 );
+	
 	// if we're combining materials, load the script file
 	if ( g_ReplaceMaterials )
 	{
@@ -1345,7 +1445,7 @@ int RunVBSP( int argc, char **argv )
 	//
 	if (onlyents)
 	{
-		LoadBSPFile (mapFile);
+		LoadBSPFile (platformBSPFileName);
 		num_entities = 0;
 		// Clear out the cubemap samples since they will be reparsed even with -onlyents
 		g_nCubemapSamples = 0;
@@ -1377,12 +1477,12 @@ int RunVBSP( int argc, char **argv )
 		// Doing this here because stuff abov may filter out entities
 		UnparseEntities ();
 
-		WriteBSPFile (mapFile);
+		WriteBSPFile (platformBSPFileName);
 	}
 	else if (onlyprops)
 	{
 		// In the only props case, deal with static + detail props only
-		LoadBSPFile (mapFile);
+		LoadBSPFile (platformBSPFileName);
 
 		LoadMapFile(name);
 		SetModelNumbers();
@@ -1395,7 +1495,7 @@ int RunVBSP( int argc, char **argv )
 		LoadEmitDetailObjectDictionary( gamedir );
 		EmitDetailObjects();
 
-		WriteBSPFile (mapFile);
+		WriteBSPFile (platformBSPFileName);
 	}
 	else
 	{
@@ -1404,9 +1504,9 @@ int RunVBSP( int argc, char **argv )
 		//
 
 		// Load just the file system from the bsp
-		if( g_bKeepStaleZip && FileExists( mapFile ) )
+		if( g_bKeepStaleZip && FileExists( platformBSPFileName ) )
 		{
-			LoadBSPFile_FileSystemOnly (mapFile);
+			LoadBSPFile_FileSystemOnly (platformBSPFileName);
 			// Mark as stale since the lighting could be screwed with new ents.
 			AddBufferToPak( GetPakFile(), "stale.txt", "stale", strlen( "stale" ) + 1, false );
 		}
@@ -1423,13 +1523,6 @@ int RunVBSP( int argc, char **argv )
 		SetLightStyles ();
 		LoadEmitDetailObjectDictionary( gamedir );
 		ProcessModels ();
-
-		// Add embed dir if provided
-		if ( *g_szEmbedDir )
-		{
-			AddDirToPak( GetPakFile(), g_szEmbedDir );
-			WriteBSPFile( mapFile );
-		}
 	}
 
 	end = Plat_FloatTime();
@@ -1442,6 +1535,9 @@ int RunVBSP( int argc, char **argv )
 	ReleasePakFileLumps();
 	DeleteMaterialReplacementKeys();
 	ShutdownMaterialSystem();
+#ifdef MAPBASE_VSCRIPT
+	VScriptVBSPTerm();
+#endif
 	CmdLib_Cleanup();
 	return 0;
 }

@@ -11,7 +11,6 @@
 #include <string.h>
 #include "BaseVSShader.h"
 
-
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
@@ -34,9 +33,6 @@ struct LightmappedGeneric_DX9_Vars_t
 	int m_nAlbedo;
 	int m_nSelfIllumTint;
 
-	int m_nRoughness;
-	int m_nMetallic;
-
 	int m_nAlpha2; // Hack for DoD srgb blend issues on overlays
 
 	int m_nDetail;
@@ -52,15 +48,11 @@ struct LightmappedGeneric_DX9_Vars_t
 	int m_nEnvmapMaskFrame;
 	int m_nEnvmapMaskTransform;
 	int m_nEnvmapTint;
-	int m_nEnvmapContrast;
-	int m_nEnvmapSaturation;
-	int m_nEnvmapOrigin;
-	int m_nEnvmapRadius;
-
 	int m_nBumpmap;
 	int m_nBumpFrame;
 	int m_nBumpTransform;
-
+	int m_nEnvmapContrast;
+	int m_nEnvmapSaturation;
 	int m_nFresnelReflection;
 	int m_nNoDiffuseBumpLighting;
 	int m_nBumpmap2;
@@ -69,6 +61,9 @@ struct LightmappedGeneric_DX9_Vars_t
 	int m_nBumpMask;
 	int m_nBaseTexture2;
 	int m_nBaseTexture2Frame;
+#ifdef MAPBASE
+	int m_nBaseTexture2Transform;
+#endif
 	int m_nBaseTextureNoEnvmap;
 	int m_nBaseTexture2NoEnvmap;
 	int m_nDetailAlphaMaskBaseTexture;
@@ -94,7 +89,54 @@ struct LightmappedGeneric_DX9_Vars_t
 	int m_nOutlineEnd0;
 	int m_nOutlineEnd1;
 
+	int m_nPhong;
+	int m_nPhongBoost;
+	int m_nPhongFresnelRanges;
+	int m_nPhongExponent;
+
+#ifdef PARALLAX_CORRECTED_CUBEMAPS
+	// Parallax cubemaps
+	int m_nEnvmapParallax; // Needed for editor
+	int m_nEnvmapParallaxObb1;
+	int m_nEnvmapParallaxObb2;
+	int m_nEnvmapParallaxObb3;
+	int m_nEnvmapOrigin;
+#endif
 };
+
+
+enum PhongMaskVariant_t
+{
+	PHONGMASK_NONE,
+	PHONGMASK_BASEALPHA,
+	PHONGMASK_NORMALALPHA,
+	PHONGMASK_STANDALONE,
+};
+
+struct LightmappedGenericFlashlight_DX9_Vars_t : public CBaseVSShader::DrawFlashlight_dx90_Vars_t
+{
+	LightmappedGenericFlashlight_DX9_Vars_t()
+		: m_nPhong( -1 )
+		, m_nPhongBoost( -1 )
+		, m_nPhongFresnelRanges( -1 )
+		, m_nPhongExponent( -1 )
+		, m_nPhongMask( -1 )
+		, m_nPhongMaskFrame( -1 )
+	{
+	}
+	int m_nPhong;
+	int m_nPhongBoost;
+	int m_nPhongFresnelRanges;
+	int m_nPhongExponent;
+	int m_nPhongMask;
+	int m_nPhongMaskFrame;
+
+#ifdef MAPBASE
+	// Fix for displacements not showing $blendmodulatetexture under a flashlight
+	int m_nBlendModulateTexture;
+#endif
+};
+
 
 void InitParamsLightmappedGeneric_DX9( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, LightmappedGeneric_DX9_Vars_t &info );
 void InitLightmappedGeneric_DX9( CBaseVSShader *pShader, IMaterialVar** params, LightmappedGeneric_DX9_Vars_t &info );

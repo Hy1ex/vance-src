@@ -32,8 +32,8 @@
 #define MAX_BRUSH_LIGHTMAP_DIM_INCLUDING_BORDER	35
 
 // We can have larger lightmaps on displacements
-#define MAX_DISP_LIGHTMAP_DIM_WITHOUT_BORDER	509
-#define MAX_DISP_LIGHTMAP_DIM_INCLUDING_BORDER	512
+#define MAX_DISP_LIGHTMAP_DIM_WITHOUT_BORDER	125
+#define MAX_DISP_LIGHTMAP_DIM_INCLUDING_BORDER	128
 
 
 // This is the actual max.. (change if you change the brush lightmap dim or disp lightmap dim
@@ -59,7 +59,11 @@
 // 16 bit short limits
 #define	MAX_MAP_MODELS					1024
 #define	MAX_MAP_BRUSHES					8192
+#ifdef MAPBASE
+#define	MAX_MAP_ENTITIES				65536 // According to ficool2, this limit is bogus/not enforced by the engine and can be "safely" raised.
+#else
 #define	MAX_MAP_ENTITIES				8192
+#endif
 #define	MAX_MAP_TEXINFO					12288
 #define MAX_MAP_TEXDATA					2048
 #define MAX_MAP_DISPINFO				2048
@@ -90,9 +94,17 @@
 #define	MAX_MAP_LIGHTING				0x1000000
 #define	MAX_MAP_VISIBILITY				0x1000000			// increased BSPVERSION 7
 #define	MAX_MAP_TEXTURES				1024
+#ifdef MAPBASE
+#define MAX_MAP_WORLDLIGHTS				65536 // According to ficool2, this limit is bogus/not enforced by the engine and can be "safely" raised.
+#else
 #define MAX_MAP_WORLDLIGHTS				8192
+#endif
 #define MAX_MAP_CUBEMAPSAMPLES			1024
+#ifdef MAPBASE
+#define MAX_MAP_OVERLAYS				8192 // According to ficool2, this limit is bogus/not enforced by the engine and can be "safely" raised.
+#else
 #define MAX_MAP_OVERLAYS				512 
+#endif
 #define MAX_MAP_WATEROVERLAYS			16384
 #define MAX_MAP_TEXDATA_STRING_DATA		256000
 #define MAX_MAP_TEXDATA_STRING_TABLE	65536
@@ -376,9 +388,7 @@ struct lump_t
 	DECLARE_BYTESWAP_DATADESC();
 	int		fileofs, filelen;
 	int		version;		// default to zero
-	// this field was char fourCC[4] previously, but was unused, favoring the LUMP IDs above instead. It has been
-	// repurposed for compression.  0 implies the lump is not compressed.
-	int		uncompressedSize; // default to zero
+	char	fourCC[4];		// default to ( char )0, ( char )0, ( char )0, ( char )0
 };
 
 
@@ -386,7 +396,7 @@ struct dheader_t
 {
 	DECLARE_BYTESWAP_DATADESC();
 	int			ident;
-	int			version;
+	int			version;	
 	lump_t		lumps[HEADER_LUMPS];
 	int			mapRevision;				// the map's revision (iteration, version) number (added BSPVERSION 6)
 };
@@ -421,7 +431,7 @@ struct dgamelumpheader_t
 // This is expected to be a four-CC code ('lump')
 typedef int GameLumpId_t;
 
-// game lump is compressed, filelen reflects original size
+// 360 only: game lump is compressed, filelen reflects original size
 // use next entry fileofs to determine actual disk lump compressed size
 // compression stage ensures a terminal null dictionary entry
 #define GAMELUMPFLAG_COMPRESSED	0x0001

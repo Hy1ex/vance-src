@@ -63,10 +63,6 @@ enum PlayerAnimEvent_t
 	PLAYERANIMEVENT_STUN_BEGIN,
 	PLAYERANIMEVENT_STUN_MIDDLE,
 	PLAYERANIMEVENT_STUN_END,
-	PLAYERANIMEVENT_PASSTIME_THROW_BEGIN,
-	PLAYERANIMEVENT_PASSTIME_THROW_MIDDLE,
-	PLAYERANIMEVENT_PASSTIME_THROW_END,
-	PLAYERANIMEVENT_PASSTIME_THROW_CANCEL,
 
 	PLAYERANIMEVENT_ATTACK_PRIMARY_SUPER,
 
@@ -207,10 +203,6 @@ public:
 	bool	VerifyAnimLayerInSlot( int iGestureSlot );
 
 	// Feet.
-	// If you are forcing aim yaw, your code is almost definitely broken if you don't include a delay between 
-	// teleporting and forcing yaw. This is due to an unfortunate interaction between the command lookback window,
-	// and the fact that m_flEyeYaw is never propogated from the server to the client.
-	// TODO: Fix this after Halloween 2014.
 	bool	m_bForceAimYaw;
 
 protected:
@@ -297,7 +289,6 @@ protected:
 	// Pose parameters.
 	bool						m_bPoseParameterInit;
 	MultiPlayerPoseData_t		m_PoseParameterData;
-	DebugPlayerAnimData_t		m_DebugAnimData;
 
 	bool						m_bCurrentFeetYawInitialized;
 	float						m_flLastAnimationStateClearTime;
@@ -331,7 +322,6 @@ protected:
 
 	// Weapon data.
 	CHandle<CBaseCombatWeapon>	m_hActiveWeapon;
-protected:
 
 	// Ground speed interpolators.
 #ifdef CLIENT_DLL
@@ -343,6 +333,14 @@ protected:
 	// movement playback options
 	int m_nMovementSequence;
 	LegAnimType_t m_LegAnimType;
+
+	//Tony; moved debuganim data to a private block and made the 2 sdk animstates friendly. I override the base classes
+	//but want complete functionality.
+private:
+	friend class CSDKPlayerAnimState;
+	friend class CHL2MPPlayerAnimState;
+	DebugPlayerAnimData_t		m_DebugAnimData;
+
 };
 
 // If this is set, then the game code needs to make sure to send player animation events

@@ -336,9 +336,7 @@ void CHLSelectFireMachineGun::PrimaryAttack( void )
 	case FIREMODE_FULLAUTO:
 		BaseClass::PrimaryAttack();
 		// Msg("%.3f\n", m_flNextPrimaryAttack.Get() );
-		#ifndef VANCE
-			SetWeaponIdleTime(gpGlobals->curtime + 3.0f);
-		#endif
+		SetWeaponIdleTime( gpGlobals->curtime + 3.0f );
 		break;
 
 	case FIREMODE_3RNDBURST:
@@ -396,6 +394,10 @@ void CHLSelectFireMachineGun::SecondaryAttack( void )
 	{
 		m_iSecondaryAttacks++;
 		gamestats->Event_WeaponFired( pOwner, false, GetClassname() );
+
+#ifdef MAPBASE
+		pOwner->SetAnimation( PLAYER_ATTACK2 );
+#endif
 	}
 }
 

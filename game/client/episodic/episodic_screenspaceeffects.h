@@ -36,6 +36,8 @@ private:
 	bool		m_bUpdateView;
 };
 
+ADD_SCREENSPACE_EFFECT( CStunEffect, episodic_stun );
+
 //
 //  EP1 Intro Blur
 //
@@ -70,6 +72,8 @@ private:
 	bool		m_bEnabled;
 	bool		m_bFadeOut;
 };
+
+ADD_SCREENSPACE_EFFECT( CEP1IntroEffect, episodic_intro );
 
 //
 //  EP2 Player Stunned Effect
@@ -109,5 +113,7 @@ private:
 	bool		m_bEnabled;
 	bool		m_bFadeOut;
 };
+
+ADD_SCREENSPACE_EFFECT( CEP2StunEffect, ep2_groggy );
 
 #endif // EPISODIC_SCREENSPACEEFFECTS_H

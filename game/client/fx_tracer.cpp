@@ -13,9 +13,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar r_drawtracers( "r_drawtracers", "1", FCVAR_CHEAT );
-ConVar r_drawtracers_firstperson( "r_drawtracers_firstperson", "1", FCVAR_ARCHIVE, "Toggle visibility of first person weapon tracers" );
-
 #define	TRACER_SPEED			5000 
 
 //-----------------------------------------------------------------------------
@@ -26,7 +23,7 @@ Vector GetTracerOrigin( const CEffectData &data )
 	Vector vecStart = data.m_vStart;
 	QAngle vecAngles;
 
-	int iAttachment = data.m_nAttachmentIndex;
+	int iAttachment = data.m_nAttachmentIndex;;
 
 	// Attachment?
 	if ( data.m_fFlags & TRACER_FLAG_USEATTACHMENT )
@@ -40,11 +37,13 @@ Vector GetTracerOrigin( const CEffectData &data )
 
 		C_BaseEntity *pEnt = data.GetEntity();
 
-// This check should probably be for all multiplayer games, investigate later
-#if defined( HL2MP ) || defined( TF_CLIENT_DLL )
-		if ( pEnt && pEnt->IsDormant() )
-			return vecStart;
-#endif
+		// This check should probably be for all multiplayer games, investigate later
+		// 10/09/2008: It should.
+		if ( gpGlobals->maxClients > 1 )
+		{
+			if ( pEnt && pEnt->IsDormant() )
+				return vecStart;
+		}
 
 		C_BaseCombatWeapon *pWpn = dynamic_cast<C_BaseCombatWeapon *>( pEnt );
 		if ( pWpn && pWpn->ShouldDrawUsingViewModel() )
@@ -79,17 +78,6 @@ void TracerCallback( const CEffectData &data )
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
 	if ( !player )
 		return;
-
-	if ( !r_drawtracers.GetBool() )
-		return;
-
-	if ( !r_drawtracers_firstperson.GetBool() )
-	{
-		C_BasePlayer *pPlayer = dynamic_cast<C_BasePlayer*>( data.GetEntity() );
-
-		if ( pPlayer && !pPlayer->ShouldDrawThisPlayer() )
-			return;
-	}
 
 	// Grab the data
 	Vector vecStart = GetTracerOrigin( data );
@@ -133,17 +121,6 @@ void ParticleTracerCallback( const CEffectData &data )
 	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
 	if ( !player )
 		return;
-
-	if ( !r_drawtracers.GetBool() )
-		return;
-
-	if ( !r_drawtracers_firstperson.GetBool() )
-	{
-		C_BasePlayer *pPlayer = dynamic_cast<C_BasePlayer*>( data.GetEntity() );
-
-		if ( pPlayer && !pPlayer->ShouldDrawThisPlayer() )
-			return;
-	}
 
 	// Grab the data
 	Vector vecStart = GetTracerOrigin( data );

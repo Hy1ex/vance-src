@@ -8,18 +8,33 @@
 // Group definitions //
 ///////////////////////
 
+$Group "gamedlls"
+{
+	"client"
+	"server"
+}
+
 $Group "game"
 {
 	"client"
-	"gamepadui"
+	"mathlib"
+	"raytrace"
 	"server"
 	"tier1"
-	"mathlib"
+	"vgui_controls"
+	"vscript"
+	"responserules"
+}
+
+$Group "shaderdlls"
+{
+	"game_shader_dx9"
 }
 
 $Group "shaders"
 {
 	"game_shader_dx9"
+	"mathlib"
 }
 
 $Group "everything"
@@ -33,8 +48,9 @@ $Group "everything"
 	"mathlib"
 	"motionmapper"
 	"phonemeextractor"
-	"raytrace"
+	"responserules"
 	"qc_eyes"
+	"raytrace"
 	"server"
 	"serverplugin_empty"
 	"tgadiff"
@@ -44,21 +60,9 @@ $Group "everything"
 	"vice"
 	"vrad_dll"
 	"vrad_launcher"
+	"vscript"
 	"vtf2tga"
 	"vtfdiff"
-	"vvis_dll"
-	"vvis_launcher"
-}
-
-$Group "tools"
-{
-	"mathlib"
-	"raytrace"
-	"tier1"
-	"vbsp"
-	"vice"
-	"vrad_dll"
-	"vrad_launcher"
 	"vvis_dll"
 	"vvis_launcher"
 }
@@ -68,5 +72,19 @@ $Group "dedicated"
 	"mathlib"
 	"server"
 	"tier1"
+}
+
+$Group "maptools"
+{
+	"vbsp"
+	"vrad_dll"
+	"vrad_launcher"
+	"vvis_dll"
+	"vvis_launcher"
+	"fgdlib"
+	"mathlib"
+	"raytrace"
+	"tier1"
+	"vscript"
 }
 

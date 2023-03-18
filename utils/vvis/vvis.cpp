@@ -1072,7 +1072,6 @@ int RunVVis( int argc, char **argv )
 {
 	char	portalfile[1024];
 	char		source[1024];
-	char		mapFile[1024];
 	double		start, end;
 
 
@@ -1080,25 +1079,17 @@ int RunVVis( int argc, char **argv )
 
 	verbose = false;
 
+	Q_StripExtension( argv[ argc - 1 ], source, sizeof( source ) );
+	CmdLib_InitFileSystem( argv[ argc - 1 ] );
+
+	Q_FileBase( source, source, sizeof( source ) );
+
 	LoadCmdLineFromFile( argc, argv, source, "vvis" );
 	int i = ParseCommandLine( argc, argv );
 
-	CmdLib_InitFileSystem( argv[ argc - 1 ] );
-
-	// The ExpandPath is just for VMPI. VMPI's file system needs the basedir in front of all filenames,
+	// This part is just for VMPI. VMPI's file system needs the basedir in front of all filenames,
 	// so we prepend qdir here.
-
-	// XXX(johns): Somewhat preserving legacy behavior here to avoid changing tool behavior, there's no specific rhyme
-	//             or reason to this. We get just the base name we were passed, discarding any directory or extension
-	//             information. We then ExpandPath() it (see VMPI comment above), and tack on .bsp for the file access
-	//             parts.
-	V_FileBase( argv[ argc - 1 ], mapFile, sizeof( mapFile ) );
-	V_strncpy( mapFile, ExpandPath( mapFile ), sizeof( mapFile ) );
-	V_strncat( mapFile, ".bsp", sizeof( mapFile ) );
-
-	// Source is just the mapfile without an extension at this point...
-	V_strncpy( source, mapFile, sizeof( mapFile ) );
-	V_StripExtension( source, source, sizeof( source ) );
+	strcpy( source, ExpandPath( source ) );
 
 	if (i != argc - 1)
 	{
@@ -1123,11 +1114,13 @@ int RunVVis( int argc, char **argv )
 	{
 		SetLowPriority();
 	}
-
+	
 	ThreadSetDefault ();
 
-	Msg ("reading %s\n", mapFile);
-	LoadBSPFile (mapFile);
+	char	targetPath[1024];
+	GetPlatformMapPath( source, targetPath, 0, 1024 );
+	Msg ("reading %s\n", targetPath);
+	LoadBSPFile (targetPath);
 	if (numnodes == 0 || numfaces == 0)
 		Error ("Empty map");
 	ParseEntities ();
@@ -1158,7 +1151,7 @@ int RunVVis( int argc, char **argv )
 		Q_StripExtension( portalfile, portalfile, sizeof( portalfile ) );
 	}
 	strcat (portalfile, ".prt");
-
+	
 	Msg ("reading %s\n", portalfile);
 	LoadPortals (portalfile);
 
@@ -1169,17 +1162,17 @@ int RunVVis( int argc, char **argv )
 		CalcPAS ();
 
 		// We need a mapping from cluster to leaves, since the PVS
-		// deals with clusters for both CalcVisibleFogVolumes and
+		// deals with clusters for both CalcVisibleFogVolumes and 
 		BuildClusterTable();
 
 		CalcVisibleFogVolumes();
 		CalcDistanceFromLeavesToWater();
 
-		visdatasize = vismap_p - dvisdata;
+		visdatasize = vismap_p - dvisdata;	
 		Msg ("visdatasize:%i  compressed from %i\n", visdatasize, originalvismapsize*2);
 
-		Msg ("writing %s\n", mapFile);
-		WriteBSPFile (mapFile);
+		Msg ("writing %s\n", targetPath);
+		WriteBSPFile (targetPath);	
 	}
 	else
 	{
@@ -1194,9 +1187,9 @@ int RunVVis( int argc, char **argv )
 		CalcVisTrace ();
 		WritePortalTrace(source);
 	}
-
+	
 	end = Plat_FloatTime();
-
+	
 	char str[512];
 	GetHourMinuteSecondsString( (int)( end - start ), str, sizeof( str ) );
 	Msg( "%s elapsed\n", str );

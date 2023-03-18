@@ -9,8 +9,8 @@
 #include "example_model_dx9_helper.h"
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"
-#include "example_model_vs30.inc"
-#include "example_model_ps30.inc"
+#include "example_model_vs20.inc"
+#include "example_model_ps20b.inc"
 #include "commandbuilder.h"
 
 
@@ -19,7 +19,7 @@
 
 static ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
 static ConVar r_lightwarpidentity( "r_lightwarpidentity", "0", FCVAR_CHEAT );
-static ConVar r_rimlight( "r_rimlight", "1", FCVAR_NONE );
+static ConVar r_rimlight( "r_rimlight", "1", FCVAR_CHEAT );
 
 // Textures may be bound to the following samplers:
 //	SHADER_SAMPLER0	 Base (Albedo) / Gloss in alpha
@@ -171,15 +171,15 @@ void DrawExampleModel_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** param
 
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, pTexCoordDim, userDataSize );
 
-		DECLARE_STATIC_VERTEX_SHADER( example_model_vs30 );
-		SET_STATIC_VERTEX_SHADER(example_model_vs30);
+		DECLARE_STATIC_VERTEX_SHADER( example_model_vs20 );
+		SET_STATIC_VERTEX_SHADER( example_model_vs20 );
 
 		// Assume we're only going to get in here if we support 2b
-		DECLARE_STATIC_PIXEL_SHADER( example_model_ps30 );
+		DECLARE_STATIC_PIXEL_SHADER( example_model_ps20b );
 		SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHT, bHasFlashlight );
-		//SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
+		SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
 		SET_STATIC_PIXEL_SHADER_COMBO( CONVERT_TO_SRGB, 0 );
-		SET_STATIC_PIXEL_SHADER(example_model_ps30);
+		SET_STATIC_PIXEL_SHADER( example_model_ps20b );
 
 		if( bHasFlashlight )
 		{
@@ -243,21 +243,21 @@ void DrawExampleModel_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** param
 			AssertMsg( !(bWriteDepthToAlpha && bWriteWaterFogToAlpha), "Can't write two values to alpha at the same time." );
 		}
 
-		DECLARE_DYNAMIC_VERTEX_SHADER( example_model_vs30 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( example_model_vs20 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, fogIndex );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, numBones > 0 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( LIGHTING_PREVIEW, pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_ENABLE_FIXED_LIGHTING)!=0);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, lightState.m_nNumLights );
-		SET_DYNAMIC_VERTEX_SHADER(example_model_vs30);
+		SET_DYNAMIC_VERTEX_SHADER( example_model_vs20 );
 
-		DECLARE_DYNAMIC_PIXEL_SHADER( example_model_ps30 );
+		DECLARE_DYNAMIC_PIXEL_SHADER( example_model_ps20b );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS, lightState.m_nNumLights );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, bWriteWaterFogToAlpha );
-		//SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-		//SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-		SET_DYNAMIC_PIXEL_SHADER(example_model_ps30);
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
+		SET_DYNAMIC_PIXEL_SHADER( example_model_ps20b );
 
 		pShader->SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, info.m_nBaseTextureTransform );
 		pShader->SetModulationPixelShaderDynamicState_LinearColorSpace( 1 );

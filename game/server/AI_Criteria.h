@@ -4,6 +4,9 @@
 //
 //=============================================================================//
 
+#ifdef NEW_RESPONSE_SYSTEM
+#include "ai_criteria_new.h"
+#else
 #ifndef AI_CRITERIA_H
 #define AI_CRITERIA_H
 #ifdef _WIN32
@@ -36,6 +39,10 @@ public:
 	const char *GetName( int index ) const;
 	const char *GetValue( int index ) const;
 	float		GetWeight( int index ) const;
+
+#ifdef MAPBASE
+	void		MergeSet( const AI_CriteriaSet& src );
+#endif
 
 private:
 
@@ -84,10 +91,8 @@ private:
 				Q_strncpy( value, str, sizeof( value ) );
 			}
 		}
-
-		// We use CUtlRBTree CopyFrom() in ctor, so CritEntry_t must be POD. If you add
-		// CUtlString or something then you must change AI_CriteriaSet copy ctor.
-		CUtlSymbol	criterianame;
+				
+		CUtlSymbol criterianame;
 		char		value[ 64 ];
 		float		weight;
 	};
@@ -170,6 +175,24 @@ enum ResponseType_t
 	NUM_RESPONSES,
 };
 
+#ifdef MAPBASE
+// I wanted to add more options to apply contexts to,
+// so I replaced the existing system with a flag-based integer instead of a bunch of booleans.
+// 
+// New ones should be implemented in: 
+// CResponseSystem::ParseRule() - AI_ResponseSystem.cpp
+// AI_Response::Describe() - AI_Criteria.cpp
+// CAI_Expresser::SpeakDispatchResponse() - ai_speech.cpp
+enum
+{
+	APPLYCONTEXT_SELF = (1 << 0), // Included for contexts that apply to both self and something else
+	APPLYCONTEXT_WORLD = (1 << 1), // Apply to world
+
+	APPLYCONTEXT_SQUAD = (1 << 2), // Apply to squad
+	APPLYCONTEXT_ENEMY = (1 << 3), // Apply to enemy
+};
+#endif
+
 class AI_Response
 {
 public:
@@ -180,10 +203,10 @@ public:
 	~AI_Response();
 	AI_Response &operator=( const AI_Response &from );
 
-	void			Release();
+	void	Release();
 
-	const char *	GetNamePtr() const;
-	const char *	GetResponsePtr() const;
+	void			GetName( char *buf, size_t buflen ) const;
+	void			GetResponse( char *buf, size_t buflen ) const;
 	const AI_ResponseParams *GetParams() const { return &m_Params; }
 	ResponseType_t	GetType() const { return (ResponseType_t)m_Type; }
 	soundlevel_t	GetSoundLevel() const;
@@ -197,9 +220,14 @@ public:
 	float			GetPreDelay() const;
 
 	void			SetContext( const char *context );
-	const char *	GetContext( void ) const { return m_szContext.Length() ? m_szContext.Get() : NULL; }
+	const char *	GetContext( void ) const { return m_szContext; }
 
+#ifdef MAPBASE
+	int				GetContextFlags() { return m_iContextFlags; }
+	bool			IsApplyContextToWorld( void ) { return (m_iContextFlags & APPLYCONTEXT_WORLD) != 0; }
+#else
 	bool			IsApplyContextToWorld( void ) { return m_bApplyContextToWorld; }
+#endif
 
 	void Describe();
 
@@ -212,6 +240,16 @@ public:
 				const char *matchingRule,
 				const char *applyContext,
 				bool bApplyContextToWorld );
+
+#ifdef MAPBASE
+	void	Init( ResponseType_t type, 
+				const char *responseName, 
+				const AI_CriteriaSet& criteria, 
+				const AI_ResponseParams& responseparams,
+				const char *matchingRule,
+				const char *applyContext,
+				int iContextFlags );
+#endif
 
 	static const char *DescribeResponse( ResponseType_t type );
 
@@ -232,8 +270,13 @@ private:
 
 	AI_ResponseParams m_Params;
 
-	CUtlString		m_szContext;
+	char *			m_szContext;
+#ifdef MAPBASE
+	int				m_iContextFlags;
+#else
 	bool			m_bApplyContextToWorld;
+#endif
 };
 
 #endif // AI_CRITERIA_H
+#endif

@@ -29,7 +29,6 @@
 	#include "player_pickup.h"
 	#include "waterbullet.h"
 	#include "func_break.h"
-	#include "projectile_bullet.h"
 
 #ifdef HL2MP
 	#include "te_hl2mp_shotgun_shot.h"
@@ -53,6 +52,10 @@ ConVar hl2_episodic( "hl2_episodic", "0", FCVAR_REPLICATED );
 #include "tf_gamerules.h"
 #include "tf_weaponbase.h"
 #endif // TF_DLL
+
+#ifdef MAPBASE_VSCRIPT
+#include "mapbase/vscript_funcs_shared.h"
+#endif
 
 #include "rumble_shared.h"
 
@@ -79,8 +82,6 @@ float k_flMaxEntitySpinRate = k_flMaxAngularVelocity * 10.0f;
 ConVar	ai_shot_bias_min( "ai_shot_bias_min", "-1.0", FCVAR_REPLICATED );
 ConVar	ai_shot_bias_max( "ai_shot_bias_max", "1.0", FCVAR_REPLICATED );
 ConVar	ai_debug_shoot_positions( "ai_debug_shoot_positions", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
-
-ConVar sv_bulletspeed_override("sv_bulletspeed_override", "0", FCVAR_CHEAT | FCVAR_REPLICATED);
 
 // Utility func to throttle rate at which the "reasonable position" spew goes out
 static double s_LastEntityReasonableEmitTime;
@@ -411,7 +412,11 @@ bool CBaseEntity::KeyValue( const char *szKeyName, const char *szValue )
 		}
 
 		// Do this so inherited classes looking for 'angles' don't have to bother with 'angle'
+#ifdef MAPBASE
+		return KeyValue( "angles", szBuf );
+#else
 		return KeyValue( szKeyName, szBuf );
+#endif
 	}
 
 	// NOTE: Have to do these separate because they set two values instead of one
@@ -438,6 +443,15 @@ bool CBaseEntity::KeyValue( const char *szKeyName, const char *szValue )
 		SetAbsOrigin( vecOrigin );
 		return true;
 	}
+
+#ifdef MAPBASE
+	if ( FStrEq( szKeyName, "eflags" ) )
+	{
+		// Can't use DEFINE_KEYFIELD since eflags might be set before KV are parsed
+		AddEFlags( atoi( szValue ) );
+		return true;
+	}
+#endif
 
 #ifdef GAME_DLL	
 	
@@ -639,17 +653,10 @@ void CBaseEntity::SetPredictionRandomSeed( const CUserCmd *cmd )
 	if ( !cmd )
 	{
 		m_nPredictionRandomSeed = -1;
-#ifdef GAME_DLL
-		m_nPredictionRandomSeedServer = -1;
-#endif
-
 		return;
 	}
 
 	m_nPredictionRandomSeed = ( cmd->random_seed );
-#ifdef GAME_DLL
-	m_nPredictionRandomSeedServer = ( cmd->server_random_seed );
-#endif
 }
 
 
@@ -1603,112 +1610,25 @@ public:
 typedef CTraceFilterSimpleList CBulletsTraceFilter;
 #endif
 
-#ifdef VANCE
-void CBaseEntity::FireBulletProjectiles(const ProjectileBulletsInfo_t& info)
-{
-	return FireBullets(info); // TEMPORARY until we fix projectile bullets
-
-	// fix up bullet vars here, it's cleaner that way
-	ProjectileBulletsInfo_t safeInfo = info;
-	safeInfo.m_pAttacker = info.m_pAttacker ? info.m_pAttacker : this;
-	safeInfo.m_pAdditionalIgnoreEnt = info.m_pAdditionalIgnoreEnt ? info.m_pAdditionalIgnoreEnt : this;
-
-	if (float speed = sv_bulletspeed_override.GetFloat() != 0.0f)
-		safeInfo.m_flBulletSpeed = speed;
-
-	CBaseCombatCharacter* pAttacker = ToBaseCombatCharacter(info.m_pAttacker);
-	if (pAttacker)
-		safeInfo.m_flBulletSize = static_cast<CBaseCombatWeapon *>(pAttacker->GetActiveWeapon())->GetWpnData().flBulletSize;
-
-#if defined( GAME_DLL )
-	if (IsPlayer())
-	{
-		CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(this);
-
-		int rumbleEffect = pPlayer->GetActiveWeapon()->GetRumbleEffect();
-
-		if (rumbleEffect != RUMBLE_INVALID)
-		{
-			if (rumbleEffect == RUMBLE_SHOTGUN_SINGLE)
-			{
-				if (safeInfo.m_iShots == 12)
-				{
-					// Upgrade to double barrel rumble effect
-					rumbleEffect = RUMBLE_SHOTGUN_DOUBLE;
-				}
-			}
-
-			pPlayer->RumbleEffect(rumbleEffect, 0, RUMBLE_FLAG_RESTART);
-		}
-	}
-#endif// GAME_DLL
-
-	Vector vecDir;
-
-	// Prediction is only usable on players
-	int iSeed = 0;
-	if (IsPlayer())
-	{
-		iSeed = CBaseEntity::GetPredictionRandomSeed() & 255;
-	}
-
-	//-----------------------------------------------------
-	// Set up our shot manipulator.
-	//-----------------------------------------------------
-	CShotManipulator Manipulator(safeInfo.m_vecDirShooting);
-
-	for (int iShot = 0; iShot < safeInfo.m_iShots; iShot++)
-	{
-		// Prediction is only usable on players
-		if (IsPlayer())
-		{
-			RandomSeed(iSeed);	// init random system with this seed
-		}
-
-		// If we're firing multiple shots, and the first shot has to be bang on target, ignore spread
-		if (iShot == 0 && safeInfo.m_iShots > 1 && (safeInfo.m_nFlags & FIRE_BULLETS_FIRST_SHOT_ACCURATE))
-		{
-			vecDir = Manipulator.GetShotDirection();
-		}
-		else
-		{
-			// Don't run the biasing code for the player at the moment.
-			vecDir = Manipulator.ApplySpread(safeInfo.m_vecSpread);
-		}
-
-#ifdef GAME_DLL
-		CProjectileBulletTrace::Create(safeInfo, vecDir);
-
-		trace_t tr;
-		Vector startPos, endPos;
-		ComputeTracerStartPosition(safeInfo.m_vecSrc, &startPos);
-		if (safeInfo.m_pAttacker->IsPlayer())
-		{
-			CBasePlayer* pPlayer = ToBasePlayer(safeInfo.m_pAttacker);
-			CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
-			pWeapon->GetAttachment(pWeapon->LookupAttachment("muzzle"), startPos);
-			endPos = startPos + vecDir * MAX_TRACE_LENGTH;
-		}
-		else
-		{
-			startPos = safeInfo.m_vecSrc;
-			endPos = startPos + vecDir * MAX_TRACE_LENGTH;
-		}
-
-		endPos = startPos + vecDir * MAX_TRACE_LENGTH;
-
-		UTIL_TraceLine(startPos, endPos, MASK_BULLETSCANTOUCH, safeInfo.m_pAdditionalIgnoreEnt, COLLISION_GROUP_NONE, &tr);
-
-		MakeTracer(startPos, tr, GetAmmoDef()->TracerType(safeInfo.m_iAmmoType));
-#endif
-
-		iSeed++;
-	}
-}
-#endif
-
 void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 {
+#if defined(MAPBASE_VSCRIPT) && defined(GAME_DLL)
+	if ( m_ScriptScope.IsInitialized() && g_Hook_FireBullets.CanRunInScope( m_ScriptScope ) )
+	{
+		HSCRIPT hInfo = g_pScriptVM->RegisterInstance( const_cast<FireBulletsInfo_t*>(&info) );
+
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { hInfo };
+		if (g_Hook_FireBullets.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			if (!functionReturn.m_bool)
+				return;
+		}
+
+		g_pScriptVM->RemoveInstance( hInfo );
+	}
+#endif
+
 	static int	tracerCount;
 	trace_t		tr;
 	CAmmoDef*	pAmmoDef	= GetAmmoDef();
@@ -1782,6 +1702,19 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	}
 #endif // SERVER_DLL
 
+#ifdef MAPBASE
+	if (info.m_pIgnoreEntList != NULL)
+	{
+		for (int i = 0; i < info.m_pIgnoreEntList->Count(); i++)
+		{
+			if (info.m_pIgnoreEntList->Element(i))
+			{
+				traceFilter.AddEntityToIgnore(info.m_pIgnoreEntList->Element(i));
+			}
+		}
+	}
+#endif
+
 	bool bUnderwaterBullets = ShouldDrawUnderwaterBulletBubbles();
 	bool bStartedInWater = false;
 	if ( bUnderwaterBullets )
@@ -1793,7 +1726,7 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	int iSeed = 0;
 	if ( IsPlayer() )
 	{
-		iSeed = CBaseEntity::GetPredictionRandomSeed( info.m_bUseServerRandomSeed ) & 255;
+		iSeed = CBaseEntity::GetPredictionRandomSeed() & 255;
 	}
 
 #if defined( HL2MP ) && defined( GAME_DLL )
@@ -1998,7 +1931,11 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 			{
 				flActualDamage = g_pGameRules->GetAmmoDamage( pAttacker, tr.m_pEnt, info.m_iAmmoType );
 			}
+#ifdef MAPBASE
+			else if ((info.m_nFlags & FIRE_BULLETS_NO_AUTO_GIB_TYPE) == 0)
+#else
 			else
+#endif
 			{
 				nActualDamageType = nDamageType | ((flActualDamage > 16) ? DMG_ALWAYSGIB : DMG_NEVERGIB );
 			}
@@ -2252,7 +2189,11 @@ void CBaseEntity::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 
 		int blood = BloodColor();
 		
+#if defined(MAPBASE) && defined(GAME_DLL)
+		if ( blood != DONT_BLEED && DamageFilterAllowsBlood( info ) )
+#else
 		if ( blood != DONT_BLEED )
+#endif
 		{
 			SpawnBlood( vecOrigin, vecDir, blood, info.GetDamage() );// a little surface blood.
 			TraceBleed( info.GetDamage(), vecDir, ptr, info.GetDamageType() );
@@ -2354,29 +2295,16 @@ void CBaseEntity::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 //-----------------------------------------------------------------------------
 int CBaseEntity::GetTracerAttachment( void )
 {
-#ifdef VANCE
-	int iAttachment = 1;
-#else
 	int iAttachment = TRACER_DONT_USE_ATTACHMENT;
-	
+
 	if ( g_pGameRules->IsMultiplayer() )
 	{
 		iAttachment = 1;
 	}
-#endif
 
 	return iAttachment;
 }
 
-float CBaseEntity::HealthFraction() const
-{
-	if ( GetMaxHealth() == 0 )
-		return 1.0f;
-
-	float flFraction = ( float )GetHealth() / ( float )GetMaxHealth();
-	flFraction = clamp( flFraction, 0.0f, 1.0f );
-	return flFraction;
-}
 
 int CBaseEntity::BloodColor()
 {
@@ -2469,7 +2397,66 @@ void CBaseEntity::ModifyEmitSoundParams( EmitSound_t &params )
 		params.m_pSoundName = GameRules()->TranslateEffectForVisionFilter( "sounds", params.m_pSoundName );
 	}
 #endif
+
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_ModifyEmitSoundParams.CanRunInScope( m_ScriptScope ))
+	{
+		HSCRIPT hParams = g_pScriptVM->RegisterInstance( reinterpret_cast<ScriptEmitSound_t*>(&params) );
+
+		// params
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ScriptVariant_t( hParams ) };
+		g_Hook_ModifyEmitSoundParams.Call( m_ScriptScope, &functionReturn, args );
+
+		g_pScriptVM->RemoveInstance( hParams );
+	}
+#endif
 }
+
+#if defined(MAPBASE) && defined(GAME_DLL)
+void CBaseEntity::ModifySentenceParams( int &iSentenceIndex, int &iChannel, float &flVolume, soundlevel_t &iSoundlevel, int &iFlags, int &iPitch,
+	const Vector **pOrigin, const Vector **pDirection, bool &bUpdatePositions, float &soundtime, int &iSpecialDSP, int &iSpeakerIndex )
+{
+#ifdef MAPBASE_VSCRIPT
+	if (m_ScriptScope.IsInitialized() && g_Hook_ModifySentenceParams.CanRunInScope( m_ScriptScope ))
+	{
+		// This is a bit of a hack, but for consistency with ModifyEmitSoundParams, put them into an EmitSound_t params
+		ScriptEmitSound_t params;
+		params.m_pSoundName = engine->SentenceNameFromIndex( iSentenceIndex );
+		params.m_nChannel = iChannel;
+		params.m_flVolume = flVolume;
+		params.m_SoundLevel = iSoundlevel;
+		params.m_nFlags = iFlags;
+		params.m_nPitch = iPitch;
+		params.m_pOrigin = *pOrigin;
+		params.m_flSoundTime = soundtime;
+		params.m_nSpecialDSP = iSpecialDSP;
+		params.m_nSpeakerEntity = iSpeakerIndex;
+
+		HSCRIPT hParams = g_pScriptVM->RegisterInstance( &params );
+
+		// params
+		ScriptVariant_t functionReturn;
+		ScriptVariant_t args[] = { ScriptVariant_t( hParams ) };
+		if (g_Hook_ModifySentenceParams.Call( m_ScriptScope, &functionReturn, args ))
+		{
+			iSentenceIndex = engine->SentenceIndexFromName( params.m_pSoundName );
+			iChannel = params.m_nChannel;
+			flVolume = params.m_flVolume;
+			iSoundlevel = params.m_SoundLevel;
+			iFlags = params.m_nFlags;
+			iPitch = params.m_nPitch;
+			*pOrigin = params.m_pOrigin;
+			soundtime = params.m_flSoundTime;
+			iSpecialDSP = params.m_nSpecialDSP;
+			iSpeakerIndex = params.m_nSpeakerEntity;
+		}
+
+		g_pScriptVM->RemoveInstance( hParams );
+	}
+#endif
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // These methods encapsulate MOVETYPE_FOLLOW, which became obsolete
@@ -2493,6 +2480,18 @@ void CBaseEntity::FollowEntity( CBaseEntity *pBaseEntity, bool bBoneMerge )
 		StopFollowingEntity();
 	}
 }
+
+#ifdef MAPBASE_VSCRIPT
+void CBaseEntity::ScriptFollowEntity( HSCRIPT hBaseEntity, bool bBoneMerge )
+{
+	FollowEntity( ToEnt( hBaseEntity ), bBoneMerge );
+}
+
+HSCRIPT CBaseEntity::ScriptGetFollowedEntity()
+{
+	return ToHScript( GetFollowedEntity() );
+}
+#endif
 
 void CBaseEntity::SetEffectEntity( CBaseEntity *pEffectEnt )
 {
@@ -2682,4 +2681,358 @@ bool CBaseEntity::IsToolRecording() const
 	return false;
 #endif
 }
+#endif
+
+#ifdef MAPBASE_VSCRIPT
+HSCRIPT CBaseEntity::GetOrCreatePrivateScriptScope()
+{
+	ValidateScriptScope();
+	return m_ScriptScope;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptSetParent(HSCRIPT hParent, const char *szAttachment)
+{
+	CBaseEntity *pParent = ToEnt(hParent);
+	if ( !pParent )
+	{
+		SetParent(NULL);
+		return;
+	}
+
+	// if an attachment is specified, the parent needs to be CBaseAnimating
+	if ( szAttachment && szAttachment[0] != '\0' )
+	{
+		CBaseAnimating *pAnimating = pParent->GetBaseAnimating();
+		if ( !pAnimating )
+		{
+			Warning("ERROR: Tried to set parent for entity %s (%s), but its parent has no model.\n", GetClassname(), GetDebugName());
+			return;
+		}
+		
+		int iAttachment = pAnimating->LookupAttachment(szAttachment);
+		if ( iAttachment <= 0 )
+		{
+			Warning("ERROR: Tried to set parent for entity %s (%s), but it has no attachment named %s.\n", GetClassname(), GetDebugName(), szAttachment);
+			return;
+		}
+
+		SetParent(pParent, iAttachment);
+		SetMoveType(MOVETYPE_NONE);
+		return;
+	}
+	
+	SetParent(pParent);
+}
+
+HSCRIPT	CBaseEntity::GetScriptOwnerEntity()
+{
+	return ToHScript(GetOwnerEntity());
+}
+
+void CBaseEntity::SetScriptOwnerEntity(HSCRIPT pOwner)
+{
+	SetOwnerEntity(ToEnt(pOwner));
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+const Vector& CBaseEntity::ScriptGetColorVector()
+{
+	static Vector vecColor;
+	vecColor.Init( m_clrRender.GetR(), m_clrRender.GetG(), m_clrRender.GetB() );
+	return vecColor;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptSetColorVector( const Vector& vecColor )
+{
+	SetRenderColor( vecColor.x, vecColor.y, vecColor.z );
+}
+
+void CBaseEntity::ScriptSetColor( int r, int g, int b )
+{
+	SetRenderColor( r, g, b );
+}
+
+//-----------------------------------------------------------------------------
+// Vscript: Gets the entity matrix transform
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseEntity::ScriptEntityToWorldTransform( void )
+{
+	return g_pScriptVM->RegisterInstance( &EntityToWorldTransform() );
+}
+
+//-----------------------------------------------------------------------------
+// Vscript: Gets the entity's physics object if it has one
+//-----------------------------------------------------------------------------
+HSCRIPT CBaseEntity::ScriptGetPhysicsObject( void )
+{
+	if (VPhysicsGetObject())
+		return g_pScriptVM->RegisterInstance( VPhysicsGetObject() );
+	else
+		return NULL;
+}
+
+
+#ifdef GAME_DLL
+#define SCRIPT_NEVER_THINK TICK_NEVER_THINK
+#else
+#define SCRIPT_NEVER_THINK CLIENT_THINK_NEVER
+#endif
+
+static inline void ScriptStopContextThink( scriptthinkfunc_t *context )
+{
+	Assert( context->m_hfnThink );
+	Assert( context->m_flNextThink == SCRIPT_NEVER_THINK );
+
+	g_pScriptVM->ReleaseScript( context->m_hfnThink );
+	context->m_hfnThink = NULL;
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptContextThink()
+{
+	float flNextThink = FLT_MAX;
+	float flScheduled = 0.0f;
+
+	ScriptVariant_t arg = m_hScriptInstance;
+
+	for ( int i = 0; i < m_ScriptThinkFuncs.Count(); ++i )
+	{
+		scriptthinkfunc_t *cur = m_ScriptThinkFuncs[i];
+
+		if ( cur->m_flNextThink == SCRIPT_NEVER_THINK )
+		{
+			continue;
+		}
+
+		if ( cur->m_flNextThink > gpGlobals->curtime )
+		{
+			if ( ( flScheduled == 0.0f ) || ( flScheduled > cur->m_flNextThink ) )
+			{
+				flScheduled = cur->m_flNextThink;
+			}
+			continue;
+		}
+
+#ifdef _DEBUG
+		// going to run the script func
+		cur->m_flNextThink = 0;
+#endif
+
+		ScriptVariant_t varReturn;
+
+#ifndef CLIENT_DLL
+		if ( !cur->m_bNoParam )
+		{
+#endif
+			g_pScriptVM->ExecuteFunction( cur->m_hfnThink, &arg, 1, &varReturn, NULL, true );
+#ifndef CLIENT_DLL
+		}
+		else
+		{
+			g_pScriptVM->ExecuteFunction( cur->m_hfnThink, NULL, 0, &varReturn, NULL, true );
+		}
+#endif
+
+		if ( cur->m_flNextThink == SCRIPT_NEVER_THINK )
+		{
+			// stopped from script while thinking
+			continue;
+		}
+
+		float flReturn;
+		if ( !varReturn.AssignTo( &flReturn ) )
+		{
+			varReturn.Free();
+			cur->m_flNextThink = SCRIPT_NEVER_THINK;
+			continue;
+		}
+
+		if ( flReturn < 0.0f )
+		{
+			cur->m_flNextThink = SCRIPT_NEVER_THINK;
+			continue;
+		}
+
+		if ( flReturn < flNextThink )
+		{
+			flNextThink = flReturn;
+		}
+
+		cur->m_flNextThink = gpGlobals->curtime + flReturn - 0.001f;
+	}
+
+	// deferred safe removal
+	for ( int i = 0; i < m_ScriptThinkFuncs.Count(); )
+	{
+		scriptthinkfunc_t *cur = m_ScriptThinkFuncs[i];
+		if ( cur->m_flNextThink == SCRIPT_NEVER_THINK )
+		{
+			ScriptStopContextThink( cur );
+			delete cur;
+			m_ScriptThinkFuncs.Remove(i);
+		}
+		else ++i;
+	}
+
+	if ( flNextThink < FLT_MAX )
+	{
+		if ( flScheduled > 0.0f )
+		{
+			flNextThink = min( gpGlobals->curtime + flNextThink, flScheduled );
+		}
+		else
+		{
+			flNextThink = gpGlobals->curtime + flNextThink;
+		}
+	}
+	else
+	{
+		if ( flScheduled > 0.0f )
+		{
+			flNextThink = flScheduled;
+		}
+		else
+		{
+			flNextThink = SCRIPT_NEVER_THINK;
+		}
+	}
+
+#ifdef _DEBUG
+#ifdef GAME_DLL
+	int nNextThinkTick = GetNextThinkTick("ScriptContextThink");
+	float flNextThinkTime = TICKS_TO_TIME(nNextThinkTick);
+
+	// If internal next think tick is earlier than what we have here with flNextThink,
+	// whoever set that think may fail. In worst case scenario the entity may stop thinking.
+	if ( nNextThinkTick > gpGlobals->tickcount )
+	{
+		if ( flNextThink == SCRIPT_NEVER_THINK )
+			Assert(0);
+		if ( flNextThinkTime < flNextThink )
+			Assert(0);
+	}
+#endif
+#endif
+
+#ifdef GAME_DLL
+	SetNextThink( flNextThink, "ScriptContextThink" );
+#else
+	SetNextClientThink( flNextThink );
+#endif
+}
+
+#ifndef CLIENT_DLL
+// see ScriptSetThink
+static bool s_bScriptContextThinkNoParam = false;
+#endif
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptSetContextThink( const char* szContext, HSCRIPT hFunc, float flTime )
+{
+#ifdef CLIENT_DLL
+	// Context thinking is not yet supported on client, entities can only have 1 think function.
+	// C_World does not have one by default, so it is safe to set its.
+	if ( !IsWorld() )
+	{
+		g_pScriptVM->RaiseException("SetContextThink is only supported on C_World");
+		return;
+	}
+#endif
+
+	scriptthinkfunc_t *pf = NULL;
+	unsigned hash = szContext ? HashString( szContext ) : 0;
+
+	FOR_EACH_VEC( m_ScriptThinkFuncs, i )
+	{
+		scriptthinkfunc_t *f = m_ScriptThinkFuncs[i];
+		if ( hash == f->m_iContextHash )
+		{
+			pf = f;
+			break;
+		}
+	}
+
+	if ( hFunc )
+	{
+		// add new
+		if ( !pf )
+		{
+			pf = new scriptthinkfunc_t;
+
+			m_ScriptThinkFuncs.SetGrowSize(1);
+			m_ScriptThinkFuncs.AddToTail( pf );
+
+			pf->m_iContextHash = hash;
+#ifndef CLIENT_DLL
+			pf->m_bNoParam = s_bScriptContextThinkNoParam;
+#endif
+		}
+		// update existing
+		else
+		{
+#ifdef _DEBUG
+			if ( pf->m_flNextThink == 0 )
+			{
+				Warning("Script think ('%s') was changed while it was thinking!\n", szContext);
+			}
+#endif
+			g_pScriptVM->ReleaseScript( pf->m_hfnThink );
+		}
+
+		float nextthink = gpGlobals->curtime + flTime;
+
+		pf->m_hfnThink = hFunc;
+		pf->m_flNextThink = nextthink;
+
+#ifdef GAME_DLL
+		int nexttick = GetNextThinkTick( RegisterThinkContext( "ScriptContextThink" ) );
+		if ( nexttick <= 0 || TICKS_TO_TIME(nexttick) > nextthink )
+		{
+			SetContextThink( &CBaseEntity::ScriptContextThink, nextthink, "ScriptContextThink" );
+		}
+#else
+		{
+			// let it self adjust
+			SetNextClientThink( gpGlobals->curtime );
+		}
+#endif
+	}
+	// null func input, think exists
+	else if ( pf )
+	{
+		pf->m_flNextThink = SCRIPT_NEVER_THINK;
+	}
+}
+
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// m_bNoParam and s_bScriptContextThinkNoParam exist only to keep backwards compatibility
+// and are an alternative to this script closure:
+//
+//	function CBaseEntity::SetThink( func, time )
+//	{
+//		SetContextThink( "", function(_){ return func() }, time )
+//	}
+//-----------------------------------------------------------------------------
+void CBaseEntity::ScriptSetThink( HSCRIPT hFunc, float time )
+{
+	s_bScriptContextThinkNoParam = true;
+	ScriptSetContextThink( NULL, hFunc, time );
+	s_bScriptContextThinkNoParam = false;
+}
+
+void CBaseEntity::ScriptStopThink()
+{
+	ScriptSetContextThink( NULL, NULL, 0.0f );
+}
+#endif
 #endif

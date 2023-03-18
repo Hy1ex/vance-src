@@ -98,10 +98,6 @@ CHUDQuickInfo::CHUDQuickInfo( const char *pElementName ) :
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_CROSSHAIR );
-
-#ifdef VANCE
-	SetHiddenBits( HIDEHUD_NEEDSUIT );
-#endif
 }
 
 void CHUDQuickInfo::ApplySchemeSettings( IScheme *scheme )
@@ -306,10 +302,8 @@ void CHUDQuickInfo::Paint()
 				m_ammoFade = 255;
 				m_warnAmmo = true;
 
-#ifndef VANCE	// Uses clip-based ticking ala CS:GO.
 				CLocalPlayerFilter filter;
 				C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HUDQuickInfo.LowAmmo" );
-#endif
 			}
 		}
 		else

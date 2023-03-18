@@ -30,6 +30,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef MAPBASE
+// This turned out to be causing major issues with VPhysics collision.
+// It's deactivated until a fix is found.
+// See player_command.cpp as well.
+//#define PLAYER_COMMAND_FIX 1
+#endif
+
 IPredictionSystem *IPredictionSystem::g_pPredictionSystems = NULL;
 
 #if !defined( NO_ENTITY_PREDICTION )
@@ -44,12 +51,6 @@ static ConVar	cl_predictionlist	( "cl_predictionlist", "0", FCVAR_CHEAT, "Show w
 static ConVar	cl_predictionentitydump( "cl_pdump", "-1", FCVAR_CHEAT, "Dump info about this entity to screen." );
 static ConVar	cl_predictionentitydumpbyclass( "cl_pclass", "", FCVAR_CHEAT, "Dump entity by prediction classname." );
 static ConVar	cl_pred_optimize( "cl_pred_optimize", "2", 0, "Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2)." );
-
-#ifdef STAGING_ONLY
-// Do not ship this - testing a fix
-static ConVar	cl_pred_optimize_prefer_server_data( "cl_pred_optimize_prefer_server_data", "0", 0, "In the case where we have both server data and predicted data up to the same tick, choose server data over predicted data." );
-//
-#endif // STAGING_ONLY
 
 #endif
 
@@ -909,9 +910,15 @@ void CPrediction::RunCommand( C_BasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		pVehicle->ProcessMovement( player, g_pMoveData );
 	}
 
+#ifdef PLAYER_COMMAND_FIX
+	RunPostThink( player );
+
+	FinishMove( player, ucmd, g_pMoveData );
+#else
 	FinishMove( player, ucmd, g_pMoveData );
 
 	RunPostThink( player );
+#endif
 
 	g_pGameMovement->FinishTrackPredictionErrors( player );
 
@@ -1407,11 +1414,6 @@ int CPrediction::ComputeFirstCommandToExecute( bool received_new_world_update, i
 	}
 	else
 	{
-#ifdef STAGING_ONLY	
-		int nPredictedLimit = cl_pred_optimize_prefer_server_data.GetBool() ? m_nCommandsPredicted - 1 : m_nCommandsPredicted;
-#else
-		int nPredictedLimit = m_nCommandsPredicted;		
-#endif // STAGING_ONLY
 		// Otherwise, there is a second optimization, wherein if we did receive an update, but no
 		//  values differed (or were outside their epsilon) and the server actually acknowledged running
 		//  one or more commands, then we can revert the entity to the predicted state from last frame, 
@@ -1420,7 +1422,7 @@ int CPrediction::ComputeFirstCommandToExecute( bool received_new_world_update, i
 		if ( cl_pred_optimize.GetInt() >= 2 && 
 			!m_bPreviousAckHadErrors && 
 			m_nCommandsPredicted > 0 && 
-			m_nServerCommandsAcknowledged <= nPredictedLimit )
+			m_nServerCommandsAcknowledged <= m_nCommandsPredicted )
 		{
 			// Copy all of the previously predicted data back into entity so we can skip repredicting it
 			// This is the final slot that we previously predicted

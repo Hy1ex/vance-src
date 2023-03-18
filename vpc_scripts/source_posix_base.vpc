@@ -12,8 +12,7 @@ $Configuration "Debug"
 	$Compiler
 	{
 		$PreprocessorDefinitions			"$BASE;DEBUG;_DEBUG"
-		$OptimizerLevel					"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)" [$OSXALL]
-		$OptimizerLevel					"-gdwarf-4 -g2 $(OptimizerLevel_CompilerSpecific)" [$LINUX]
+		$OptimizerLevel					"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)"
 	}
 }
 
@@ -22,9 +21,7 @@ $Configuration "Release"
 	$Compiler
 	{
 		$PreprocessorDefinitions		"$BASE;NDEBUG"
-		$OptimizerLevel					"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)" [$OSXALL]
-		$OptimizerLevel					"-gdwarf-4 -g2 $(OptimizerLevel_CompilerSpecific)" [$LINUX]
-		$PreprocessorDefinitions		"$BASE;RELEASEASSERTS" [$RELEASEASSERTS]
+		$OptimizerLevel					"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)"
 	}
 }
 
@@ -45,7 +42,6 @@ $Configuration
 		$PreprocessorDefinitions		"$BASE;_OSX;OSX;_DARWIN_UNLIMITED_SELECT;FD_SETSIZE=10240;" [$OSXALL]
 		$PreprocessorDefinitions		"$BASE;OVERRIDE_V_DEFINES"	  [$OSXALL]						
 		$PreprocessorDefinitions		"$BASE;_LINUX;LINUX;" [$LINUXALL]
-		$PreprocessorDefinitions		"$BASE;PLATFORM_64BITS" [$LINUX64]
 		$SymbolVisibility				"hidden" 					[$POSIX]
 		$PreprocessorDefinitions		"$BASE;POSIX;_POSIX"		[$POSIX]
 

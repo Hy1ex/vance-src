@@ -9,18 +9,6 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#if defined(__x86_64__) || defined(_WIN64)
-#define PLATFORM_64BITS 1
-#endif
-
-#if defined(__GCC__) || defined(__GNUC__)
-#define COMPILER_GCC 1
-#endif
-
-#ifdef __clang__
-#define COMPILER_CLANG 1
-#endif
-
 #if defined( _X360 )
 	#define NO_STEAM
 	#define NO_VOICE
@@ -63,12 +51,13 @@
 // need this for _alloca
 #include <alloca.h>
 #include <unistd.h>
-#include <signal.h>
+	#include <signal.h>
 #include <time.h>
 #endif
 
 #include <malloc.h>
 #include <new>
+
 
 // need this for memset
 #include <string.h>
@@ -159,6 +148,10 @@
 typedef unsigned char uint8;
 typedef signed char int8;
 
+#if defined(__x86_64__) || defined(_WIN64)
+	#define X64BITS
+#endif // __x86_64__
+
 #if defined( _WIN32 )
 
 	typedef __int16					int16;
@@ -198,7 +191,7 @@ typedef signed char int8;
 	typedef unsigned int			uint32;
 	typedef long long				int64;
 	typedef unsigned long long		uint64;
-	#ifdef PLATFORM_64BITS
+	#ifdef X64BITS
 		typedef long long			intp;
 		typedef unsigned long long	uintp;
 	#else
@@ -209,38 +202,16 @@ typedef signed char int8;
 
 	// Avoid redefinition warnings if a previous header defines this.
 	#undef OVERRIDE
-	#if __cplusplus >= 201103L
+	#if defined(__clang__)
 		#define OVERRIDE override
-		#if defined(__clang__)
-			// warning: 'override' keyword is a C++11 extension [-Wc++11-extensions]
-			// Disabling this warning is less intrusive than enabling C++11 extensions
-			#pragma GCC diagnostic ignored "-Wc++11-extensions"
-		#endif
+		// warning: 'override' keyword is a C++11 extension [-Wc++11-extensions]
+		// Disabling this warning is less intrusive than enabling C++11 extensions
+		#pragma GCC diagnostic ignored "-Wc++11-extensions"
 	#else
 		#define OVERRIDE
 	#endif
 
 #endif // else _WIN32
-
-//-----------------------------------------------------------------------------
-// Set up platform type defines.
-//-----------------------------------------------------------------------------
-#if defined( PLATFORM_X360 ) || defined( _PS3 )
-	#if !defined( _GAMECONSOLE )
-		#define _GAMECONSOLE
-	#endif
-	#define IsPC()			false
-	#define IsGameConsole()	true
-#else
-	#define IsPC()			true
-	#define IsGameConsole()	false
-#endif
-
-#ifdef PLATFORM_64BITS
-	#define IsPlatform64Bits()	true
-#else
-	#define IsPlatform64Bits()	false
-#endif
 
 // From steam/steamtypes.h
 // RTime32
@@ -259,11 +230,7 @@ typedef unsigned int		uint;
 // Ensure that everybody has the right compiler version installed. The version
 // number can be obtained by looking at the compiler output when you type 'cl'
 // and removing the last two digits and the periods: 16.00.40219.01 becomes 160040219
-#if _MSC_FULL_VER > 180000000
-	#if _MSC_FULL_VER < 180030723
-		#error You must install VS 2013 Update 3
-	#endif
-#elif _MSC_FULL_VER > 160000000
+#if _MSC_FULL_VER > 160000000
 	#if _MSC_FULL_VER < 160040219
 		#error You must install VS 2010 SP1
 	#endif
@@ -400,7 +367,7 @@ typedef void * HINSTANCE;
 #define MAX_UNICODE_PATH MAX_PATH
 #endif
 
-#define MAX_UNICODE_PATH_IN_UTF8 MAX_UNICODE_PATH*4
+#define MAX_UNICODE_PATH_IN_UTF8 (MAX_UNICODE_PATH*4)
 
 #ifdef GNUC
 #undef offsetof
@@ -412,7 +379,7 @@ typedef void * HINSTANCE;
 #endif
 
 
-#define ALIGN_VALUE( val, alignment ) ( ( val + alignment - 1 ) & ~( alignment - 1 ) ) //  need macro for constant expression
+#define ALIGN_VALUE( val, alignment ) ( ( (val) + (alignment) - 1 ) & ~( (alignment) - 1 ) ) //  need macro for constant expression
 
 // Used to step into the debugger
 #if defined( _WIN32 ) && !defined( _X360 )
@@ -429,19 +396,6 @@ typedef void * HINSTANCE;
 #endif
 #endif
 #define	DebuggerBreakIfDebugging() if ( !Plat_IsInDebugSession() ) ; else DebuggerBreak()
-
-#ifdef STAGING_ONLY
-#define	DebuggerBreakIfDebugging_StagingOnly() if ( !Plat_IsInDebugSession() ) ; else DebuggerBreak()
-#else
-#define	DebuggerBreakIfDebugging_StagingOnly()
-#endif
-
-// Allows you to specify code that should only execute if we are in a staging build. Otherwise the code noops.
-#ifdef STAGING_ONLY
-#define STAGING_ONLY_EXEC( _exec ) do { _exec; } while (0)
-#else
-#define STAGING_ONLY_EXEC( _exec ) do { } while (0)
-#endif
 
 // C functions for external declarations that call the appropriate C++ methods
 #ifndef EXPORT
@@ -618,7 +572,16 @@ typedef void * HINSTANCE;
 		#endif
 	// GCC 3.4.1 has a bug in supporting forced inline of templated functions
 	// this macro lets us not force inlining in that case
-	#define FORCEINLINE_TEMPLATE	inline
+#if __GNUC__ < 4
+#define FORCEINLINE_TEMPLATE inline
+#else
+#define FORCEINLINE_TEMPLATE inline __attribute__((always_inline))
+#endif
+#if __cpp_constexpr >= 201304
+#define CONSTEXPR_FUNC constexpr
+#else
+#define CONSTEXPR_FUNC
+#endif
 //	#define  __stdcall			__attribute__ ((__stdcall__))
 #endif
 
@@ -718,6 +681,40 @@ typedef void * HINSTANCE;
 #pragma warning( disable : 4312 )	// conversion from 'unsigned int' to 'memhandle_t' of greater size
 #endif
 
+// Detect C++11 support for "rvalue references" / "move semantics" / other C++11 (and up) stuff
+#if defined(_MSC_VER)
+#if _MSC_VER >= 1600
+#define VALVE_RVALUE_REFS 1
+#endif
+#if _MSC_VER >= 1800
+#define VALVE_INITIALIZER_LIST_SUPPORT 1
+#define VALVE_EXPLICIT_CONVERSION_OP 1
+#endif
+#elif defined(__clang__)
+#if __has_extension(cxx_rvalue_references)
+#define VALVE_RVALUE_REFS 1
+#endif
+#if __has_feature(cxx_generalized_initializers)
+#define VALVE_INITIALIZER_LIST_SUPPORT 1
+#endif
+#if __has_feature(cxx_explicit_conversions)
+#define VALVE_EXPLICIT_CONVERSION_OP 1
+#endif
+#elif defined(__GNUC__)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6 )
+#if defined(__GXX_EXPERIMENTAL_CXX0X__)
+#define VALVE_RVALUE_REFS 1
+#define VALVE_INITIALIZER_LIST_SUPPORT 1
+#define VALVE_EXPLICIT_CONVERSION_OP 1
+#endif
+#endif
+#endif
+
+#ifdef VALVE_RVALUE_REFS
+#include "tier0/valve_minmax_off.h"
+#include <utility>
+#include "tier0/valve_minmax_on.h"
+#endif
 
 #ifdef POSIX
 #define _stricmp stricmp
@@ -749,29 +746,6 @@ typedef void * HINSTANCE;
 typedef uint32 HMODULE;
 typedef void *HANDLE;
 #endif
-
-//-----------------------------------------------------------------------------
-// fsel
-//-----------------------------------------------------------------------------
-#ifndef _X360
-
-static FORCEINLINE float fsel(float fComparand, float fValGE, float fLT)
-{
-	return fComparand >= 0 ? fValGE : fLT;
-}
-static FORCEINLINE double fsel(double fComparand, double fValGE, double fLT)
-{
-	return fComparand >= 0 ? fValGE : fLT;
-}
-
-#else
-
-// __fsel(double fComparand, double fValGE, double fLT) == fComparand >= 0 ? fValGE : fLT
-// this is much faster than if ( aFloat > 0 ) { x = .. }
-#define fsel __fsel
-
-#endif
-
 
 //-----------------------------------------------------------------------------
 // FP exception handling
@@ -1132,6 +1106,7 @@ PLATFORM_INTERFACE bool				Plat_IsInBenchmarkMode();
 
 PLATFORM_INTERFACE double			Plat_FloatTime();		// Returns time in seconds since the module was loaded.
 PLATFORM_INTERFACE unsigned int		Plat_MSTime();			// Time in milliseconds.
+PLATFORM_INTERFACE char *			Plat_asctime( const struct tm *tm, char *buf );
 PLATFORM_INTERFACE char *			Plat_ctime( const time_t *timep, char *buf, size_t bufsize );
 PLATFORM_INTERFACE struct tm *		Plat_gmtime( const time_t *timep, struct tm *result );
 PLATFORM_INTERFACE time_t			Plat_timegm( struct tm *timeptr );
@@ -1185,7 +1160,7 @@ inline uint64 Plat_Rdtsc()
 			memcpy( this, &src, sizeof(_classname) );	\
 			return *this;								\
 		}
-
+	
 // Processor Information:
 struct CPUInformation
 {
@@ -1212,9 +1187,6 @@ struct CPUInformation
 	int64 m_Speed;						// In cycles per second.
 
 	tchar* m_szProcessorID;				// Processor vendor Identification.
-
-	uint32 m_nModel;
-	uint32 m_nFeatures[3];
 
 	CPUInformation(): m_Size(0){}
 };
@@ -1292,7 +1264,7 @@ PLATFORM_INTERFACE void* Plat_SimpleLog( const tchar* file, int line );
 // Returns true if debugger attached, false otherwise
 //-----------------------------------------------------------------------------
 #if defined(_WIN32) || defined(LINUX) || defined(OSX)
-PLATFORM_INTERFACE bool Plat_IsInDebugSession();
+PLATFORM_INTERFACE bool Plat_IsInDebugSession( bool bForceRecheck = false );
 PLATFORM_INTERFACE void Plat_DebugString( const char * );
 #else
 inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; }
@@ -1303,6 +1275,15 @@ inline bool Plat_IsInDebugSession( bool bForceRecheck = false ) { return false; 
 // Returns true if running on a 64 bit (windows) OS
 //-----------------------------------------------------------------------------
 PLATFORM_INTERFACE bool Is64BitOS();
+
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// General Mapbase version constants compiled into projects for versioning purposes
+//-----------------------------------------------------------------------------
+#define MAPBASE_VERSION "7.1"
+#define MAPBASE_VER_INT 7100	// For use in #if in a similar fashion to macros like _MSC_VER
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -1376,62 +1357,81 @@ inline const char *GetPlatformExt( void )
 template <class T>
 inline T* Construct( T* pMemory )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T;
 }
 
 template <class T, typename ARG1>
 inline T* Construct( T* pMemory, ARG1 a1 )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T( a1 );
 }
 
 template <class T, typename ARG1, typename ARG2>
 inline T* Construct( T* pMemory, ARG1 a1, ARG2 a2 )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T( a1, a2 );
 }
 
 template <class T, typename ARG1, typename ARG2, typename ARG3>
 inline T* Construct( T* pMemory, ARG1 a1, ARG2 a2, ARG3 a3 )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T( a1, a2, a3 );
 }
 
 template <class T, typename ARG1, typename ARG2, typename ARG3, typename ARG4>
 inline T* Construct( T* pMemory, ARG1 a1, ARG2 a2, ARG3 a3, ARG4 a4 )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T( a1, a2, a3, a4 );
 }
 
 template <class T, typename ARG1, typename ARG2, typename ARG3, typename ARG4, typename ARG5>
 inline T* Construct( T* pMemory, ARG1 a1, ARG2 a2, ARG3 a3, ARG4 a4, ARG5 a5 )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T( a1, a2, a3, a4, a5 );
 }
 
 template <class T, class P>
 inline void ConstructOneArg( T* pMemory, P const& arg)
 {
+	HINT(pMemory != 0);
 	::new( pMemory ) T(arg);
 }
 
 template <class T, class P1, class P2 >
 inline void ConstructTwoArg( T* pMemory, P1 const& arg1, P2 const& arg2)
 {
+	HINT(pMemory != 0);
 	::new( pMemory ) T(arg1, arg2);
 }
 
 template <class T, class P1, class P2, class P3 >
 inline void ConstructThreeArg( T* pMemory, P1 const& arg1, P2 const& arg2, P3 const& arg3)
 {
+	HINT(pMemory != 0);
 	::new( pMemory ) T(arg1, arg2, arg3);
 }
 
 template <class T>
 inline T* CopyConstruct( T* pMemory, T const& src )
 {
+	HINT(pMemory != 0);
 	return ::new( pMemory ) T(src);
 }
+					
+#ifdef VALVE_RVALUE_REFS
+template <class T>
+inline void CopyConstruct(T* pMemory, T&& src)
+{
+	HINT(pMemory != 0);
+	::new(pMemory)T(std::forward<T>(src));
+}
+#endif
 
 template <class T>
 inline void Destruct( T* pMemory )
@@ -1606,20 +1606,6 @@ private:
 	FUNCPTR_TYPE m_pfn;
 };
 #endif
-
-
-// Watchdog timer support. Call Plat_BeginWatchdogTimer( nn ) to kick the timer off.  if you don't call
-// Plat_EndWatchdogTimer within nn seconds, the program will kick off an exception.  This is for making
-// sure that hung dedicated servers abort (and restart) instead of staying hung. Calling
-// Plat_EndWatchdogTimer more than once or when there is no active watchdog is fine. Only does anything
-// under linux right now. It should be possible to implement this functionality in windows via a
-// thread, if desired.
-PLATFORM_INTERFACE void Plat_BeginWatchdogTimer( int nSecs );
-PLATFORM_INTERFACE void Plat_EndWatchdogTimer( void );
-PLATFORM_INTERFACE int Plat_GetWatchdogTime( void );
-
-typedef void (*Plat_WatchDogHandlerFunction_t)(void);
-PLATFORM_INTERFACE void Plat_SetWatchdogHandlerFunction( Plat_WatchDogHandlerFunction_t function );
 
 
 //-----------------------------------------------------------------------------

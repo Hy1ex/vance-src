@@ -14,6 +14,10 @@
 
 #include "networkvar.h" // todo: change this when DECLARE_CLASS is moved into a better location.
 
+#ifdef MAPBASE_VSCRIPT
+#include "vscript/ivscript.h"
+#endif
+
 // Used to initialize m_flBaseDamage to something that we know pretty much for sure
 // hasn't been modified by a user. 
 #define BASEDAMAGE_NOT_SPECIFIED	FLT_MAX
@@ -55,8 +59,7 @@ public:
 	void			AddDamage( float flAddAmount );
 	void			SubtractDamage( float flSubtractAmount );
 	float			GetDamageBonus() const;
-	CBaseEntity		*GetDamageBonusProvider() const;
-	void			SetDamageBonus( float flBonus, CBaseEntity *pProvider = NULL );
+	void			SetDamageBonus( float flBonus );
 
 	float			GetBaseDamage() const;
 	bool			BaseDamageIsValid() const;
@@ -64,8 +67,6 @@ public:
 	Vector			GetDamageForce() const;
 	void			SetDamageForce( const Vector &damageForce );
 	void			ScaleDamageForce( float flScaleAmount );
-	float			GetDamageForForceCalc() const;
-	void			SetDamageForForceCalc( const float flScaleAmount );
 
 	Vector			GetDamagePosition() const;
 	void			SetDamagePosition( const Vector &damagePosition );
@@ -105,6 +106,15 @@ public:
 	// For designer debug output.
 	static void		DebugGetDamageTypeString(unsigned int DamageType, char *outbuf, int outbuflength );
 
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT			ScriptGetInflictor() const;
+	void			ScriptSetInflictor( HSCRIPT pInflictor );
+	HSCRIPT			ScriptGetWeapon() const;
+	void			ScriptSetWeapon( HSCRIPT pWeapon );
+	HSCRIPT			ScriptGetAttacker() const;
+	void			ScriptSetAttacker( HSCRIPT pAttacker );
+#endif
+
 
 //private:
 	void			CopyDamageToBaseDamage();
@@ -128,10 +138,7 @@ protected:
 	int				m_iDamagedOtherPlayers;
 	int				m_iPlayerPenetrationCount;
 	float			m_flDamageBonus;		// Anything that increases damage (crit) - store the delta
-	EHANDLE			m_hDamageBonusProvider;	// Who gave us the ability to do extra damage?
 	bool			m_bForceFriendlyFire;	// Ideally this would be a dmg type, but we can't add more
-
-	float			m_flDamageForForce;
 
 	DECLARE_SIMPLE_DATADESC();
 };
@@ -253,15 +260,9 @@ inline float CTakeDamageInfo::GetDamageBonus() const
 	return m_flDamageBonus;
 }
 
-inline CBaseEntity *CTakeDamageInfo::GetDamageBonusProvider() const
-{
-	return m_hDamageBonusProvider;
-}
-
-inline void CTakeDamageInfo::SetDamageBonus( float flBonus, CBaseEntity *pProvider /*= NULL*/ )
+inline void CTakeDamageInfo::SetDamageBonus( float flBonus )
 {
 	m_flDamageBonus = flBonus;
-	m_hDamageBonusProvider = pProvider;
 }
 
 inline float CTakeDamageInfo::GetBaseDamage() const
@@ -291,16 +292,6 @@ inline void CTakeDamageInfo::SetDamageForce( const Vector &damageForce )
 inline void	CTakeDamageInfo::ScaleDamageForce( float flScaleAmount )
 {
 	m_vecDamageForce *= flScaleAmount;
-}
-
-inline float CTakeDamageInfo::GetDamageForForceCalc() const
-{
-	return m_flDamageForForce;
-}
-
-inline void CTakeDamageInfo::SetDamageForForceCalc( float flDamage )
-{
-	m_flDamageForForce = flDamage;
 }
 
 inline Vector CTakeDamageInfo::GetDamagePosition() const
@@ -353,12 +344,12 @@ inline void CTakeDamageInfo::SetDamageCustom( int iDamageCustom )
 
 inline int CTakeDamageInfo::GetDamageStats() const
 {
-	return m_iDamageCustom;
+	return m_iDamageStats;
 }
 
 inline void CTakeDamageInfo::SetDamageStats( int iDamageCustom )
 {
-	m_iDamageCustom = iDamageCustom;
+	m_iDamageStats = iDamageCustom;
 }
 
 inline int CTakeDamageInfo::GetAmmoType() const

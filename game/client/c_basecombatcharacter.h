@@ -29,6 +29,9 @@ class C_BaseCombatCharacter : public C_BaseFlex
 public:
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
+#ifdef MAPBASE_VSCRIPT
+	DECLARE_ENT_SCRIPTDESC();
+#endif
 
 					C_BaseCombatCharacter( void );
 	virtual			~C_BaseCombatCharacter( void );
@@ -78,9 +81,6 @@ public:
 	bool SwitchToNextBestWeapon(C_BaseCombatWeapon *pCurrent);
 
 	virtual C_BaseCombatWeapon	*GetActiveWeapon( void ) const;
-#ifdef VANCE
-	virtual C_BaseCombatWeapon	*GetDeployingWeapon( void ) const;
-#endif
 	int					WeaponCount() const;
 	C_BaseCombatWeapon	*GetWeapon( int i ) const;
 
@@ -97,20 +97,16 @@ public:
 
 	virtual void		DoMuzzleFlash();
 
-	CHandle<C_BaseCombatWeapon> m_hActiveWeapon;
-#ifdef VANCE
-	CHandle<C_BaseCombatWeapon> m_hDeployingWeapon;
-	friend class C_BasePlayer;
-#endif
-
 #ifdef GLOWS_ENABLE
 	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
 	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
-//	void				EnableGlowEffect( float r, float g, float b );
-
-	void				SetClientSideGlowEnabled( bool bEnabled ){ m_bClientSideGlowEnabled = bEnabled; UpdateGlowEffect(); }
-	bool				IsClientSideGlowEnabled( void ){ return m_bClientSideGlowEnabled; }
 #endif // GLOWS_ENABLE
+
+#ifdef MAPBASE_VSCRIPT
+	int					ScriptGetAmmoCount( int i );
+	HSCRIPT				ScriptGetActiveWeapon();
+	HSCRIPT				ScriptGetWeapon( int i );
+#endif
 
 public:
 
@@ -131,15 +127,10 @@ private:
 	CNetworkArray( int, m_iAmmo, MAX_AMMO_TYPES );
 
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
-#ifndef VANCE
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
-#else
-	friend class C_ShowWeapon; // This allows CShowWeapon to access whatever it needs to update for the character
-#endif
 
 #ifdef GLOWS_ENABLE
-	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
-	bool				m_bGlowEnabled;				// networked value
+	bool				m_bGlowEnabled;
 	bool				m_bOldGlowEnabled;
 	CGlowObject			*m_pGlowEffect;
 #endif // GLOWS_ENABLE

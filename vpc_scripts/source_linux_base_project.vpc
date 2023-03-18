@@ -13,8 +13,7 @@ $Configuration "Debug"
 	$Compiler
 	{
 		$PreprocessorDefinitions			"DEBUG;_DEBUG"
-		$OptimizerLevel					"-gdwarf-2 -g $(OptimizerLevel_CompilerSpecific)" [$OSXALL]
-		$OptimizerLevel					"-gdwarf-4 -g $(OptimizerLevel_CompilerSpecific)" [$LINUX]
+		$OptimizerLevel					"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)"
 	}
 }
 
@@ -23,9 +22,8 @@ $Configuration "Release"
 	$Compiler
 	{
 		$PreprocessorDefinitions		"NDEBUG"
-		$OptimizerLevel				"-gdwarf-2 -g $(OptimizerLevel_CompilerSpecific)" [$OSXALL]
-		$OptimizerLevel				"-gdwarf-4 -g $(OptimizerLevel_CompilerSpecific)" [$LINUX]
 		$PreprocessorDefinitions		"$BASE;RELEASEASSERTS" [$RELEASEASSERTS]
+		$OptimizerLevel				"-gdwarf-2 -g2 $(OptimizerLevel_CompilerSpecific)"
 	}
 }
 

@@ -4,8 +4,10 @@
 //  STATIC: "DIFFUSEBUMPMAP"			"0..1"
 //  STATIC: "VERTEXCOLOR"				"0..1"
 //  STATIC: "VERTEXALPHATEXBLENDFACTOR"	"0..1"
+//  STATIC: "RELIEF_MAPPING"            "0..0"
 //  STATIC: "SEAMLESS"                  "0..1"
 //  STATIC: "BUMPMASK"                  "0..1"
+//	STATIC: "FLASHLIGHT"				"0..1"	[XBOX]
 
 //  DYNAMIC: "FASTPATH"					"0..1"
 //	DYNAMIC: "DOWATERFOG"				"0..1"
@@ -56,6 +58,9 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 projPos					: POSITION;	
+#if !defined( _X360 )    
+	float  fog						: FOG;
+#endif
 
 #if SEAMLESS
 	float3 SeamlessTexCoord         : TEXCOORD0;            // x y z 
@@ -79,6 +84,14 @@ struct VS_OUTPUT
 
 	float4 vertexColor				: COLOR;				// in seamless, r g b = blend weights
 	float4 vertexBlendX_fogFactorW	: COLOR1;
+
+	// Extra iterators on 360, used in flashlight combo
+#if defined( _X360 )
+#if FLASHLIGHT
+	float4 flashlightSpacePos		: TEXCOORD8;
+	float4 vProjPos					: TEXCOORD9;
+#endif
+#endif
 
 };
 
@@ -193,6 +206,9 @@ VS_OUTPUT main( const VS_INPUT v )
 #endif
 
 	o.vertexBlendX_fogFactorW = CalcFog( worldPos, vProjPos, g_FogType );
+#if !defined( _X360 )
+	o.fog = o.vertexBlendX_fogFactorW;
+#endif
 
 	if (!g_bVertexColor)
 	{

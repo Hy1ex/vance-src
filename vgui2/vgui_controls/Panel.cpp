@@ -40,7 +40,6 @@
 #include "mempool.h"
 #include "filesystem.h"
 #include "tier0/icommandline.h"
-#include "tier0/minidump.h"
 
 #include "tier0/vprof.h"
 
@@ -51,38 +50,7 @@ using namespace vgui;
 
 #define TRIPLE_PRESS_MSEC	300
 
-const char *g_PinCornerStrings [] =
-{
-	"PIN_TOPLEFT",
-	"PIN_TOPRIGHT",
-	"PIN_BOTTOMLEFT",
-	"PIN_BOTTOMRIGHT",
 
-	"PIN_CENTER_TOP",
-	"PIN_CENTER_RIGHT",
-	"PIN_CENTER_BOTTOM",
-	"PIN_CENTER_LEFT",
-};
-
-COMPILE_TIME_ASSERT( Panel::PIN_LAST == ARRAYSIZE( g_PinCornerStrings ) );
-
-static const char *COM_GetModDirectory()
-{
-	static char modDir[MAX_PATH];
-	if ( Q_strlen( modDir ) == 0 )
-	{
-		const char *gamedir = CommandLine()->ParmValue("-game", CommandLine()->ParmValue( "-defaultgamedir", "hl2" ) );
-		Q_strncpy( modDir, gamedir, sizeof(modDir) );
-		if ( strchr( modDir, '/' ) || strchr( modDir, '\\' ) )
-		{
-			Q_StripLastDir( modDir, sizeof(modDir) );
-			int dirlen = Q_strlen( modDir );
-			Q_strncpy( modDir, gamedir + dirlen, sizeof(modDir) - dirlen );
-		}
-	}
-
-	return modDir;
-}
 extern int GetBuildModeDialogCount();
 
 static char *CopyString( const char *in )
@@ -96,12 +64,12 @@ static char *CopyString( const char *in )
 	return n;
 }
 
-#ifdef STAGING_ONLY
-ConVar tf_strict_mouse_up_events( "tf_strict_mouse_up_events", "0", FCVAR_ARCHIVE, "Only allow Mouse-Release events to happens on panels we also Mouse-Downed in" );
-#endif
+#ifdef MAPBASE
+ConVar vgui_mapbase_custom_schemes( "vgui_mapbase_custom_schemes", "1" );
 
-// Temporary convar to help debug why the MvMVictoryMannUpPanel TabContainer is sometimes way off to the left.
-ConVar tf_debug_tabcontainer( "tf_debug_tabcontainer", "0", FCVAR_HIDDEN, "Spew TabContainer dimensions." );
+// This is used in mapbase_shared.cpp
+HScheme g_iCustomClientSchemeOverride;
+#endif
 
 #if defined( VGUI_USEDRAGDROP )
 //-----------------------------------------------------------------------------
@@ -409,8 +377,6 @@ KeyBindingContextHandle_t Panel::CreateKeyBindingsContext( char const *filename,
 	return g_KBMgr.CreateContext( filename, pathID );
 }
 
-COMPILE_TIME_ASSERT( ( MOUSE_MIDDLE - MOUSE_LEFT ) == 2 );
-Panel* Panel::m_sMousePressedPanels[] = { NULL, NULL, NULL };
 
 //-----------------------------------------------------------------------------
 // Purpose: static method
@@ -763,6 +729,7 @@ void Panel::Init( int x, int y, int wide, int tall )
 	m_bForceStereoRenderToFrameBuffer = false;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: Destructor
 //-----------------------------------------------------------------------------
@@ -772,7 +739,7 @@ Panel::~Panel()
 	if ( !m_bToolTipOverridden )
 	{
 		if ( m_pTooltips )
-		{
+		{		
 			delete m_pTooltips;
 		}
 	}
@@ -825,13 +792,6 @@ Panel::~Panel()
 #if defined( VGUI_USEDRAGDROP )
 	delete m_pDragDrop;
 #endif // VGUI_USEDRAGDROP
-
-#if defined( VGUI_PANEL_VERIFY_DELETES )
-	// Zero out our vtbl pointer. This should hopefully help us catch bad guys using
-	//  this panel after it has been deleted.
-	uintp *panel_vtbl = (uintp *)this;
-	*panel_vtbl = NULL;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -911,7 +871,7 @@ const char *Panel::GetClassName()
 //-----------------------------------------------------------------------------
 void Panel::SetPos(int x, int y)
 {
-	if ( !HushAsserts() )
+	if (!CommandLine()->FindParm("-hushasserts"))
 	{
 		Assert( abs(x) < 32768 && abs(y) < 32768 );
 	}
@@ -924,26 +884,6 @@ void Panel::SetPos(int x, int y)
 void Panel::GetPos(int &x, int &y)
 {
 	ipanel()->GetPos(GetVPanel(), x, y);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int Panel::GetXPos()
-{
-	int x,y;
-	GetPos( x, y );
-	return x;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-int Panel::GetYPos()
-{
-	int x,y;
-	GetPos( x, y );
-	return y;
 }
 
 //-----------------------------------------------------------------------------
@@ -1128,15 +1068,6 @@ void Panel::Think()
 	}
 
 	OnThink();
-}
-
-void Panel::OnChildSettingsApplied( KeyValues *pInResourceData, Panel *pChild  )
-{
-	Panel* pParent = GetParent();
-	if( pParent )
-	{
-		pParent->OnChildSettingsApplied( pInResourceData, pChild );
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1653,6 +1584,7 @@ void Panel::CallParentFunction(KeyValues *message)
 	}
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: if set to true, panel automatically frees itself when parent is deleted
 //-----------------------------------------------------------------------------
@@ -1687,17 +1619,31 @@ void Panel::DeletePanel()
 //-----------------------------------------------------------------------------
 HScheme Panel::GetScheme()
 {
+	HScheme iScheme;
+
 	if (m_iScheme)
 	{
-		return m_iScheme; // return our internal scheme
+		iScheme = m_iScheme; // return our internal scheme
 	}
-	
-	if (GetVParent()) // recurse down the heirarchy 
+	else if (GetVParent()) // recurse down the heirarchy 
 	{
-		return ipanel()->GetScheme(GetVParent());
+		iScheme = ipanel()->GetScheme(GetVParent());
+	}
+	else
+	{
+		iScheme = scheme()->GetDefaultScheme();
 	}
 
-	return scheme()->GetDefaultScheme();
+#ifdef MAPBASE
+	// If a custom client scheme is available, use the custom scheme.
+	// TODO: Need a better way to detect that this panel actually uses ClientScheme.res
+	if (g_iCustomClientSchemeOverride != 0 && iScheme == scheme()->GetScheme( "ClientScheme" ) && vgui_mapbase_custom_schemes.GetBool())
+	{
+		return g_iCustomClientSchemeOverride;
+	}
+#endif
+
+	return iScheme;
 }
 
 //-----------------------------------------------------------------------------
@@ -1942,17 +1888,6 @@ void Panel::InternalMousePressed(int code)
 	}
 #endif
 
-#ifdef STAGING_ONLY
-	const char *pGameDir = COM_GetModDirectory();
-	if ( Q_stristr( pGameDir, "tf" ) )
-	{
-		if ( code >= MOUSE_LEFT && code <= MOUSE_MIDDLE )
-		{
-			m_sMousePressedPanels[ code - MOUSE_LEFT ] = this;
-		}
-	}
-#endif
-
 	Panel *pMouseHandler = m_hMouseEventHandler.Get();
 	if ( pMouseHandler )
 	{
@@ -2086,26 +2021,6 @@ void Panel::InternalMouseReleased(int code)
 			return;
 		}
 	}
-
-#ifdef STAGING_ONLY
-	const char *pGameDir = COM_GetModDirectory();
-	if ( Q_stristr( pGameDir, "tf" ) && tf_strict_mouse_up_events.GetBool() )
-	{
-		// Only allow mouse release events to go to panels that we also
-		// first clicked into
-		if ( code >= MOUSE_LEFT && code <= MOUSE_MIDDLE )
-		{
-			const int nIndex = code - MOUSE_LEFT;
-			Panel* pPressedPanel = m_sMousePressedPanels[ nIndex ];
-			m_sMousePressedPanels[ nIndex ] = NULL;	// Clear out pressed panel
-			if ( pPressedPanel != this )
-			{
-				OnMouseMismatchedRelease( (MouseCode)code, pPressedPanel );
-				return;
-			}
-		}
-	}
-#endif
 
 	OnMouseReleased((MouseCode)code);
 }
@@ -3054,10 +2969,6 @@ void Panel::OnMouseTriplePressed(MouseCode code)
 }
 
 void Panel::OnMouseReleased(MouseCode code)
-{
-}
-
-void Panel::OnMouseMismatchedRelease( MouseCode code, Panel* pPressedPanel )
 {
 }
 
@@ -4391,7 +4302,6 @@ int Panel::ComputePos( const char *pszInput, int &nPos, const int& nSize, const 
 	const int nFlagProportionalParent = bX ? BUILDMODE_SAVE_XPOS_PROPORTIONAL_PARENT : BUILDMODE_SAVE_YPOS_PROPORTIONAL_PARENT;
 
 	int nFlags = 0;
-	int nPosDelta = 0;
 	if ( pszInput )
 	{
 		// look for alignment flags
@@ -4430,6 +4340,7 @@ int Panel::ComputePos( const char *pszInput, int &nPos, const int& nSize, const 
 			flProportion = (float)nPos / (float)nOldPos;
 		}
 
+		int nPosDelta = 0;
 		if ( nFlags & nFlagProportionalSlef )
 		{
 			nPosDelta = nSize * flPos;
@@ -4458,38 +4369,7 @@ int Panel::ComputePos( const char *pszInput, int &nPos, const int& nSize, const 
 		}
 	}
 
-	if ( tf_debug_tabcontainer.GetBool() && !Q_stricmp( "TabContainer", GetName() ) )
-	{
-		Msg( "TabContainer nFlags:%x nPos:%d nParentSize:%d nPosDelta:%d nSize:%d GetParent:%p (%s) pszInput:'%s'\n",
-				nFlags, nPos, nParentSize, nPosDelta, nSize, GetParent(), GetParent() ? GetParent()->GetName() : "??",
-				pszInput ? pszInput : "??" );
-	}
-
 	return nFlags;
-}
-
-Panel::PinCorner_e GetPinCornerFromString( const char* pszCornerName )
-{
-	if ( pszCornerName == NULL )
-	{
-		return Panel::PIN_TOPLEFT;
-	}
-
-	// Optimize for all the old entries of a single digit
-	if ( strlen( pszCornerName ) == 1 )
-	{
-		return (Panel::PinCorner_e)atoi( pszCornerName );
-	}
-
-	for( int i=0; i<ARRAYSIZE( g_PinCornerStrings ); ++i )
-	{
-		if ( !Q_stricmp( g_PinCornerStrings[i], pszCornerName ) )
-		{
-			return (Panel::PinCorner_e)i;
-		}
-	}
-
-	return Panel::PIN_TOPLEFT;
 }
 
 //-----------------------------------------------------------------------------
@@ -4763,19 +4643,6 @@ void Panel::ApplySettings(KeyValues *inResourceData)
 		SetName(newName);
 	}
 
-	// Automatically add an action signal target if one is specified.  This allows for
-	// nested child buttons to add their distant parents as action signal targets.
-	int nActionSignalLevel = inResourceData->GetInt( "actionsignallevel", -1 );
-	if ( nActionSignalLevel != -1 )
-	{
-		Panel *pActionSignalTarget = this;
-		while( nActionSignalLevel-- )
-		{
-			pActionSignalTarget = pActionSignalTarget->GetParent();
-		}
-		AddActionSignalTarget( pActionSignalTarget );
-	}
-
 	// check to see if we need to render to the frame buffer even if 
 	// stereo mode is trying to render all of the ui to a render target
 	m_bForceStereoRenderToFrameBuffer = inResourceData->GetBool( "ForceStereoRenderToFrameBuffer", false );
@@ -4794,8 +4661,8 @@ void Panel::ApplySettings(KeyValues *inResourceData)
 	//=============================================================================
 
 	const char *pszSiblingName = inResourceData->GetString("pin_to_sibling", NULL);
-	PinCorner_e pinOurCornerToSibling = GetPinCornerFromString( inResourceData->GetString( "pin_corner_to_sibling", NULL ) );
-	PinCorner_e pinSiblingCorner = GetPinCornerFromString( inResourceData->GetString( "pin_to_sibling_corner", NULL ) );
+	PinCorner_e pinOurCornerToSibling = (PinCorner_e)inResourceData->GetInt( "pin_corner_to_sibling", PIN_TOPLEFT );
+	PinCorner_e pinSiblingCorner = (PinCorner_e)inResourceData->GetInt( "pin_to_sibling_corner", PIN_TOPLEFT );
 	PinToSibling( pszSiblingName, pinOurCornerToSibling, pinSiblingCorner );
 
 
@@ -4834,8 +4701,6 @@ void Panel::ApplySettings(KeyValues *inResourceData)
 	{
 		SetKeyBoardInputEnabled( atoi( pKeyboardInputEnabled ) );
 	}
-
-	OnChildSettingsApplied( inResourceData, this );
 }
 
 //-----------------------------------------------------------------------------
@@ -8666,7 +8531,7 @@ void VguiPanelGetSortedChildPanelList( Panel *pParentPanel, void *pSortedPanels 
 	}
 }
 
-void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, char *pchFilter /*= NULL*/, int nFilterType /*= 0*/ )
+void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, const char *pchFilter /*= NULL*/, int nFilterType /*= 0*/ )
 {
 	CUtlSortVector< SortedPanel_t, CSortedPanelYLess > *pList = reinterpret_cast< CUtlSortVector< SortedPanel_t, CSortedPanelYLess >* >( pSortedPanels );
 

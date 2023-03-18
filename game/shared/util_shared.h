@@ -358,6 +358,14 @@ void		UTIL_StringToIntArray( int *pVector, int count, const char *pString );
 void		UTIL_StringToFloatArray( float *pVector, int count, const char *pString );
 void		UTIL_StringToColor32( color32 *color, const char *pString );
 
+#ifdef MAPBASE
+// Version of UTIL_StringToIntArray that doesn't set all untouched array elements to 0.
+void		UTIL_StringToIntArray_PreserveArray( int *pVector, int count, const char *pString );
+
+// Version of UTIL_StringToFloatArray that doesn't set all untouched array elements to 0.
+void		UTIL_StringToFloatArray_PreserveArray( float *pVector, int count, const char *pString );
+#endif
+
 CBasePlayer *UTIL_PlayerByIndex( int entindex );
 
 //=============================================================================
@@ -441,8 +449,8 @@ inline float DistanceToRay( const Vector &pos, const Vector &rayStart, const Vec
 	public: \
 		interfaceName( bool bAutoAdd = true ); \
 		virtual ~interfaceName(); \
-		static void AddToAutoList( interfaceName *pElement ) { m_##interfaceName##AutoList.AddToTail( pElement ); } \
-		static void RemoveFromAutoList( interfaceName *pElement ) { m_##interfaceName##AutoList.FindAndFastRemove( pElement ); } \
+		static void Add( interfaceName *pElement ) { m_##interfaceName##AutoList.AddToTail( pElement ); } \
+		static void Remove( interfaceName *pElement ) { m_##interfaceName##AutoList.FindAndFastRemove( pElement ); } \
 		static const CUtlVector< interfaceName* >& AutoList( void ) { return m_##interfaceName##AutoList; } \
 	private: \
 		static CUtlVector< interfaceName* > m_##interfaceName##AutoList; \
@@ -456,28 +464,14 @@ inline float DistanceToRay( const Vector &pos, const Vector &rayStart, const Vec
 	{ \
 		if ( bAutoAdd ) \
 		{ \
-			AddToAutoList( this ); \
+			Add( this ); \
 		} \
 	} \
 	interfaceName::~interfaceName() \
 	{ \
-		RemoveFromAutoList( this ); \
+		Remove( this ); \
 	}
 
-//--------------------------------------------------------------------------------------------------------------
-// This would do the same thing without requiring casts all over the place. Yes, it's a template, but 
-// DECLARE_AUTO_LIST requires a CUtlVector<T> anyway. TODO ask about replacing the macros with this.
-//template<class T>
-//class AutoList {
-//public:
-//	typedef CUtlVector<T*> AutoListType;
-//	static AutoListType& All() { return m_autolist; }
-//protected:
-//	AutoList() { m_autolist.AddToTail(static_cast<T*>(this)); }
-//	virtual ~AutoList() { m_autolist.FindAndFastRemove(static_cast<T*>(this)); }
-//private:
-//	static AutoListType m_autolist;
-//};
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -590,23 +584,34 @@ public:
 		return (m_timestamp > 0.0f) ? m_duration : 0.0f;
 	}
 
+	/// 1.0 for newly started, 0.0 for elapsed
+	float GetRemainingRatio( void ) const
+	{
+		if (HasStarted() && m_duration > 0.0f)
+		{
+			float left = GetRemainingTime() / m_duration;
+			if (left < 0.0f)
+				return 0.0f;
+			if (left > 1.0f)
+				return 1.0f;
+			return left;
+		}
+
+		return 0.0f;
+	}
+
 private:
 	float m_duration;
 	float m_timestamp;
-	virtual float Now( void ) const;		// work-around since client header doesn't like inlined gpGlobals->curtime
+	float Now( void ) const;		// work-around since client header doesn't like inlined gpGlobals->curtime
 };
 
-class RealTimeCountdownTimer : public CountdownTimer
-{
-	virtual float Now( void ) const OVERRIDE
-	{
-		return Plat_FloatTime();
-	}
-};
-
-char* ReadAndAllocStringValue( KeyValues *pSub, const char *pName, const char *pFilename = NULL );
+const char* ReadAndAllocStringValue( KeyValues *pSub, const char *pName, const char *pFilename = NULL );
 
 int UTIL_StringFieldToInt( const char *szValue, const char **pValueStrings, int iNumStrings );
+
+int UTIL_CountNumBitsSet( unsigned int nVar );
+int UTIL_CountNumBitsSet( uint64 nVar );
 
 //-----------------------------------------------------------------------------
 // Holidays

@@ -8,10 +8,6 @@
 #include "cbase.h"
 #include "ammodef.h"
 
-#if defined( VANCE ) && defined( GAME_DLL )
-#include "vance_player.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -59,12 +55,8 @@ bool CBaseCombatCharacter::Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmo
 
 	if ( m_hActiveWeapon )
 	{
-		if (!m_hActiveWeapon->Holster(pWeapon))
+		if ( !m_hActiveWeapon->Holster( pWeapon ) )
 			return false;
-			
-#ifdef VANCE
-		return true;
-#endif
 	}
 
 	m_hActiveWeapon = pWeapon;
@@ -86,21 +78,15 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 #else
 		IClientVehicle *pVehicle = pPlayer->GetVehicle();
 #endif
-		if ( pVehicle && !pPlayer->UsingStandardWeaponsInVehicle() )
+		if (pVehicle && !pPlayer->UsingStandardWeaponsInVehicle())
 			return false;
-
-#ifdef VANCE
-		if ( m_hDeployingWeapon || m_hDeployingWeapon.Get() == pWeapon )
-			return false;
-#ifndef CLIENT_DLL
-		if ( ( static_cast<CVancePlayer *>( pPlayer ) )->IsSpawning() )
-			return false;
-#endif
-#endif
-
 	}
 
+#ifdef MAPBASE
+	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) && !pWeapon->HasSpawnFlags(SF_WEAPON_NO_AUTO_SWITCH_WHEN_EMPTY) )
+#else
 	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) )
+#endif
 		return false;
 
 	if ( !pWeapon->CanDeploy() )
@@ -108,23 +94,8 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 	
 	if ( m_hActiveWeapon )
 	{
-		if ( !m_hActiveWeapon->CanHolster() && !pWeapon->ForceWeaponSwitch() )
+		if ( !m_hActiveWeapon->CanHolster() )
 			return false;
-
-		if ( IsPlayer() )
-		{
-			CBasePlayer *pPlayer = (CBasePlayer *)this;
-			// check if active weapon force the last weapon to switch
-			if ( m_hActiveWeapon->ForceWeaponSwitch() )
-			{
-				// last weapon wasn't allowed to switch, don't allow to switch to new weapon
-				CBaseCombatWeapon *pLastWeapon = pPlayer->GetLastWeapon();
-				if ( pLastWeapon && pWeapon != pLastWeapon && !pLastWeapon->CanHolster() && !pWeapon->ForceWeaponSwitch() )
-				{
-					return false;
-				}
-			}
-		}
 	}
 
 	return true;
@@ -138,17 +109,6 @@ CBaseCombatWeapon *CBaseCombatCharacter::GetActiveWeapon() const
 {
 	return m_hActiveWeapon;
 }
-
-#ifdef VANCE
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : CBaseCombatWeapon
-//-----------------------------------------------------------------------------
-CBaseCombatWeapon *CBaseCombatCharacter::GetDeployingWeapon() const
-{
-	return m_hDeployingWeapon;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -251,6 +211,16 @@ void CBaseCombatCharacter::SetBloodColor( int nBloodColor )
 {
 	m_bloodColor = nBloodColor;
 }
+
+#if defined(MAPBASE) && defined(GAME_DLL)
+//-----------------------------------------------------------------------------
+// Purpose: Sets blood color
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::InputSetBloodColor( inputdata_t &inputdata )
+{
+	SetBloodColor(inputdata.value.Int());
+}
+#endif
 
 //-----------------------------------------------------------------------------
 /**

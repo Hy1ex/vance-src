@@ -31,6 +31,11 @@ using namespace vgui;
 
 static CUtlSymbolTable g_ScriptSymbols(0, 128, true);
 
+#ifdef MAPBASE
+// Allows animation sequences to be overridden by map-specific files
+extern bool g_bUsingCustomHudAnimations;
+#endif
+
 // singleton accessor for animation controller for use by the vgui controls
 namespace vgui
 {
@@ -67,8 +72,6 @@ AnimationController::AnimationController(Panel *parent) : BaseClass(parent, NULL
 	m_sYPos = g_ScriptSymbols.AddString("ypos");
 	m_sWide = g_ScriptSymbols.AddString("wide");
 	m_sTall = g_ScriptSymbols.AddString("tall");
-
-	m_sModelPos = g_ScriptSymbols.AddString( "model_pos" );
 
 	m_flCurrentTime = 0.0f;
 }
@@ -319,18 +322,47 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 			return false;
 		}
 		
-		int seqIndex;
+		int seqIndex = -1;
 		UtlSymId_t nameIndex = g_ScriptSymbols.AddString(token);
 				
-		// Create a new sequence
-		seqIndex = m_Sequences.AddToTail();
+#ifdef MAPBASE
+		if (g_bUsingCustomHudAnimations)
+		{
+			// look through for the sequence
+			for (seqIndex = 0; seqIndex < m_Sequences.Count(); seqIndex++)
+			{
+				if (m_Sequences[seqIndex].name == nameIndex)
+					break;
+			}
+
+			if (seqIndex >= m_Sequences.Count())
+				seqIndex = -1;
+			else
+			{
+				// Clear some stuff
+				m_Sequences[seqIndex].cmdList.RemoveAll();
+			}
+		}
+
+		if (seqIndex == -1)
+#endif
+		{
+			// Create a new sequence
+			seqIndex = m_Sequences.AddToTail();
+		}
+
 		AnimSequence_t &seq = m_Sequences[seqIndex];
 		seq.name = nameIndex;
 		seq.duration = 0.0f;
 
 		// get the open brace or a conditional
 		pMem = ParseFile(pMem, token, NULL);
+#ifdef MAPBASE
+		// Fixes ! conditionals
+		if ( Q_stristr( token, "[$" ) || Q_stristr( token, "[!$" ) )
+#else
 		if ( Q_stristr( token, "[$" ) )
+#endif
 		{
 			bAccepted = EvaluateConditional( token );
 
@@ -510,34 +542,6 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 				pMem = ParseFile(pMem, token, NULL);
 				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
 			}
-			else if (!stricmp(token, "runeventchild"))
-			{
-				animCmd.commandType = CMD_RUNEVENTCHILD;
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.variable = g_ScriptSymbols.AddString(token);
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.event = g_ScriptSymbols.AddString(token);
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
-			}
-			else if (!stricmp(token, "firecommand"))
-			{
-				animCmd.commandType = CMD_FIRECOMMAND;
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.variable = g_ScriptSymbols.AddString(token);
-			}
-			else if (!stricmp(token, "setvisible"))
-			{
-				animCmd.commandType = CMD_SETVISIBLE;
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.variable = g_ScriptSymbols.AddString(token);
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.variable2 = atoi(token);
-				pMem = ParseFile(pMem, token, NULL);
-				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
-			}
 			else if (!stricmp(token, "stopevent"))
 			{
 				animCmd.commandType = CMD_STOPEVENT;
@@ -623,7 +627,12 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 			
 			// Look ahead one token for a conditional
 			char *peek = ParseFile(pMem, token, NULL);
+#ifdef MAPBASE
+			// Fixes ! conditionals
+			if ( Q_stristr( token, "[$" ) || Q_stristr( token, "[!$" ) )
+#else
 			if ( Q_stristr( token, "[$" ) )
+#endif
 			{
 				if ( !EvaluateConditional( token ) )
 				{
@@ -689,11 +698,9 @@ void AnimationController::UpdatePostedMessages(bool bRunToCompletion)
 		case CMD_RUNEVENT:
 			{
 				RanEvent_t curEvent;
-				curEvent.pParent = NULL;
 				curEvent.event = msg.event;
-
 				curEvent.pParent = msg.parent.Get();
-				
+
 				// run the event, but only if we haven't already run it this frame, for this parent
 				if (!eventsRanThisFrame.HasElement(curEvent))
 				{
@@ -701,37 +708,6 @@ void AnimationController::UpdatePostedMessages(bool bRunToCompletion)
 					RunCmd_RunEvent(msg);
 				}
 			}	
-			break;
-		case CMD_RUNEVENTCHILD:
-			{
-				RanEvent_t curEvent;
-				curEvent.pParent = NULL;
-				curEvent.event =  msg.event;
-
-				curEvent.pParent = msg.parent.Get()->FindChildByName( g_ScriptSymbols.String(msg.variable) );
-				msg.parent = curEvent.pParent;
-		
-				// run the event, but only if we haven't already run it this frame, for this parent
-				if (!eventsRanThisFrame.HasElement(curEvent))
-				{
-					eventsRanThisFrame.AddToTail(curEvent);
-					RunCmd_RunEvent(msg);
-				}
-			}
-			break;
-		case CMD_FIRECOMMAND:
-			{
-				msg.parent->OnCommand( g_ScriptSymbols.String(msg.variable) );
-			}
-			break;
-		case CMD_SETVISIBLE:
-			{
-				Panel* pPanel = msg.parent.Get()->FindChildByName( g_ScriptSymbols.String(msg.variable) );
-				if ( pPanel )
-				{
-					pPanel->SetVisible( msg.variable2 == 1 );
-				}
-			}
 			break;
 		case CMD_STOPEVENT:
 			RunCmd_StopEvent(msg);
@@ -1007,63 +983,6 @@ bool AnimationController::StartAnimationSequence(Panel *pWithinParent, const cha
 	}
 
 	return true;	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: stops an animation sequence script
-//-----------------------------------------------------------------------------
-bool AnimationController::StopAnimationSequence( Panel *pWithinParent, const char *sequenceName )
-{
-	Assert( pWithinParent );
-
-	// lookup the symbol for the name
-	UtlSymId_t seqName = g_ScriptSymbols.Find( sequenceName );
-	if (seqName == UTL_INVAL_SYMBOL)
-		return false;
-
-	// remove the existing command from the queue
-	RemoveQueuedAnimationCommands( seqName, pWithinParent );
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Runs a custom command from code, not from a script file
-//-----------------------------------------------------------------------------
-void AnimationController::CancelAnimationsForPanel( Panel *pWithinParent )
-{
-	// Msg("Removing queued anims for sequence %s\n", g_ScriptSymbols.String(seqName));
-
-	// remove messages posted by this sequence
-	// if pWithinParent is specified, remove only messages under that parent
-	{
-		for (int i = 0; i < m_PostedMessages.Count(); i++)
-		{
-			if ( m_PostedMessages[i].parent == pWithinParent )
-			{
-				m_PostedMessages.Remove(i);
-				--i;
-			}
-		}
-	}
-
-	// remove all animations
-	// if pWithinParent is specified, remove only animations under that parent
-	for (int i = 0; i < m_ActiveAnimations.Count(); i++)
-	{
-		Panel *animPanel = m_ActiveAnimations[i].panel;
-
-		if ( !animPanel )
-			continue;
-
-		Panel *foundPanel = pWithinParent->FindChildByName(animPanel->GetName(),true);
-
-		if ( foundPanel != animPanel )
-			continue;
-
-		m_ActiveAnimations.Remove(i);
-		--i;
-	}
 }
 
 //-----------------------------------------------------------------------------

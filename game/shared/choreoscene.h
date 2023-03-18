@@ -84,6 +84,9 @@ public:
 
 	// Event callback handler
 	void			SetEventCallbackInterface( IChoreoEventCallback *callback );
+#ifdef MAPBASE
+	IChoreoEventCallback	*GetEventCallbackInterface() { return m_pIChoreoEventCallback; }
+#endif
 
 	// Loading
 	bool			ParseFromBuffer( char const *pFilename, ISceneTokenProcessor *tokenizer );
@@ -325,8 +328,6 @@ private:
 
 	// Current simulation time
 	float			m_flCurrentTime;
-
-	float			m_flStartLoopTime;
 
 	float			m_flStartTime;
 	float			m_flEndTime;

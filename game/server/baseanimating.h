@@ -44,6 +44,7 @@ public:
 
 	DECLARE_DATADESC();
 	DECLARE_SERVERCLASS();
+	DECLARE_ENT_SCRIPTDESC();
 
 	virtual void SetModel( const char *szModelName );
 	virtual void Activate();
@@ -83,6 +84,7 @@ public:
 	virtual void	StudioFrameAdvance(); // advance animation frame to some time in the future
 	void StudioFrameAdvanceManual( float flInterval );
 	bool	IsValidSequence( int iSequence );
+	virtual void	ReachedEndOfSequence() { return; }
 
 	inline float					GetPlaybackRate();
 	inline void						SetPlaybackRate( float rate );
@@ -99,6 +101,9 @@ public:
 	inline float SequenceDuration( void ) { return SequenceDuration( m_nSequence ); }
 	float	SequenceDuration( CStudioHdr *pStudioHdr, int iSequence );
 	inline float SequenceDuration( int iSequence ) { return SequenceDuration(GetModelPtr(), iSequence); }
+#ifdef MAPBASE_VSCRIPT
+	inline float ScriptSequenceDuration( int iSequence ) { return SequenceDuration(GetModelPtr(), iSequence); }
+#endif
 	float	GetSequenceCycleRate( CStudioHdr *pStudioHdr, int iSequence );
 	inline float	GetSequenceCycleRate( int iSequence ) { return GetSequenceCycleRate(GetModelPtr(),iSequence); }
 	float	GetLastVisibleCycle( CStudioHdr *pStudioHdr, int iSequence );
@@ -108,7 +113,6 @@ public:
 	void    ResetEventIndexes ( void );
 	int		SelectWeightedSequence ( Activity activity );
 	int		SelectWeightedSequence ( Activity activity, int curSequence );
-	int		SelectWeightedSequenceFromModifiers( Activity activity, CUtlSymbol *pActivityModifiers, int iModifierCount );
 	int		SelectHeaviestSequence ( Activity activity );
 	int		LookupActivity( const char *label );
 	int		LookupSequence ( const char *label );
@@ -141,6 +145,9 @@ public:
 	bool HasAnimEvent( int nSequence, int nEvent );
 	virtual	void DispatchAnimEvents ( CBaseAnimating *eventHandler ); // Handle events that have happend since last time called up until X seconds into the future
 	virtual void HandleAnimEvent( animevent_t *pEvent );
+#ifdef MAPBASE_VSCRIPT
+	bool ScriptHookHandleAnimEvent( animevent_t *pEvent );
+#endif
 
 	int		LookupPoseParameter( CStudioHdr *pStudioHdr, const char *szName );
 	inline int	LookupPoseParameter( const char *szName ) { return LookupPoseParameter(GetModelPtr(), szName); }
@@ -187,6 +194,29 @@ public:
 	bool GetAttachment( int iAttachment, Vector &absOrigin, QAngle &absAngles );
 	int GetAttachmentBone( int iAttachment );
 	virtual bool GetAttachment( int iAttachment, matrix3x4_t &attachmentToWorld );
+	const Vector& ScriptGetAttachmentOrigin(int iAttachment);
+	const Vector& ScriptGetAttachmentAngles(int iAttachment);
+#ifdef MAPBASE_VSCRIPT
+	HSCRIPT ScriptGetAttachmentMatrix(int iAttachment);
+	float	ScriptGetPoseParameter(const char* szName);
+	void	ScriptSetPoseParameter(const char* szName, float fValue);
+
+	void	ScriptGetBoneTransform( int iBone, HSCRIPT hTransform );
+
+	int		ScriptGetSequenceActivity( int iSequence ) { return GetSequenceActivity( iSequence ); }
+	float	ScriptGetSequenceMoveDist( int iSequence ) { return GetSequenceMoveDist( GetModelPtr(), iSequence ); }
+	int		ScriptSelectHeaviestSequence( int activity ) { return SelectHeaviestSequence( (Activity)activity ); }
+	int		ScriptSelectWeightedSequence( int activity, int curSequence ) { return SelectWeightedSequence( (Activity)activity, curSequence ); }
+
+	HSCRIPT ScriptGetSequenceKeyValues( int iSequence );
+
+	// For VScript
+	int		GetSkin() { return m_nSkin; }
+	void	SetSkin( int iSkin ) { m_nSkin = iSkin; }
+
+	static ScriptHook_t	g_Hook_OnServerRagdoll;
+	static ScriptHook_t	g_Hook_HandleAnimEvent;
+#endif
 
 	// These return the attachment in the space of the entity
 	bool GetAttachmentLocal( const char *szName, Vector &origin, QAngle &angles );
@@ -298,6 +328,11 @@ public:
 	void InputIgniteNumHitboxFires( inputdata_t &inputdata );
 	void InputIgniteHitboxFireScale( inputdata_t &inputdata );
 	void InputBecomeRagdoll( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputCreateSeparateRagdoll( inputdata_t &inputdata );
+	void InputCreateSeparateRagdollClient( inputdata_t &inputdata );
+	void InputSetPoseParameter( inputdata_t &inputdata );
+#endif
 
 	// Dissolve, returns true if the ragdoll has been created
 	bool Dissolve( const char *pMaterialName, float flStartTime, bool bNPCOnly = true, int nDissolveType = 0, Vector vDissolverOrigin = vec3_origin, int iMagnitude = 0 );
@@ -309,11 +344,19 @@ public:
 	float				m_flLastEventCheck;	// cycle index of when events were last checked
 
 	virtual void SetLightingOriginRelative( CBaseEntity *pLightingOriginRelative );
+#ifdef MAPBASE
+	void SetLightingOriginRelative( string_t strLightingOriginRelative, inputdata_t *inputdata = NULL );
+#else
 	void SetLightingOriginRelative( string_t strLightingOriginRelative );
+#endif
 	CBaseEntity *GetLightingOriginRelative();
 
 	virtual void SetLightingOrigin( CBaseEntity *pLightingOrigin );
+#ifdef MAPBASE
+	void SetLightingOrigin( string_t strLightingOrigin, inputdata_t *inputdata = NULL );
+#else
 	void SetLightingOrigin( string_t strLightingOrigin );
+#endif
 	CBaseEntity *GetLightingOrigin();
 
 	const float* GetPoseParameterArray() { return m_flPoseParameter.Base(); }
@@ -332,13 +375,6 @@ public:
 
 	bool PrefetchSequence( int iSequence );
 
-#ifdef VANCE
-	virtual bool IsHackable() { return m_bHackable; }
-
-	bool		IsHacked() { return m_bHacked; }
-	virtual void Hack( CBaseEntity *pActivator, CBaseEntity *pCaller );
-#endif
-
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();
@@ -347,6 +383,14 @@ private:
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );
 	void InputSetLightingOrigin( inputdata_t &inputdata );
 	void InputSetModelScale( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputSetModel( inputdata_t &inputdata );
+
+	void InputSetCycle( inputdata_t &inputdata );
+	void InputSetPlaybackRate( inputdata_t &inputdata );
+
+public: // From Alien Swarm SDK
+#endif
 
 	bool CanSkipAnimation( void );
 
@@ -385,11 +429,6 @@ public:
 	QAngle	GetStepAngles( void ) const;
 
 private:
-#ifdef VANCE
-	bool				m_bHackable;
-	bool				m_bHacked;
-#endif
-
 	bool				m_bSequenceFinished;// flag set when StudioAdvanceFrame moves across a frame boundry
 	bool				m_bSequenceLoops;	// true if the sequence loops
 	bool				m_bResetSequenceInfoOnLoad; // true if a ResetSequenceInfo was queued up during dynamic load
@@ -428,8 +467,8 @@ protected:
 
 public:
 	COutputEvent m_OnIgnite;
-#ifdef VANCE
-	COutputEvent m_OnHacked;
+#ifdef MAPBASE
+	COutputEHANDLE m_OnServerRagdoll;
 #endif
 
 private:
@@ -452,14 +491,10 @@ inline CStudioHdr *CBaseAnimating::GetModelPtr( void )
 		return NULL;
 
 #ifdef _DEBUG
-	if ( !HushAsserts() )
-	{
-		// GetModelPtr() is often called before OnNewModel() so go ahead and set it up first chance.
-		static IDataCacheSection *pModelCache = datacache->FindSection( "ModelData" );
-		AssertOnce( pModelCache->IsFrameLocking() );
-	}
+	// GetModelPtr() is often called before OnNewModel() so go ahead and set it up first chance.
+	static IDataCacheSection *pModelCache = datacache->FindSection( "ModelData" );
+	AssertOnce( pModelCache->IsFrameLocking() );
 #endif
-
 	if ( !m_pStudioHdr && GetModel() )
 	{
 		LockStudioHdr();

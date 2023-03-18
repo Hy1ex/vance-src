@@ -90,14 +90,13 @@ struct directlight_t
 	float m_flStartFadeDistance;
 	float m_flEndFadeDistance;
 	float m_flCapDist;										// max distance to feed in
-	bool m_bStatic;											// for radiosity only calculations (direct light is assumed to be rendered in game)
 
 	directlight_t(void)
 	{
 		m_flEndFadeDistance = -1.0;							// end<start indicates not set
 		m_flStartFadeDistance= 0.0;
 		m_flCapDist = 1.0e22;
-		m_bStatic = false;
+
 	}
 };
 
@@ -280,15 +279,10 @@ extern float		maxchop;
 extern FileHandle_t	pFileSamples[4][4];
 extern qboolean		g_bLowPriority;
 extern qboolean		do_fast;
-extern bool			do_fastsample;
-extern bool			do_soften;
-extern int			fastsamples;
 extern bool			g_bInterrupt;		// Was used with background lighting in WC. Tells VRAD to stop lighting.
 extern IIncremental *g_pIncremental;	// null if not doing incremental lighting
-extern bool			g_bDumpPropLightmaps;
 
 extern float g_flSkySampleScale;								// extra sampling factor for indirect light
-extern float g_flSunSampleScale;								// extra sampling factor for indirect sunlight
 
 extern bool g_bLargeDispSampleRadius;
 extern bool g_bStaticPropPolys;
@@ -369,10 +363,7 @@ void BuildFacelights (int facenum, int threadnum);
 void PrecompLightmapOffsets();
 void FinalLightFace (int threadnum, int facenum);
 void PvsForOrigin (Vector& org, byte *pvs);
-void ConvertRGBExp32ToRGBA8888( const ColorRGBExp32 *pSrc, unsigned char *pDst, Vector* _optOutLinear = NULL );
-void ConvertRGBExp32ToLinear(const ColorRGBExp32 *pSrc, Vector* pDst);
-void ConvertLinearToRGBA8888( const Vector *pSrc, unsigned char *pDst );
-
+void ConvertRGBExp32ToRGBA8888( const ColorRGBExp32 *pSrc, unsigned char *pDst );
 
 inline byte PVSCheck( const byte *pvs, int iCluster )
 {
@@ -459,11 +450,11 @@ struct SSE_sampleLightOutput_t
 #define GATHERLFLAGS_IGNORE_NORMALS 2
 
 // SSE Gather light stuff
-bool GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int facenum, 
+void GatherSampleLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int facenum, 
 					   FourVectors const& pos, FourVectors *pNormals, int normalCount, int iThread,
 					   int nLFlags = 0,					// GATHERLFLAGS_xxx
 					   int static_prop_to_skip=-1,
-					   float flEpsilon = 0.0, bool fastsample = false);
+					   float flEpsilon = 0.0 );
 //void GatherSampleSkyLightSSE( SSE_sampleLightOutput_t &out, directlight_t *dl, int facenum, 
 //							 FourVectors const& pos, FourVectors *pNormals, int normalCount, int iThread,
 //							 int nLFlags = 0,

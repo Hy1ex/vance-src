@@ -17,21 +17,20 @@
 #define MAX_COMMAND_LENGTH 64
 #define MAX_CREATE_ERROR_STRING 96
 
-class CBaseIssue	// Base class concept for vote issues (i.e. Kick Player).  Created per level-load and destroyed by CVoteController's dtor.
+class CBaseIssue	// Abstract base class for all things-that-can-be-voted-on.  
 {
 public:
-	CBaseIssue( const char *typeString );
-	virtual				 ~CBaseIssue();
+	CBaseIssue(const char *typeString);
+	virtual ~CBaseIssue();
 	const char			*GetTypeString( void );						// Connection between console command and specific type of issue
-	virtual const char	*GetTypeStringLocalized( void ) { return ""; }	// When empty, the client uses the classname string and prepends "#Vote_"
-	virtual const char	*GetDetailsString( void );
+	virtual const char	*GetDetailsString();
 	virtual void		SetIssueDetails( const char *pszDetails );	// We need to know the details part of the con command for later
 	virtual void		OnVoteFailed( int iEntityHoldingVote );		// The moment the vote fails, also has some time for feedback before the window goes away
 	virtual void		OnVoteStarted( void ) {}					// Called as soon as the vote starts
 	virtual bool		IsEnabled( void ) { return false; }			// Query the issue to see if it's enabled
 	virtual bool		CanTeamCallVote( int iTeam ) const;			// Can someone on the given team call this vote?
 	virtual bool		CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime ); // Can this guy hold a vote on this issue?
-	virtual bool		IsTeamRestrictedVote( void );				// Restrict access and visibility of this vote to a specific team?
+	virtual bool		IsAllyRestrictedVote( void );				// Can only members of the same team vote on this?
 	virtual const char *GetDisplayString( void ) = 0;				// The string that will be passed to the client for display
 	virtual void		ExecuteCommand( void ) = 0;					// Where the magic happens.  Do your thing.
 	virtual void		ListIssueDetails( CBasePlayer *pForWhom ) = 0;	// Someone would like to know all your valid details
@@ -42,10 +41,6 @@ public:
 	virtual void		SetYesNoVoteCount( int iNumYesVotes, int iNumNoVotes, int iNumPotentialVotes );
 	virtual bool		GetVoteOptions( CUtlVector <const char*> &vecNames );	// We use this to generate options for voting
 	virtual bool		BRecordVoteFailureEventForEntity( int iVoteCallingEntityIndex ) const { return iVoteCallingEntityIndex != DEDICATED_SERVER; }
-	void				SetIssueCooldownDuration( float flDuration ) { m_flNextCallTime = gpGlobals->curtime + flDuration; }	// The issue can not be raised again for this period of time (in seconds)
-	virtual float		GetQuorumRatio( void );						// Each issue can decide the required ratio of voted-vs-abstained
-
-	CHandle< CBasePlayer > m_hPlayerTarget;							// If the target of the issue is a player, we should store them here
 
 protected:
 	static void			ListStandardNoArgCommand( CBasePlayer *forWhom, const char *issueString );		// List a Yes vote command
@@ -56,13 +51,14 @@ protected:
 		float	flLockoutTime;					
 	};
 
-	CUtlVector< FailedVote* > m_FailedVotes;
-	char m_szTypeString[MAX_COMMAND_LENGTH];
-	char m_szDetailsString[MAX_VOTE_DETAILS_LENGTH];
+	CUtlVector<FailedVote *> m_FailedVotes;
+
+	char				m_szTypeString[MAX_COMMAND_LENGTH];
+	char				m_szDetailsString[MAX_VOTE_DETAILS_LENGTH];
+
 	int m_iNumYesVotes;
 	int m_iNumNoVotes;
 	int m_iNumPotentialVotes;
-	float m_flNextCallTime;
 };
 
 class CVoteController : public CBaseEntity
@@ -89,7 +85,6 @@ public:
 
 	virtual void	Spawn( void );
 	virtual int		UpdateTransmitState( void );
-	virtual bool	IsVoteSystemEnabled( void );
 
 	bool			SetupVote( int iEntIndex );	// This creates a list of issues for the UI
 	bool			CreateVote( int iEntIndex, const char *pszTypeString, const char *pszDetailString );	// This is what the UI passes in
@@ -98,19 +93,13 @@ public:
 	void			ListIssues( CBasePlayer *pForWhom );
 	bool			IsValidVoter( CBasePlayer *pWhom );
 	bool			CanTeamCastVote( int iTeam ) const;
-	void			SendVoteCreationFailedMessage( vote_create_failed_t nReason, CBasePlayer *pVoteCaller, int nTime = -1 );
-	void			SendVoteFailedToPassMessage( vote_create_failed_t nReason );
+	void			SendVoteFailedMessage( vote_create_failed_t nReason = VOTE_FAILED_GENERIC, CBasePlayer *pVoteCaller = NULL, int nTime = -1 );
 	void			VoteChoice_Increment( int nVoteChoice );
 	void			VoteChoice_Decrement( int nVoteChoice );
-	int				GetVoteIssueIndexWithHighestCount( void );
+	int				GetWinningVoteOption( void );
 	void			TrackVoteCaller( CBasePlayer *pPlayer );
-	bool			CanEntityCallVote( CBasePlayer *pPlayer, int &nCooldown, vote_create_failed_t &nErrorCode );
+	bool			CanEntityCallVote( CBasePlayer *pPlayer, int &nCooldown );
 	bool			IsVoteActive( void ) { return m_iActiveIssueIndex != INVALID_ISSUE; }
-	int				GetNumVotesCast( void );
-
-	void			AddPlayerToKickWatchList( CSteamID steamID, float flDuration );		// Band-aid until we figure out how player's avoid kick votes
-	void			AddPlayerToNameLockedList( CSteamID steamID, float flDuration, int nUserID );
-	bool			IsPlayerBeingKicked( CBasePlayer *pPlayer );
 
 protected:
 	void			ResetData( void );
@@ -127,6 +116,7 @@ protected:
 	CountdownTimer	m_resetVoteTimer;							// when the current vote will end 
 	int				m_nVotesCast[MAX_PLAYERS + 1];				// arrays are zero-based and player indices are one-based
 	int				m_iEntityHoldingVote;
+	int				m_nHighestCountIndex;
 	
 	CUtlVector <CBaseIssue *>	m_potentialIssues;
 	CUtlVector <const char *>	m_VoteOptions;

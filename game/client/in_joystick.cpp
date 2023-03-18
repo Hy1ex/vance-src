@@ -25,7 +25,9 @@
 #include "tier0/icommandline.h"
 #include "inputsystem/iinputsystem.h"
 #include "inputsystem/ButtonCode.h"
+#if _MSC_VER < 1900
 #include "math.h"
+#endif
 #include "tier1/convar_serverbounded.h"
 #include "cam_thirdperson.h"
 
@@ -800,7 +802,7 @@ void CInput::JoyStickMove( float frametime, CUserCmd *cmd )
 
 		if ( m_flPreviousJoystickForward || m_flPreviousJoystickSide || m_flPreviousJoystickPitch || m_flPreviousJoystickYaw )
 		{
-			const Vector& vTempOffset = g_ThirdPersonManager.GetCameraOffsetAngles();
+			Vector vTempOffset = g_ThirdPersonManager.GetCameraOffsetAngles();
 
 			// update the ideal pitch and yaw
 			cam_idealpitch.SetValue( vTempOffset[ PITCH ] - viewangles[ PITCH ] );
