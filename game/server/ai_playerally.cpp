@@ -452,7 +452,7 @@ void CAI_PlayerAlly::GatherConditions( void )
 		
 		if ( bPlayerIsLooking )
 		{
-D			SetCondition( COND_TALKER_PLAYER_STARING );
+			SetCondition( COND_TALKER_PLAYER_STARING );
 			if ( m_flTimePlayerStartStare == 0 )
 				m_flTimePlayerStartStare = gpGlobals->curtime;
 		}
@@ -636,13 +636,13 @@ bool CAI_PlayerAlly::SelectSpeechResponse( AIConcept_t concept, const char *pszM
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-void CAI_PlayerAlly::SetPendingSpeech( AIConcept_t concept, AI_Response *pResponse )
+void CAI_PlayerAlly::SetPendingSpeech( AIConcept_t conceptId, AI_Response *pResponse )
 {
 	m_PendingResponse = *pResponse;
 #ifndef NEW_RESPONSE_SYSTEM
 	pResponse->Release();
 #endif
-	m_PendingConcept = concept;
+	m_PendingConcept = conceptId;
 	m_TimePendingSet = gpGlobals->curtime;
 }
 

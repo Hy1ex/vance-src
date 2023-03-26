@@ -44,7 +44,6 @@ $Project "tier1"
 		$File	"kvpacker.cpp"
 		$File	"lzmaDecoder.cpp"
 		$File	"lzss.cpp" [!$SOURCESDK]
-		$File	"math_proxy.cpp" [$POSIX]
 		$File	"mempool.cpp"
 		$File	"memstack.cpp"
 		$File	"NetAdr.cpp"

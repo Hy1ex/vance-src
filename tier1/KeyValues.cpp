@@ -71,7 +71,7 @@ public:
 			m_errorStack[m_errorIndex] = symName;
 		}
 		m_errorIndex++;
-		m_maxErrorIndex = max( m_maxErrorIndex, (m_errorIndex-1) );
+		m_maxErrorIndex = MAX( m_maxErrorIndex, (m_errorIndex-1) );
 		return m_errorIndex-1;
 	}
 
@@ -2051,6 +2051,12 @@ void KeyValues::RecursiveMergeKeyValues( KeyValues *baseKV )
 	}
 }
 
+static bool IsSteamDeck()
+{
+	static bool bIsSteamDeck = getenv( "SteamDeck" ) != nullptr || CommandLine()->FindParm( "-gamepadui" );
+	return bIsSteamDeck;
+}
+
 //-----------------------------------------------------------------------------
 // Returns whether a keyvalues conditional evaluates to true or false
 // Needs more flexibility with conditionals, checking convars would be nice.
@@ -2084,6 +2090,9 @@ bool EvaluateConditional( const char *str )
 
 	if ( Q_stristr( str, "$POSIX" ) )
 		return IsPosix() ^ bNot;
+
+	if ( Q_stristr( str, "$DECK" ) )
+		return IsSteamDeck() ^ bNot;
 
 #ifdef MAPBASE
 	// Custom conditional

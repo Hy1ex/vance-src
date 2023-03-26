@@ -1011,7 +1011,7 @@ bool CAI_LeadBehavior::Speak( AIConcept_t conceptId )
 		return false;
 
 	// If we haven't said the start speech, don't nag
-	bool bNag = ( FStrEq(conceptId,TLK_LEAD_COMINGBACK) || FStrEq(concept, TLK_LEAD_CATCHUP) || FStrEq(concept, TLK_LEAD_RETRIEVE) );
+	bool bNag = ( FStrEq(conceptId,TLK_LEAD_COMINGBACK) || FStrEq(conceptId, TLK_LEAD_CATCHUP) || FStrEq(conceptId, TLK_LEAD_RETRIEVE) );
 	if ( !m_hasspokenstart && bNag )
 		return false;
 
@@ -1022,7 +1022,7 @@ bool CAI_LeadBehavior::Speak( AIConcept_t conceptId )
 		// We ignore nag timers for this, because the response rules will control refire rates.
 		CAI_PlayerAlly *pAlly = dynamic_cast<CAI_PlayerAlly*>(GetOuter());
 		if ( pAlly )
- 			return pAlly->SpeakIfAllowed( conceptId, GetConceptModifiers( concept ) );
+ 			return pAlly->SpeakIfAllowed( conceptId, GetConceptModifiers( conceptId ) );
 	}
 
 	// Don't spam Nags
