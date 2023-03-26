@@ -1357,13 +1357,13 @@ int64 bf_read::ReadLongLong()
 
 float bf_read::ReadFloat()
 {
-	float retLocl;
-	Assert( sizeof(retLocl) == 4 );
-	ReadBits(&retLocl, 32);
+	float ret;
+	Assert( sizeof(ret) == 4 );
+	ReadBits(&ret, 32);
 
 	// Swap the float, since ReadBits reads raw data
-	LittleFloat( &retLocl, &retLocl );
-	return retLocl;
+	LittleFloat( &ret, &ret );
+	return ret;
 }
 
 bool bf_read::ReadBytes(void *pOut, int nBytes)

@@ -1759,7 +1759,7 @@ struct thinModelVertices_t
 	{
 		Assert( ( m_numBoneInfluences  >= 1 ) && ( m_numBoneInfluences  <= 3 ) );
 		Assert( ( boneWeights.numbones >= 1 ) && ( boneWeights.numbones <= m_numBoneInfluences ) );
-		int    numStoredWeights = max( 0, ( m_numBoneInfluences - 1 ) );
+		int    numStoredWeights = MAX( 0, ( m_numBoneInfluences - 1 ) );
 		float *pBaseWeight	= m_boneWeights + vertIndex*numStoredWeights;
 		char  *pBaseIndex	= m_boneIndices + vertIndex*m_numBoneInfluences;
 		for ( int i = 0; i < m_numBoneInfluences; i++ )
@@ -1829,7 +1829,7 @@ private:
 		Assert( pBoneWeights );
 		Assert( ( m_numBoneInfluences <= 1 ) || ( m_boneWeights != NULL ) );
 		Assert( ( m_numBoneInfluences <= 0 ) || ( m_boneIndices != NULL ) );
-		int    numStoredWeights = max( 0, ( m_numBoneInfluences - 1 ) );
+		int    numStoredWeights = MAX( 0, ( m_numBoneInfluences - 1 ) );
 		float *pBaseWeight	= m_boneWeights + vertIndex*numStoredWeights;
 		char  *pBaseIndex	= m_boneIndices + vertIndex*m_numBoneInfluences;
 		float  sum			= 0.0f;
@@ -2137,7 +2137,7 @@ struct studiohdr_t
 	int					GetSequenceActivity( int iSequence );
 	void				SetSequenceActivity( int iSequence, int iActivity );
 	int					GetActivityListVersion( void );
-	void				SetActivityListVersion( int iVersion ) const;
+	void				SetActivityListVersion( int version ) const;
 	int					GetEventListVersion( void );
 	void				SetEventListVersion( int version );
 	
@@ -2185,7 +2185,7 @@ struct studiohdr_t
 //public:
 	int					EntryNode( int iSequence );
 	int					ExitNode( int iSequence );
-	const char			*pszNodeName( int iNode );
+	char				*pszNodeName( int iNode );
 	int					GetTransition( int iFrom, int iTo ) const;
 
 	int					numflexdesc;
@@ -2395,7 +2395,7 @@ public:
 
 	int					EntryNode( int iSequence );
 	int					ExitNode( int iSequence );
-	const char			*pszNodeName( int iNode );
+	char				*pszNodeName( int iNode );
 	// FIXME: where should this one be?
 	int					GetTransition( int iFrom, int iTo ) const;
 

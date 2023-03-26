@@ -103,6 +103,16 @@ public:
 		return ( o.m_pObject == m_pObject );
 	}	
 
+	FORCEINLINE bool operator==( const T* pObj ) const
+	{
+		return ( pObj == m_pObject );
+	}	
+
+	FORCEINLINE bool operator==( std::nullptr_t ) const
+	{
+		return ( nullptr == m_pObject );
+	}	
+
 public:
 	CUtlReference *m_pNext;
 	CUtlReference *m_pPrev;

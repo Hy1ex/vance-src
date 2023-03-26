@@ -806,7 +806,7 @@ size_t Compress(Source* reader, Sink* writer) {
     size_t fragment_size;
     const char* fragment = reader->Peek(&fragment_size);
     DCHECK_NE(fragment_size, 0) << ": premature end of input";
-    const int num_to_read = min(N, kBlockSize);
+    const int num_to_read = MIN(N, kBlockSize);
     size_t bytes_read = fragment_size;
 
     int pending_advance = 0;

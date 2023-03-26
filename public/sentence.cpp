@@ -508,7 +508,7 @@ void CSentence::ParseWords( CUtlBuffer& buf )
 			// Parse phoneme
 			int code;
 			char phonemename[ 256 ];
-			float startLocl, endLocl;
+			float start, end;
 			float volume;
 
 			code = atoi( token );
@@ -516,9 +516,9 @@ void CSentence::ParseWords( CUtlBuffer& buf )
 			buf.GetString( token );
 			Q_strncpy( phonemename, token, sizeof( phonemename ) );
 			buf.GetString( token );
-			startLocl = atof( token );
+			start = atof( token );
 			buf.GetString( token );
-			endLocl = atof( token );
+			end = atof( token );
 			buf.GetString( token );
 			volume = atof( token );
 
@@ -526,8 +526,8 @@ void CSentence::ParseWords( CUtlBuffer& buf )
 			assert( pt );
 			pt->SetPhonemeCode( code );
 			pt->SetTag( phonemename );
-			pt->SetStartTime( startLocl );
-			pt->SetEndTime( endLocl );
+			pt->SetStartTime( start );
+			pt->SetEndTime( end );
 
 			AddPhonemeTag( wt, pt );
 		}
@@ -1096,7 +1096,7 @@ void CSentence::ResetToBase( void )
 void CSentence::MarkNewPhraseBase( void )
 {
 #if PHONEME_EDITOR
-	m_nResetWordBase = max( m_Words.Size(), 0 );
+	m_nResetWordBase = MAX( m_Words.Size(), 0 );
 #endif
 }
 
@@ -1304,9 +1304,9 @@ void CSentence::Append( float starttime, const CSentence& src )
 
 		// Offset times
 		int c = newWord->m_Phonemes.Count();
-		for ( int j = 0; j < c; ++j )
+		for ( int i = 0; i < c; ++i )
 		{
-			CPhonemeTag *tag = newWord->m_Phonemes[ j ];
+			CPhonemeTag *tag = newWord->m_Phonemes[ i ];
 			tag->AddStartTime( starttime );
 			tag->AddEndTime( starttime );
 		}
@@ -1491,10 +1491,10 @@ float CSentence::GetIntensity( float time, float endtime )
 	int end = i + 1;
 	int next = i + 2;
 
-	prev = max( -1, prev );
-	start = max( -1, start );
-	end = min( end, GetNumSamples() );
-	next = min( next, GetNumSamples() );
+	prev = MAX( -1, prev );
+	start = MAX( -1, start );
+	end = MIN( end, GetNumSamples() );
+	next = MIN( next, GetNumSamples() );
 
 	CEmphasisSample *esPre = GetBoundedSample( prev, endtime );
 	CEmphasisSample *esStart = GetBoundedSample( start, endtime );

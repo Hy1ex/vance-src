@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //
 //=============================================================================//
- //========= Copyright © 1996-2003, Valve LLC, All rights reserved. ============
+ //========= Copyright ï¿½ 1996-2003, Valve LLC, All rights reserved. ============
 //
 // The copyright to the contents herein is the property of Valve, L.L.C.
 // The contents may be used and/or copied only with the written permission of
@@ -309,8 +309,8 @@ bool BuildGroup::CursorMoved(int x, int y, Panel *panel)
 		
 		if (_dragMouseCode == MOUSE_RIGHT)
 		{
-			int newW = max( 1, _dragStartPanelSize[ 0 ] + x - _dragStartCursorPos[0] );
-			int newH = max( 1, _dragStartPanelSize[ 1 ] + y - _dragStartCursorPos[1] );
+			int newW = MAX( 1, _dragStartPanelSize[ 0 ] + x - _dragStartCursorPos[0] );
+			int newH = MAX( 1, _dragStartPanelSize[ 1 ] + y - _dragStartCursorPos[1] );
 
 			bool shift = ( input()->IsKeyDown(KEY_LSHIFT) || input()->IsKeyDown(KEY_RSHIFT) );
 			bool ctrl = ( input()->IsKeyDown(KEY_LCONTROL) || input()->IsKeyDown(KEY_RCONTROL) );

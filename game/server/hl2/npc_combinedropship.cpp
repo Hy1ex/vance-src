@@ -2436,7 +2436,7 @@ void CNPC_CombineDropship::PrescheduleThink( void )
 						float flSpeed = GetAbsVelocity().Length();
 						Vector vecVelocity = vecToTarget;
 						VectorNormalize( vecVelocity );
-						SetAbsVelocity( vecVelocity * min(flSpeed,flDistance) );
+						SetAbsVelocity( vecVelocity * MIN(flSpeed,flDistance) );
 					}
 					else
 					*/

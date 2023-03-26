@@ -1758,13 +1758,13 @@ void CAI_ActBusyBehavior::PlaySoundForActBusy( busyanimparts_t AnimPart )
 #ifdef NEW_RESPONSE_SYSTEM
 				CAI_Concept concept = STRING(pBusyAnim->iszSounds[AnimPart]);
 #else
-				const char *concept = STRING(pBusyAnim->iszSounds[AnimPart]);
+				const char *conceptId = STRING(pBusyAnim->iszSounds[AnimPart]);
 #endif
 
 				// Must be able to speak the concept
-				if ( !pExpresser->IsSpeaking() && pExpresser->CanSpeakConcept( concept ) )
+				if ( !pExpresser->IsSpeaking() && pExpresser->CanSpeakConcept( conceptId ) )
 				{
-					pExpresser->Speak( concept );
+					pExpresser->Speak( conceptId );
 				}
 			}
 		}

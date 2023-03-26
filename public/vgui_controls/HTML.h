@@ -165,13 +165,9 @@ protected:
 
 private:
 	STEAM_CALLBACK( HTML, BrowserNeedsPaint, HTML_NeedsPaint_t, m_NeedsPaint );
-	STEAM_CALLBACK( HTML, BrowserComboNeedsPaint, HTML_ComboNeedsPaint_t, m_ComboNeedsPaint );
 	STEAM_CALLBACK( HTML, BrowserStartRequest, HTML_StartRequest_t, m_StartRequest );
 	STEAM_CALLBACK( HTML, BrowserURLChanged, HTML_URLChanged_t, m_URLChanged );
 	STEAM_CALLBACK( HTML, BrowserFinishedRequest, HTML_FinishedRequest_t, m_FinishedRequest );
-	STEAM_CALLBACK( HTML, BrowserShowPopup, HTML_ShowPopup_t, m_ShowPopup );
-	STEAM_CALLBACK( HTML, BrowserHidePopup, HTML_HidePopup_t, m_HidePopup );
-	STEAM_CALLBACK( HTML, BrowserSizePopup, HTML_SizePopup_t, m_SizePopup );
 
 	STEAM_CALLBACK( HTML, BrowserOpenNewTab, HTML_OpenLinkInNewTab_t, m_LinkInNewTab );
 	STEAM_CALLBACK( HTML, BrowserSetHTMLTitle, HTML_ChangedTitle_t, m_ChangeTitle );

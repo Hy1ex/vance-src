@@ -483,8 +483,8 @@ bool GameData::ParseMapSize(TokenReader &tr)
 
 	if (nMin != nMax)
 	{
-		m_nMinMapCoord = min(nMin, nMax);
-		m_nMaxMapCoord = max(nMin, nMax);
+		m_nMinMapCoord = MIN(nMin, nMax);
+		m_nMaxMapCoord = MAX(nMin, nMax);
 	}
 
 	if (!GDSkipToken(tr, OPERATOR, ")"))

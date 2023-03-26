@@ -1375,7 +1375,7 @@ private:
 
 
 
-class CM128InitialAttributeIterator : public CFltx4StridedConstPtr
+class CM128InitialAttributeIterator : public CStridedConstPtr<fltx4>
 {
 public:
 	FORCEINLINE CM128InitialAttributeIterator( int nAttribute, CParticleCollection *pParticles )
@@ -1385,7 +1385,7 @@ public:
 };
 
 
-class CM128AttributeIterator : public CFltx4StridedConstPtr
+class CM128AttributeIterator : public CStridedConstPtr<fltx4>
 {
 public:
 	FORCEINLINE CM128AttributeIterator( int nAttribute, CParticleCollection *pParticles )
@@ -1403,7 +1403,7 @@ public:
 	}
 };
 
-class CM128AttributeWriteIterator : public CFltx4StridedPtr
+class CM128AttributeWriteIterator : public CStridedPtr<fltx4>
 {
 public:
 	FORCEINLINE CM128AttributeWriteIterator( void )
@@ -2238,7 +2238,7 @@ FORCEINLINE int CParticleCollection::GetControlPointParent( int nControlPoint ) 
 
 FORCEINLINE bool CParticleCollection::IsValid( void ) const 
 { 
-	return ( m_pDef != NULL && m_pDef->GetMaterial() );  
+	return ( m_pDef != nullptr && m_pDef->GetMaterial() );  
 }
 
 

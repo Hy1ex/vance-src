@@ -928,7 +928,7 @@ char *V_strncat(char *pDest, const char *pSrc, size_t destBufferSize, int max_ch
 	}
 	else
 	{
-		charstocopy = (size_t)min( max_chars_to_copy, (int)srclen );
+		charstocopy = (size_t)MIN( max_chars_to_copy, (int)srclen );
 	}
 
 	if ( len + charstocopy >= destBufferSize )
@@ -960,7 +960,7 @@ wchar_t *V_wcsncat( INOUT_Z_CAP(cchDest) wchar_t *pDest, const wchar_t *pSrc, si
 	}
 	else
 	{
-		charstocopy = (size_t)min( max_chars_to_copy, (int)srclen );
+		charstocopy = (size_t)MIN( max_chars_to_copy, (int)srclen );
 	}
 
 	if ( len + charstocopy >= cchDest )
@@ -1020,7 +1020,7 @@ char *V_pretifymem( float value, int digitsafterdecimal /*= 2*/, bool usebinaryo
 	char val[ 32 ];
 
 	// Clamp to >= 0
-	digitsafterdecimal = max( digitsafterdecimal, 0 );
+	digitsafterdecimal = MAX( digitsafterdecimal, 0 );
 
 	// If it's basically integral, don't do any decimals
 	if ( FloatMakePositive( value - (int)value ) < 0.00001 )
@@ -1420,7 +1420,7 @@ int V_UCS2ToUnicode( const ucs2 *pUCS2, wchar_t *pUnicode, int cubDestSizeInByte
 	size_t nMaxUTF8 = cubDestSizeInBytes;
 	char *pIn = (char *)pUCS2;
 	char *pOut = (char *)pUnicode;
-	if ( conv_t )
+	if ( uintptr_t( conv_t ) > 0 )
 	{
 		cchResult = 0;
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUTF8 );
@@ -1449,7 +1449,7 @@ int V_UnicodeToUCS2( const wchar_t *pUnicode, int cubSrcInBytes, char *pUCS2, in
 #ifdef _WIN32
 	// Figure out which buffer is smaller and convert from bytes to character
 	// counts.
-	int cchResult = min( (size_t)cubSrcInBytes/sizeof(wchar_t), cubDestSizeInBytes/sizeof(wchar_t) );
+	int cchResult = MIN( (size_t)cubSrcInBytes/sizeof(wchar_t), cubDestSizeInBytes/sizeof(wchar_t) );
 	wchar_t *pDest = (wchar_t*)pUCS2;
 	wcsncpy( pDest, pUnicode, cchResult );
 	// Make sure we NULL-terminate.
@@ -1461,7 +1461,7 @@ int V_UnicodeToUCS2( const wchar_t *pUnicode, int cubSrcInBytes, char *pUCS2, in
 	size_t nMaxUCS2 = cubDestSizeInBytes;
 	char *pIn = (char*)pUnicode;
 	char *pOut = pUCS2;
-	if ( conv_t )
+	if ( uintptr_t( conv_t ) > 0 )
 	{
 		cchResult = 0;
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUCS2 );
@@ -1508,7 +1508,7 @@ int V_UCS2ToUTF8( const ucs2 *pUCS2, char *pUTF8, int cubDestSizeInBytes )
 	size_t nMaxUTF8 = cubDestSizeInBytes - 1;
 	char *pIn = (char *)pUCS2;
 	char *pOut = (char *)pUTF8;
-	if ( conv_t )
+	if ( uintptr_t( conv_t ) > 0 )
 	{
 		cchResult = 0;
 		const size_t nBytesToWrite = nMaxUTF8;
@@ -1554,7 +1554,7 @@ int V_UTF8ToUCS2( const char *pUTF8, int cubSrcInBytes, ucs2 *pUCS2, int cubDest
 	size_t nMaxUTF8 = cubDestSizeInBytes;
 	char *pIn = (char *)pUTF8;
 	char *pOut = (char *)pUCS2;
-	if ( conv_t )
+	if ( uintptr_t( conv_t ) > 0 )
 	{
 		cchResult = 0;
 		cchResult = iconv( conv_t, &pIn, &nLenUnicde, &pOut, &nMaxUTF8 );
@@ -1610,7 +1610,7 @@ unsigned char V_nibble( char c )
 void V_hextobinary( char const *in, int numchars, byte *out, int maxoutputbytes )
 {
 	int len = V_strlen( in );
-	numchars = min( len, numchars );
+	numchars = MIN( len, numchars );
 	// Make sure it's even
 	numchars = ( numchars ) & ~0x1;
 
@@ -1721,7 +1721,7 @@ void V_FileBase( const char *in, char *out, int maxlen )
 	// Length of new sting
 	len = end - start + 1;
 
-	int maxcopy = min( len + 1, maxlen );
+	int maxcopy = MIN( len + 1, maxlen );
 
 	// Copy partial string
 	V_strncpy( out, &in[start], maxcopy );
@@ -1765,7 +1765,7 @@ void V_StripExtension( const char *in, char *out, int outSize )
 
 	if (end > 0 && !PATHSEPARATOR( in[end] ) && end < outSize)
 	{
-		int nChars = min( end, outSize-1 );
+		int nChars = MIN( end, outSize-1 );
 		if ( out != in )
 		{
 			memcpy( out, in, nChars );
@@ -2012,7 +2012,7 @@ bool V_ExtractFilePath (const char *path, char *dest, int destSize )
 		src--;
 	}
 
-	int copysize = min( src - path, destSize - 1 );
+	int copysize = MIN( src - path, destSize - 1 );
 	memcpy( dest, path, copysize );
 	dest[copysize] = 0;
 
@@ -2403,7 +2403,7 @@ char* AllocString( const char *pStr, int nMaxChars )
 	if ( nMaxChars == -1 )
 		allocLen = strlen( pStr ) + 1;
 	else
-		allocLen = min( (int)strlen(pStr), nMaxChars ) + 1;
+		allocLen = MIN( (int)strlen(pStr), nMaxChars ) + 1;
 
 	char *pOut = new char[allocLen];
 	V_strncpy( pOut, pStr, allocLen );

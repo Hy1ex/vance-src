@@ -579,7 +579,7 @@ public:
 					wide = imageWide;
 				}
 
-				xpos += wide;//max(maxWidth,wide);
+				xpos += wide;//MAX(maxWidth,wide);
 				surface()->DrawOutlinedRect( xpos, 0, xpos, GetTall() );
 			}
 		}

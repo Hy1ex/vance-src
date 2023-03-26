@@ -220,6 +220,15 @@ template <size_t maxLenInChars> void V_strcpy_safe( OUT_Z_ARRAY char (&pDest)[ma
 	V_strncpy( pDest, pSrc, (int)maxLenInChars ); 
 }
 
+// A function which duplicates a string using new[] to allocate the new string.
+inline char *V_strdup( const char *pSrc )
+{
+	int nLen = V_strlen( pSrc );
+	char *pResult = new char [ nLen+1 ];
+	V_memcpy( pResult, pSrc, nLen+1 );
+	return pResult;
+}
+
 void V_wcsncpy( OUT_Z_BYTECAP(maxLenInBytes) wchar_t *pDest, wchar_t const *pSrc, int maxLenInBytes );
 template <size_t maxLenInChars> void V_wcscpy_safe( OUT_Z_ARRAY wchar_t (&pDest)[maxLenInChars], wchar_t const *pSrc ) 
 { 
@@ -468,16 +477,6 @@ inline void V_strcat( INOUT_Z_CAP(cchDest) char *dest, const char *src, int cchD
 inline void V_wcscat( INOUT_Z_CAP(cchDest) wchar_t *dest, const wchar_t *src, int cchDest )
 {
 	V_wcsncat( dest, src, cchDest, COPY_ALL_CHARACTERS );
-}
-
-// Reentrant strtok
-inline static char* V_strtok_s( char *str, const char *delimiters, char **context )
-{
-#ifdef _MSC_VER
-	return strtok_s( str, delimiters, context );
-#elif POSIX
-	return strtok_r( str, delimiters, context );
-#endif
 }
 
 //-----------------------------------------------------------------------------

@@ -924,7 +924,7 @@ void CNPC_Barnacle::PullEnemyTorwardsMouth( bool bAdjustEnemyOrigin )
 			{
 				// get us there in a second
 				Vector desiredVelocity;
-				float distToMove = min(distFromCenter, 24.0f * dt);
+				float distToMove = MIN(distFromCenter, 24.0f * dt);
 				desiredVelocity.x = vToCenter.x * distToMove;
 				desiredVelocity.y = vToCenter.y * distToMove;
 				desiredVelocity.z = 0;

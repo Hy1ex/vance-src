@@ -139,7 +139,7 @@ class IForceVirtualInheritancePanel
 //			This is designed as an easy-access to the vgui-functionality; for more
 //			low-level access to vgui functions use the IPanel/IClientPanel interfaces directly
 //-----------------------------------------------------------------------------
-class Panel : public IClientPanel, public virtual IForceVirtualInheritancePanel
+class Panel : public IClientPanel, virtual IForceVirtualInheritancePanel
 {
 	DECLARE_CLASS_SIMPLE_NOBASE( Panel );
 
@@ -949,7 +949,6 @@ inline bool	Panel::IsMouseInputDisabledForThisPanel() const
 	return _flags.IsFlagSet( IS_MOUSE_DISABLED_FOR_THIS_PANEL_ONLY );
 }
 
-#if 0
 // This function cannot be defined here because it requires on a full definition of
 // KeyValues (to call KeyValues::MakeCopy()) whereas the rest of this header file
 // assumes a forward declared definition of KeyValues.
@@ -974,7 +973,6 @@ inline void Panel::PostMessageToAllSiblingsOfType( KeyValues *msg, float delaySe
 
 	msg->deleteThis();
 }
-#endif
 
 class Button;
 
@@ -1011,7 +1009,7 @@ public:
 
 
 void VguiPanelGetSortedChildPanelList( Panel *pParentPanel, void *pSortedPanels );
-void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, const char *pchFilter = NULL, int nFilterType = 0 );
+void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, char *pchFilter = NULL, int nFilterType = 0 );
 int VguiPanelNavigateSortedChildButtonList( void *pSortedPanels, int nDir );
 
 

@@ -323,14 +323,14 @@ void ComboBox::PerformLayout()
 	HFont buttonFont = m_pButton->GetFont();
 	int fontTall = surface()->GetFontTall( buttonFont );
 
-	int buttonSize = min( tall, fontTall );
+	int buttonSize = MIN( tall, fontTall );
 	
 	int buttonY = ( ( tall - 1 ) - buttonSize ) / 2;
 
 	// Some dropdown button icons in our games are wider than they are taller. We need to factor that in.
 	int button_wide, button_tall;
 	m_pButton->GetContentSize(button_wide, button_tall);
-	button_wide = max( buttonSize, button_wide );
+	button_wide = MAX( buttonSize, button_wide );
 
 	m_pButton->SetBounds( wide - button_wide, buttonY, button_wide, buttonSize );
 	if ( IsEditable() )

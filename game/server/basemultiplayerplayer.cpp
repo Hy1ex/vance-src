@@ -66,13 +66,13 @@ void CBaseMultiplayerPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CBaseMultiplayerPlayer::SpeakIfAllowed( AIConcept_t concept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter ) 
+bool CBaseMultiplayerPlayer::SpeakIfAllowed( AIConcept_t conceptId, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter ) 
 { 
 	if ( !IsAlive() )
 		return false;
 
-	//if ( IsAllowedToSpeak( concept, bRespondingToPlayer ) )
-	return Speak( concept, modifiers, pszOutResponseChosen, bufsize, filter );
+	//if ( IsAllowedToSpeak( conceptId, bRespondingToPlayer ) )
+	return Speak( conceptId, modifiers, pszOutResponseChosen, bufsize, filter );
 }
 
 //-----------------------------------------------------------------------------
@@ -92,9 +92,9 @@ bool CBaseMultiplayerPlayer::SpeakConcept( AI_Response &response, int iConcept )
 {
 	m_iCurrentConcept = iConcept;
 #ifdef NEW_RESPONSE_SYSTEM
-	CAI_Concept concept(g_pszMPConcepts[iConcept]);
+	CAI_Concept conceptId(g_pszMPConcepts[iConcept]);
 	concept.SetSpeaker(this);
-	return FindResponse( response, concept );
+	return FindResponse( response, conceptId );
 #else
 	AI_Response *pResponse = SpeakFindResponse( g_pszMPConcepts[iConcept] );
 	if (pResponse)

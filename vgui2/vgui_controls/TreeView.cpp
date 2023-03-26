@@ -35,7 +35,7 @@
 #include <tier0/memdbgon.h>
 
 #ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#define MAX(a,b)            (((a) > (b)) ? (a) : (b))
 #endif
 
 using namespace vgui;
@@ -418,7 +418,7 @@ class TreeNode : public Panel
 
 public:
     TreeNode(Panel *parent, TreeView *pTreeView);
-	virtual ~TreeNode();
+	~TreeNode();
     void SetText(const char *pszText);
     void SetFont(HFont font);
     void SetKeyValues(KeyValues *data);
@@ -902,7 +902,7 @@ void TreeNode::CalculateVisibleMaxWidth()
 		int childMaxWidth = GetMaxChildrenWidth();
 		childMaxWidth += TREE_INDENT_AMOUNT;
 
-		width = max(childMaxWidth, m_iNodeWidth);
+		width = MAX(childMaxWidth, m_iNodeWidth);
 	}
 	else
 	{

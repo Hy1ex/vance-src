@@ -62,10 +62,10 @@ _PS_EXTERN_CONST(am_pi_o_2, (float)(M_PI / 2.0));
 _PS_EXTERN_CONST(am_2_o_pi, (float)(2.0 / M_PI));
 _PS_EXTERN_CONST(am_pi_o_4, (float)(M_PI / 4.0));
 _PS_EXTERN_CONST(am_4_o_pi, (float)(4.0 / M_PI));
-_PS_EXTERN_CONST_TYPE(am_sign_mask, int32, 0x80000000);
+_PS_EXTERN_CONST_TYPE(am_sign_mask, uint32, 0x80000000);
 _PS_EXTERN_CONST_TYPE(am_inv_sign_mask, int32, ~0x80000000);
-_PS_EXTERN_CONST_TYPE(am_min_norm_pos,int32, 0x00800000);
-_PS_EXTERN_CONST_TYPE(am_mant_mask, int32, 0x7f800000);
+_PS_EXTERN_CONST_TYPE(am_min_norm_pos,uint32, 0x00800000);
+_PS_EXTERN_CONST_TYPE(am_mant_mask, uint32, 0x7f800000);
 _PS_EXTERN_CONST_TYPE(am_inv_mant_mask, int32, ~0x7f800000);
 
 _EPI32_CONST(1, 1);
@@ -301,8 +301,8 @@ float _SSE_InvRSquared(const float* v)
 		shufps		xmm2, xmm2, 1		// x2 = vy * vy, X, X, X
 		addss		xmm1, xmm2			// x1 = (vx * vx) + (vy * vy), X, X, X
 		addss		xmm1, xmm3			// x1 = (vx * vx) + (vy * vy) + (vz * vz), X, X, X
-		maxss		xmm1, xmm5			// x1 = max( 1.0, x1 )
-		rcpss		xmm0, xmm1			// x0 = 1 / max( 1.0, x1 )
+		maxss		xmm1, xmm5			// x1 = MAX( 1.0, x1 )
+		rcpss		xmm0, xmm1			// x0 = 1 / MAX( 1.0, x1 )
 		movss		inv_r2, xmm0		// inv_r2 = x0
 	}
 #elif POSIX
@@ -339,8 +339,8 @@ float _SSE_InvRSquared(const float* v)
 // #define _PS_CONST(Name, Val) static const ALIGN16 float _ps_##Name[4] ALIGN16_POST = { Val, Val, Val, Val }
 #define _PS_CONST_TYPE(Name, Type, Val) static const ALIGN16 Type _ps_##Name[4] ALIGN16_POST = { Val, Val, Val, Val }
 
-_PS_CONST_TYPE(sign_mask, int, 0x80000000);
-_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
+_PS_CONST_TYPE(sign_mask, uint32, 0x80000000);
+_PS_CONST_TYPE(inv_sign_mask, uint32, ~0x80000000);
 
 
 #define _PI32_CONST(Name, Val)  static const ALIGN16 int _pi32_##Name[4]  ALIGN16_POST = { Val, Val, Val, Val }

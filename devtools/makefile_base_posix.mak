@@ -49,7 +49,7 @@ ifeq ($(CXX),clang++)
 	CXXFLAGS = $(CFLAGS) -std=gnu++0x -Wno-c++11-narrowing -Wno-dangling-else $(ENV_CXXFLAGS)
 else
 # !!! ABI COMPAT: -fabi-compat-version=2 is needed to generate the proper symbols for linking
-	CXXFLAGS = $(CFLAGS) -std=gnu++0x -fpermissive -fabi-compat-version=2 $(ENV_CXXFLAGS)
+	CXXFLAGS = $(CFLAGS) -std=c++20 -fpermissive -fabi-compat-version=2 $(ENV_CXXFLAGS)
 endif
 DEFINES += -DVPROF_LEVEL=1 -DGNUC -DNO_HOOK_MALLOC -DNO_MALLOC_OVERRIDE
 LDFLAGS = $(CFLAGS) $(GCC_ExtraLinkerFlags) $(OptimizerLevel)

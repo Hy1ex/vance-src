@@ -832,9 +832,9 @@ static void CalcZeroframeData( const CStudioHdr *pStudioHdr, const studiohdr_t *
 		{
 			s1 = clamp( (fFrame - index * animdesc.zeroframespan) / animdesc.zeroframespan, 0.0f, 1.0f );
 		}
-		int i0 = max( index - 1, 0 );
+		int i0 = MAX( index - 1, 0 );
 		int i1 = index;
-		int i2 = min( index + 1, animdesc.zeroframecount - 1 );
+		int i2 = MIN( index + 1, animdesc.zeroframecount - 1 );
 		for (j = 0; j < pAnimStudioHdr->numbones; j++)
 		{
 			if (pAnimGroup)
@@ -933,8 +933,8 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 	{
 		if (pStudioHdr->boneFlags(i) & boneMask)
 		{
-			int l = pSeqGroup->boneMap[i];
-			if (l >= 0 && pweight[l] > 0.0f)
+			int j = pSeqGroup->boneMap[i];
+			if (j >= 0 && pweight[j] > 0.0f)
 			{
 				if (animdesc.flags & STUDIO_DELTA)
 				{
@@ -943,13 +943,13 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 				}
 				else if (pSeqLinearBones)
 				{
-					q[i] = pSeqLinearBones->quat(l);
-					pos[i] = pSeqLinearBones->pos(l);
+					q[i] = pSeqLinearBones->quat(j);
+					pos[i] = pSeqLinearBones->pos(j);
 				}
 				else 
 				{
-					q[i] = pSeqbone[l].quat;
-					pos[i] = pSeqbone[l].pos;
+					q[i] = pSeqbone[j].quat;
+					pos[i] = pSeqbone[j].pos;
 				}
 #ifdef STUDIO_ENABLE_PERF_COUNTERS
 				pStudioHdr->m_nPerfUsedBones++;
@@ -997,9 +997,10 @@ static void CalcVirtualAnimation( virtualmodel_t *pVModel, const CStudioHdr *pSt
 		matrix3x4_t *boneToWorld = g_MatrixPool.Alloc();
 		CBoneBitList boneComputed;
 
-		for (int l = 0; i < animdesc.numlocalhierarchy; i++)
+		int i;
+		for (i = 0; i < animdesc.numlocalhierarchy; i++)
 		{
-			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( l );
+			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( i );
 
 			if ( !pHierarchy )
 				break;
@@ -1140,9 +1141,10 @@ static void CalcAnimation( const CStudioHdr *pStudioHdr,	Vector *pos, Quaternion
 		matrix3x4_t *boneToWorld = g_MatrixPool.Alloc();
 		CBoneBitList boneComputed;
 
-		for (int j = 0; j < animdesc.numlocalhierarchy; j++)
+		int i;
+		for (i = 0; i < animdesc.numlocalhierarchy; i++)
 		{
-			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( j );
+			mstudiolocalhierarchy_t *pHierarchy = animdesc.pHierarchy( i );
 
 			if ( !pHierarchy )
 				break;
@@ -2623,14 +2625,14 @@ public:
          X[i] = P[i];
       normalize(X);
 
-// Its y axis is perpendicular to P, so Y = unit( E - X(E·X) ).
+// Its y axis is perpendicular to P, so Y = unit( E - X(Eï¿½X) ).
 
       float dDOTx = dot(D,X);
       for (i = 0 ; i < 3 ; i++)
          Y[i] = D[i] - dDOTx * X[i];
       normalize(Y);
 
-// Its z axis is perpendicular to both X and Y, so Z = X×Y.
+// Its z axis is perpendicular to both X and Y, so Z = Xï¿½Y.
 
       cross(X,Y,Z);
 
@@ -2796,8 +2798,8 @@ bool Studio_SolveIK( int iThigh, int iKnee, int iFoot, Vector &targetFoot, Vecto
 
 	// exaggerate knee targets for legs that are nearly straight
 	// FIXME: should be configurable, and the ikKnee should be from the original animation, not modifed
-	float d = (targetFoot-worldThigh).Length() - min( l1, l2 );
-	d = max( l1 + l2, d );
+	float d = (targetFoot-worldThigh).Length() - MIN( l1, l2 );
+	d = MAX( l1 + l2, d );
 	// FIXME: too short knee directions cause trouble
 	d = d * 100;
 
@@ -2817,7 +2819,7 @@ bool Studio_SolveIK( int iThigh, int iKnee, int iFoot, Vector &targetFoot, Vecto
 
 	// too close?
 	// limit distance to about an 80 degree knee bend
-	float minDist = max( fabs(l1 - l2) * 1.15, min( l1, l2 ) * 0.15 );
+	float minDist = MAX( fabs(l1 - l2) * 1.15, MIN( l1, l2 ) * 0.15 );
 	if (ikFoot.Length() < minDist)
 	{
 		// too close to get an accurate vector, just use original vector
@@ -3281,7 +3283,7 @@ void CIKContext::AddDependencies( mstudioseqdesc_t &seqdesc, int iSequence, floa
 		}
 		else
 		{
-			flCycle = max( 0.0, min( flCycle, 0.9999 ) );
+			flCycle = MAX( 0.0, MIN( flCycle, 0.9999 ) );
 		}
 	}
 
@@ -3775,7 +3777,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 						pTarget->est.floor = Lerp( pRule->flRuleWeight, pTarget->est.floor, pRule->floor );
 						pTarget->est.radius = Lerp( pRule->flRuleWeight, pTarget->est.radius, pRule->radius );
 						//pTarget->est.latched = Lerp( pRule->flRuleWeight, pTarget->est.latched, pRule->latched );
-						pTarget->est.latched = min( pTarget->est.latched, pRule->latched );
+						pTarget->est.latched = MIN( pTarget->est.latched, pRule->latched );
 						pTarget->est.release = Lerp( pRule->flRuleWeight, pTarget->est.release, pRule->release );
 						pTarget->est.flWeight = Lerp( pRule->flRuleWeight, pTarget->est.flWeight, pRule->flWeight );
 					}
@@ -3793,7 +3795,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 					if (pRule->latched > 0.0)
 						pTarget->est.latched = 0.0;
 					else
-						pTarget->est.latched = min( pTarget->est.latched, 1.0f - pRule->flWeight );
+						pTarget->est.latched = MIN( pTarget->est.latched, 1.0f - pRule->flWeight );
 				}
 				break;
 			case IK_RELEASE:
@@ -3802,7 +3804,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 					if (pRule->latched > 0.0)
 						pTarget->est.latched = 0.0;
 					else
-						pTarget->est.latched = min( pTarget->est.latched, 1.0f - pRule->flWeight );
+						pTarget->est.latched = MIN( pTarget->est.latched, 1.0f - pRule->flWeight );
 
 					pTarget->est.flWeight = (pTarget->est.flWeight) * (1 - pRule->flWeight * pRule->flRuleWeight);
 				}
@@ -3968,11 +3970,11 @@ void CIKContext::AutoIKRelease( void )
 			float ft = m_flTime - pTarget->error.flErrorTime;
 			if (dt < 0.25)
 			{
-				pTarget->error.ramp = min( pTarget->error.ramp + ft * 4.0, 1.0 );
+				pTarget->error.ramp = MIN( pTarget->error.ramp + ft * 4.0, 1.0 );
 			}
 			else
 			{
-				pTarget->error.ramp = max( pTarget->error.ramp - ft * 4.0, 0.0 );
+				pTarget->error.ramp = MAX( pTarget->error.ramp - ft * 4.0, 0.0 );
 			}
 			if (pTarget->error.ramp > 0.0)
 			{
@@ -4730,7 +4732,7 @@ void DoQuatInterpBone(
 			// FIXME: a fast acos should be acceptable
 			dot = clamp( dot, -1.f, 1.f );
 			weight[i] = 1 - (2 * acos( dot ) * pProc->pTrigger( i )->inv_tolerance );
-			weight[i] = max( 0, weight[i] );
+			weight[i] = MAX( 0, weight[i] );
 			scale += weight[i];
 		}
 
@@ -5608,9 +5610,9 @@ bool Studio_AnimPosition( mstudioanimdesc_t *panim, float flCycle, Vector &vecPo
 			vecAngle.y = vecAngle.y * (1 - f) + pmove->angle * f;
 			if (iLoops != 0)
 			{
-				mstudiomovement_t *pmoveLocl = panim->pMovement( panim->nummovements - 1 );
-				vecPos = vecPos + iLoops * pmoveLocl->position;
-				vecAngle.y = vecAngle.y + iLoops * pmoveLocl->angle;
+				mstudiomovement_t *pmove = panim->pMovement( panim->nummovements - 1 );
+				vecPos = vecPos + iLoops * pmove->position; 
+				vecAngle.y = vecAngle.y + iLoops * pmove->angle; 
 			}
 			return true;
 		}

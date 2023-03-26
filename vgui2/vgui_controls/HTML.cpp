@@ -163,13 +163,9 @@ private:
 //-----------------------------------------------------------------------------
 HTML::HTML(Panel *parent, const char *name, bool allowJavaScript, bool bPopupWindow) : Panel(parent, name), 
 m_NeedsPaint( this, &HTML::BrowserNeedsPaint ),
-m_ComboNeedsPaint( this, &HTML::BrowserComboNeedsPaint ),
 m_StartRequest( this, &HTML::BrowserStartRequest ),
 m_URLChanged( this, &HTML::BrowserURLChanged ),
 m_FinishedRequest( this, &HTML::BrowserFinishedRequest ),
-m_ShowPopup( this, &HTML::BrowserShowPopup ),
-m_HidePopup( this, &HTML::BrowserHidePopup ),
-m_SizePopup( this, &HTML::BrowserSizePopup ),
 m_LinkInNewTab( this, &HTML::BrowserOpenNewTab ),
 m_ChangeTitle( this, &HTML::BrowserSetHTMLTitle ),
 m_FileLoadDialog( this, &HTML::BrowserFileLoadDialog ),
@@ -201,7 +197,7 @@ m_HideTooltip( this, &HTML::BrowserHideToolTip )
 	m_pInteriorPanel = new HTMLInterior( this );
 	SetPostChildPaintEnabled( true );
 
-	m_unBrowserHandle = INVALID_HTTMLBROWSER;
+	m_unBrowserHandle = INVALID_HTMLBROWSER;
 	m_SteamAPIContext.Init();
 	if ( m_SteamAPIContext.SteamHTMLSurface() )
 	{
@@ -452,7 +448,7 @@ void HTML::OpenURL(const char *URL, const char *postData, bool force)
 //-----------------------------------------------------------------------------
 void HTML::PostURL(const char *URL, const char *pchPostData, bool force)
 {
-	if ( m_unBrowserHandle == INVALID_HTTMLBROWSER )
+	if ( m_unBrowserHandle == INVALID_HTMLBROWSER )
 	{
 		m_sPendingURLLoad = URL;
 		m_sPendingPostData = pchPostData;
@@ -749,18 +745,18 @@ int GetKeyModifiers()
 	// Any time a key is pressed reset modifier list as well
 	int nModifierCodes = 0;
 	if (vgui::input()->IsKeyDown( KEY_LCONTROL ) || vgui::input()->IsKeyDown( KEY_RCONTROL ))
-		nModifierCodes |= ISteamHTMLSurface::eHTMLKeyModifier_CrtlDown;
+		nModifierCodes |= ISteamHTMLSurface::k_eHTMLKeyModifier_CtrlDown;
 
 	if (vgui::input()->IsKeyDown( KEY_LALT ) || vgui::input()->IsKeyDown( KEY_RALT ))
-		nModifierCodes |= ISteamHTMLSurface::eHTMLKeyModifier_AltDown;
+		nModifierCodes |= ISteamHTMLSurface::k_eHTMLKeyModifier_AltDown;
 
 	if (vgui::input()->IsKeyDown( KEY_LSHIFT ) || vgui::input()->IsKeyDown( KEY_RSHIFT ))
-		nModifierCodes |= ISteamHTMLSurface::eHTMLKeyModifier_ShiftDown;
+		nModifierCodes |= ISteamHTMLSurface::k_eHTMLKeyModifier_ShiftDown;
 
 #ifdef OSX
 	// for now pipe through the cmd-key to be like the control key so we get copy/paste
 	if (vgui::input()->IsKeyDown( KEY_LWIN ) || vgui::input()->IsKeyDown( KEY_RWIN ))
-		nModifierCodes |= ISteamHTMLSurface::eHTMLKeyModifier_CrtlDown;
+		nModifierCodes |= ISteamHTMLSurface::k_eHTMLKeyModifier_CtrlDown;
 #endif
 
 	return nModifierCodes;
@@ -954,7 +950,7 @@ void HTML::AddCustomURLHandler(const char *customProtocolName, vgui::Panel *targ
 //-----------------------------------------------------------------------------
 void HTML::BrowserResize()
 {
-	if (m_unBrowserHandle == INVALID_HTTMLBROWSER)
+	if (m_unBrowserHandle == INVALID_HTMLBROWSER)
 		return;
 
 	int w,h;
@@ -1443,42 +1439,6 @@ void HTML::BrowserNeedsPaint( HTML_NeedsPaint_t *pCallback )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: we have a new texture to update
-//-----------------------------------------------------------------------------
-void HTML::BrowserComboNeedsPaint( HTML_ComboNeedsPaint_t *pCallback )
-{
-	if ( m_pComboBoxHost->IsVisible() )
-	{
-		int tw = 0, tt = 0;
-		// update the combo box texture also
-		if ( m_iComboBoxTextureID != 0 )
-		{
-			tw = m_allocedComboBoxWidth;
-			tt = m_allocedComboBoxHeight;
-		}
-
-		if ( m_iComboBoxTextureID == 0  || tw != (int)pCallback->unWide || tt != (int)pCallback->unTall )
-		{
-			if ( m_iComboBoxTextureID != 0 )
-				surface()->DeleteTextureByID( m_iComboBoxTextureID );
-
-			// if the dimensions changed we also need to re-create the texture ID to support the overlay properly (it won't resize a texture on the fly, this is the only control that needs
-			//   to so lets have a tiny bit more code here to support that)
-			m_iComboBoxTextureID = surface()->CreateNewTextureID( true );
-			surface()->DrawSetTextureRGBAEx( m_iComboBoxTextureID, (const unsigned char *)pCallback->pBGRA, pCallback->unWide, pCallback->unTall, IMAGE_FORMAT_BGRA8888 );
-			m_allocedComboBoxWidth = (int)pCallback->unWide;
-			m_allocedComboBoxHeight = (int)pCallback->unTall;
-		}
-		else
-		{
-			// same size texture, just bits changing in it, lets twiddle
-			surface()->DrawUpdateRegionTextureRGBA( m_iComboBoxTextureID, 0, 0, (const unsigned char *)pCallback->pBGRA, pCallback->unWide, pCallback->unTall, IMAGE_FORMAT_BGRA8888 );
-		}
-	}
-}
-
-
-//-----------------------------------------------------------------------------
 // Purpose: browser wants to start loading this url, do we let it?
 //-----------------------------------------------------------------------------
 bool HTML::OnStartRequest( const char *url, const char *target, const char *pchPostData, bool bIsRedirect )
@@ -1581,40 +1541,11 @@ void HTML::BrowserFinishedRequest( HTML_FinishedRequest_t *pCmd )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: show a popup dialog
-//-----------------------------------------------------------------------------
-void HTML::BrowserShowPopup( HTML_ShowPopup_t *pCmd )
-{
-	m_pComboBoxHost->SetVisible( true );
-}
-
-
-//-----------------------------------------------------------------------------
 // Purpose: hide the popup
 //-----------------------------------------------------------------------------
 void HTML::HidePopup()
 { 
 	m_pComboBoxHost->SetVisible( false ); 
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: browser wants us to hide a popup
-//-----------------------------------------------------------------------------
-void HTML::BrowserHidePopup( HTML_HidePopup_t *pCmd )
-{
-	HidePopup();
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: browser wants us to position a popup
-//-----------------------------------------------------------------------------
-void HTML::BrowserSizePopup( HTML_SizePopup_t *pCmd )
-{
-	int nAbsX, nAbsY;
-	ipanel()->GetAbsPos( GetVPanel(), nAbsX, nAbsY );
-	m_pComboBoxHost->SetBounds( pCmd->unX + 1 + nAbsX, pCmd->unY+ nAbsY, pCmd->unWide, pCmd->unTall );
 }
 
 
