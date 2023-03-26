@@ -11,12 +11,14 @@
 $Group "gamedlls"
 {
 	"client"
+	"gamepadui"
 	"server"
 }
 
 $Group "game"
 {
 	"client"
+	"gamepadui"
 	"mathlib"
 	"raytrace"
 	"server"

@@ -8,9 +8,6 @@ $Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
-// Mapbase shaders
-$Include "$SRCDIR\materialsystem\stdshaders\game_shader_dx9_mapbase.vpc" [$MAPBASE]
-
 $Configuration	"Debug"
 {
 	$General
@@ -34,10 +31,10 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;fxctmp9;vshtmp9;"	[$WIN32||$POSIX]
+		$AdditionalIncludeDirectories	"$BASE;include"	[$WIN32||$POSIX]
 //		$AdditionalIncludeDirectories	"$BASE;..\..\dx9sdk\include"	[$WIN32]
 		$AdditionalIncludeDirectories	"$BASE;fxctmp9_360;vshtmp9_360"					[$X360]
-		$PreprocessorDefinitions		"$BASE;STDSHADER_DX9_DLL_EXPORT;FAST_MATERIALVAR_ACCESS"
+		$PreprocessorDefinitions		"$BASE;STDSHADER_DX9_DLL_EXPORT;FAST_MATERIALVAR_ACCESS;GAME_SHADER_DLL"
 		$PreprocessorDefinitions		"$BASE;USE_ACTUAL_DX" [($WIN32||$X360) && !$GL]
 	}
 
@@ -52,18 +49,18 @@ $Project
 {
 	$Folder	"Source Files"
 	{
-		$File	"BaseVSShader.cpp"
+		$File	"basevsshader.cpp"
 
 		$File	"example_model_dx9.cpp"
 		$File	"example_model_dx9_helper.cpp"
 
-		$File	"Bloom.cpp"
+		$File	"bloom.cpp"
 		$File	"screenspace_general.cpp"
 	}
 
 	$Folder	"Header Files"
 	{
-		$File	"BaseVSShader.h"
+		$File	"basevsshader.h"
 		$File	"common_fxc.h"
 		$File	"common_hlsl_cpp_consts.h"
 		$File	"common_ps_fxc.h"

@@ -118,8 +118,8 @@ enum MaterialMatrixMode_t
 const int NUM_MODEL_TRANSFORMS = 53;
 const int MATERIAL_MODEL_MAX = MATERIAL_MODEL + NUM_MODEL_TRANSFORMS;
 
-enum MaterialPrimitiveType_t 
-{ 
+enum MaterialPrimitiveType_t
+{
 	MATERIAL_POINTS			= 0x0,
 	MATERIAL_LINES,
 	MATERIAL_TRIANGLES,
@@ -293,7 +293,7 @@ private:
 //-----------------------------------------------------------------------------
 // allowed stencil operations. These match the d3d operations
 //-----------------------------------------------------------------------------
-enum StencilOperation_t 
+enum StencilOperation_t
 {
 #if !defined( _X360 )
 	STENCILOPERATION_KEEP = 1,
@@ -409,7 +409,7 @@ struct MaterialAdapterInfo_t
 //-----------------------------------------------------------------------------
 struct MaterialVideoMode_t
 {
-	int m_Width;			// if width and height are 0 and you select 
+	int m_Width;			// if width and height are 0 and you select
 	int m_Height;			// windowed mode, it'll use the window size
 	ImageFormat m_Format;	// use ImageFormats (ignored for windowed mode)
 	int m_RefreshRate;		// 0 == default (ignored for windowed mode)
@@ -422,22 +422,10 @@ struct FlashlightState_t
 	{
 		m_bEnableShadows = false;						// Provide reasonable defaults for shadow depth mapping parameters
 		m_bDrawShadowFrustum = false;
-#ifdef ASW_PROJECTED_TEXTURES
-		m_flShadowMapResolution = 2048.0f;
-		m_flShadowFilterSize = 0.5f;
-		m_flShadowSlopeScaleDepthBias = 16.0f;
-		m_flShadowDepthBias = 0.0005f;
-#elif defined(MAPBASE)
-		m_flShadowMapResolution = 2048;
-		m_flShadowFilterSize = 1.0f;
-		m_flShadowSlopeScaleDepthBias = 4.0f;
-		m_flShadowDepthBias = 0.00001f;
-#else
 		m_flShadowMapResolution = 1024.0f;
 		m_flShadowFilterSize = 3.0f;
 		m_flShadowSlopeScaleDepthBias = 16.0f;
 		m_flShadowDepthBias = 0.0005f;
-#endif
 		m_flShadowJitterSeed = 0.0f;
 		m_flShadowAtten = 0.0f;
 		m_bScissor = false; 
@@ -446,16 +434,6 @@ struct FlashlightState_t
 		m_nRight = -1;
 		m_nBottom = -1;
 		m_nShadowQuality = 0;
-#ifdef ASW_PROJECTED_TEXTURES
-		m_bOrtho = false;
-		m_fOrthoLeft = -1.0f;
-		m_fOrthoRight = 1.0f;
-		m_fOrthoTop = -1.0f;
-		m_fOrthoBottom = 1.0f;
-
-		m_fBrightnessScale = 1.0f;
-		m_pSpotlightTexture = NULL;
-#endif
 	}
 
 	Vector m_vecLightOrigin;
@@ -482,22 +460,6 @@ struct FlashlightState_t
 	float m_flShadowAtten;
 	int   m_nShadowQuality;
 
-#ifdef ASW_PROJECTED_TEXTURES
-	bool  m_bOrtho;
-	float m_fOrthoLeft;
-	float m_fOrthoRight;
-	float m_fOrthoTop;
-	float m_fOrthoBottom;
-
-	float m_FarZAtten;
-	float m_fBrightnessScale;
-	bool m_bGlobalLight;
-#endif
-
-#ifdef MAPBASE
-	bool m_bAlwaysDraw;
-#endif
-
 	// Getters for scissor members
 	bool DoScissor() { return m_bScissor; }
 	int GetLeft()	 { return m_nLeft; }
@@ -509,7 +471,7 @@ private:
 
 	friend class CShadowMgr;
 
-	bool m_bScissor; 
+	bool m_bScissor;
 	int m_nLeft;
 	int m_nTop;
 	int m_nRight;
@@ -564,6 +526,15 @@ enum RenderTargetSizeMode_t
 	RT_SIZE_FULL_FRAME_BUFFER_ROUNDED_UP=6, // Same size as the frame buffer, rounded up if necessary for systems that can't do non-power of two textures.
 	RT_SIZE_REPLAY_SCREENSHOT = 7,	// Rounded down to power of 2, essentially...
 	RT_SIZE_LITERAL = 8				// Use the size passed in. Don't clamp it to the frame buffer size. Really.
+};
+
+enum RenderBackend_t
+{
+	RENDER_BACKEND_UNKNOWN,
+	RENDER_BACKEND_D3D9,
+	RENDER_BACKEND_TOGL,
+	RENDER_BACKEND_VULKAN,
+	RENDER_BACKEND_NULL,
 };
 
 typedef void (*MaterialBufferReleaseFunc_t)( );
@@ -649,8 +620,8 @@ public:
 	// Get the current config for this video card (as last set by UpdateConfig)
 	virtual const MaterialSystem_Config_t &GetCurrentConfigForVideoCard() const = 0;
 
-	// Gets *recommended* configuration information associated with the display card, 
-	// given a particular dx level to run under. 
+	// Gets *recommended* configuration information associated with the display card,
+	// given a particular dx level to run under.
 	// Use dxlevel 0 to use the recommended dx level.
 	// The function returns false if an invalid dxlevel was specified
 
@@ -692,7 +663,7 @@ public:
 	// FIXME: REMOVE! Get video card identitier
 	virtual const MaterialSystemHardwareIdentifier_t &GetVideoCardIdentifier( void ) const = 0;
 
-	// Use this to spew information about the 3D layer 
+	// Use this to spew information about the 3D layer
 	virtual void				SpewDriverInfo() const = 0;
 
 	virtual void				GetDXLevelDefaults(uint &max_dxlevel,uint &recommended_dxlevel) = 0;
@@ -894,11 +865,11 @@ public:
 	virtual bool				IsTextureLoaded( char const* pTextureName ) const = 0;
 
 	// Creates a procedural texture
-	virtual ITexture *			CreateProceduralTexture( const char	*pTextureName, 
-		const char *pTextureGroupName, 
-		int w, 
-		int h, 
-		ImageFormat fmt, 
+	virtual ITexture *			CreateProceduralTexture( const char	*pTextureName,
+		const char *pTextureGroupName,
+		int w,
+		int h,
+		ImageFormat fmt,
 		int nFlags ) = 0;
 
 	//
@@ -1077,11 +1048,13 @@ public:
 
 	// returns the display device name that matches the adapter index we were started with
 	virtual char *GetDisplayDeviceName() const = 0;
+
+	virtual RenderBackend_t		GetRenderBackend() const = 0;
 };
 
 
 //-----------------------------------------------------------------------------
-// 
+//
 //-----------------------------------------------------------------------------
 abstract_class IMatRenderContext : public IRefCounted
 {
