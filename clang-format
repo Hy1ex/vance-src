@@ -1,0 +1,36 @@
+---
+Language: Cpp
+BasedOnStyle: Microsoft
+Standard: Cpp11
+
+AlignOperands: false
+
+IndentCaseLabels: 'true'
+IndentPPDirectives: BeforeHash
+IndentWidth: '4'
+
+FixNamespaceComments: 'true'
+NamespaceIndentation: All
+
+PointerAlignment: Right
+
+SortIncludes: 'false'
+
+TabWidth: '4'
+UseTab: Always
+
+AccessModifierOffset: -4
+
+SpacesInAngles: 'false'
+SpacesInCStyleCastParentheses: 'false'
+SpacesInConditionalStatement: 'true'
+SpacesInContainerLiterals: 'false'
+SpacesInParentheses: 'true'
+SpacesInSquareBrackets: 'false'
+
+ReflowComments: 'false'
+
+PenaltyExcessCharacter: 0
+---
+Language: Proto
+DisableFormat: true
