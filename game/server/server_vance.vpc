@@ -46,7 +46,7 @@ $Project "Server (Vance)"
 		$File	"vehicle_choreo_generic.cpp"
 		$File	"$SRCDIR\game\shared\vehicle_choreo_generic_shared.h"
 		$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
-		
+
 		$Folder	"VANCE"
 		{
 			$File	"vance\vance_client.cpp"
@@ -92,7 +92,7 @@ $Project "Server (Vance)"
 			$File	"vance\vance_player.h"
 			$File	"vance\lights_deferred.cpp"
 			$File	"vance\lights_deferred.h"
-			
+
 			$File	"$SRCDIR\game\shared\vance\vance_baseweapon_shared.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_baseweapon_shared.h"
 			$File	"$SRCDIR\game\shared\vance\vance_weapon_parse.cpp"
@@ -104,7 +104,7 @@ $Project "Server (Vance)"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.h"
 			$File	"$SRCDIR\game\shared\vance\vance_shareddefs.h"
-			
+
 			$File	"$SRCDIR\game\shared\vance\weapon_akms.cpp"
 			$File	"$SRCDIR\game\shared\vance\weapon_melee.cpp"
 		}
@@ -306,8 +306,8 @@ $Project "Server (Vance)"
 			$File	"hl2\weapon_pistol.cpp"
 			$File	"episodic\weapon_striderbuster.cpp"
 			$File	"episodic\weapon_striderbuster.h"
-			$File	"hl2\weapon_stunstick.cpp"
-			$File	"hl2\weapon_stunstick.h"
+			$File	"hl2\weapon_stunstick.cpp" [!$MAPBASE] // See server_mapbase.vpc
+			$File	"hl2\weapon_stunstick.h" [!$MAPBASE] // See server_mapbase.vpc
 			$File	"episodic\ep1_gamestats.h"
 			$File	"episodic\ep2_gamestats.h"
 			$File	"episodic\ep1_gamestats.cpp" \
