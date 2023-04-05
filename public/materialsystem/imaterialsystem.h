@@ -1803,4 +1803,16 @@ static void DoMatSysQueueMark( IMaterialSystem *pMaterialSystem, const char *psz
 extern IMaterialSystem *materials;
 extern IMaterialSystem *g_pMaterialSystem;
 
+FORCEINLINE bool IsEmulatingGL()
+{
+    static bool bIsEmulatingGL = ( Plat_GetCommandLineA() ) ? ( strstr( Plat_GetCommandLineA(), "-r_emulate_gl" ) != NULL ) : false;
+    return bIsEmulatingGL;
+}
+
+FORCEINLINE bool IsOpenGL()
+{
+    static bool bIsOpenGL = materials->GetRenderBackend() == RENDER_BACKEND_TOGL || IsEmulatingGL();
+    return bIsOpenGL;
+}
+
 #endif // IMATERIALSYSTEM_H
