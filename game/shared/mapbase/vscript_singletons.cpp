@@ -9,10 +9,11 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include <vgui_controls/Controls.h> 
+#include <vgui_controls/Controls.h>
 #include <vgui/ILocalize.h>
 #include "ammodef.h"
 #include "tier1/utlcommon.h"
+#include "utlbuffer.h"
 
 #ifndef CLIENT_DLL
 #include "ai_squad.h"
@@ -757,7 +758,7 @@ void CScriptGameEventListener::StopListeningForEvent()
 //-----------------------------------------------------------------------------
 bool CScriptGameEventListener::StopListeningToGameEvent( int listener )
 {
-	CScriptGameEventListener *p = reinterpret_cast<CScriptGameEventListener*>(listener); // INT_TO_POINTER	
+	CScriptGameEventListener *p = reinterpret_cast<CScriptGameEventListener*>(listener); // INT_TO_POINTER
 
 	bool bRemoved = s_Listeners.FindAndFastRemove(p);
 	if ( bRemoved )
@@ -2304,7 +2305,7 @@ public:
 			Line( vecLastPosition, vecPosition, r, g, b, bNoDepthTest, flDuration );
 
 			if ( a && i > 1 )
-			{		
+			{
 				debugoverlay->AddTriangleOverlay( vecStart, vecLastPosition, vecPosition, r, g, b, a, bNoDepthTest, flDuration );
 			}
 		}

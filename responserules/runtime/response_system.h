@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: The CResponseSystem class. Don't include this header; include the response_types
 // into which it is transcluded.
@@ -13,18 +13,21 @@
 #endif
 
 #include "utldict.h"
+#include "stringpool.h"
+#include "utllinkedlist.h"
+#include "response_types_internal.h"
 
 namespace ResponseRules
 {
 	typedef ResponseParams	AI_ResponseParams ;
-	#define AI_CriteriaSet ResponseRules::CriteriaSet 
+	#define AI_CriteriaSet ResponseRules::CriteriaSet
 
 	//-----------------------------------------------------------------------------
 	// Purpose: The database of all available responses.
 	// The Rules are partitioned based on a variety of factors (presently,
 	// speaker and concept) for faster lookup, basically a seperate-chained hash.
 	//-----------------------------------------------------------------------------
-	class CResponseSystem : public IResponseSystem 
+	class CResponseSystem : public IResponseSystem
 	{
 	public:
 		CResponseSystem();
@@ -35,10 +38,10 @@ namespace ResponseRules
 		typedef void (CResponseSystem::*pfnParseResponseDispatch)( ParserResponse &, ResponseGroup&, AI_ResponseParams * );
 		typedef void (CResponseSystem::*pfnParseResponseGroupDispatch) ( char const *responseGroupName, ResponseGroup &newGroup, AI_ResponseParams &groupResponseParams );
 
-		typedef CUtlMap< unsigned,pfnResponseDispatch > DispatchMap_t;  
-		typedef CUtlMap< unsigned,pfnParseRuleDispatch > ParseRuleDispatchMap_t;  
-		typedef CUtlMap< unsigned,pfnParseResponseDispatch > ParseResponseDispatchMap_t;  
-		typedef CUtlMap< unsigned,pfnParseResponseGroupDispatch > ParseResponseGroupDispatchMap_t;  
+		typedef CUtlMap< unsigned,pfnResponseDispatch > DispatchMap_t;
+		typedef CUtlMap< unsigned,pfnParseRuleDispatch > ParseRuleDispatchMap_t;
+		typedef CUtlMap< unsigned,pfnParseResponseDispatch > ParseResponseDispatchMap_t;
+		typedef CUtlMap< unsigned,pfnParseResponseGroupDispatch > ParseResponseGroupDispatchMap_t;
 
 #pragma region IResponseSystem
 		// IResponseSystem
@@ -248,7 +251,7 @@ public:
 #ifdef MAPBASE
 		void		DisableEmptyRules();
 #endif
-		
+
 		float		ScoreCriteriaAgainstRule( const CriteriaSet& set, ResponseRulePartition::tRuleDict &dict, int irule, bool verbose = false );
 		float		RecursiveScoreSubcriteriaAgainstRule( const CriteriaSet& set, Criteria *parent, bool& exclude, bool verbose /*=false*/ );
 		float		ScoreCriteriaAgainstRuleCriteria( const CriteriaSet& set, int icriterion, bool& exclude, bool verbose = false );
@@ -265,7 +268,7 @@ public:
 		void		GetCurrentScript( char *buf, size_t buflen );
 		int			GetCurrentToken() const;
 		void		SetCurrentScript( const char *script );
-		
+
 		inline bool IsRootCommand( unsigned int hash ) const
 		{
 			int slot = m_RootCommandHashes.Find( hash );

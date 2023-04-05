@@ -80,7 +80,7 @@ IEngineEmulator *IEngineEmulator::Get()
 
 
 //-----------------------------------------------------------------------------
-// Convars 
+// Convars
 //-----------------------------------------------------------------------------
 
 
@@ -97,7 +97,7 @@ ConVar rr_disableemptyrules( "rr_disableemptyrules", "0", FCVAR_NONE, "Disables 
 
 
 //-----------------------------------------------------------------------------
-// Copied from SoundParametersInternal.cpp 
+// Copied from SoundParametersInternal.cpp
 //-----------------------------------------------------------------------------
 
 #define SNDLVL_PREFIX "SNDLVL_"
@@ -180,9 +180,9 @@ static soundlevel_t TextToSoundLevel( const char *key )
 CResponseSystem::ExcludeList_t CResponseSystem::m_DebugExcludeList( 4, 0 );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-CResponseSystem::CResponseSystem() : 
+CResponseSystem::CResponseSystem() :
 	m_RootCommandHashes( 0, 0, DefLessFunc( unsigned int ) ),
 	m_FileDispatch( 0, 0, DefLessFunc( unsigned int ) ),
 	m_RuleDispatch( 0, 0, DefLessFunc( unsigned int ) ),
@@ -200,14 +200,14 @@ CResponseSystem::CResponseSystem() :
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CResponseSystem::~CResponseSystem()
 {
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : char const
 //-----------------------------------------------------------------------------
 void CResponseSystem::GetCurrentScript( char *buf, size_t buflen )
@@ -244,7 +244,7 @@ void CResponseSystem::PopScript(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::Clear()
 {
@@ -260,9 +260,9 @@ void CResponseSystem::Clear()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *name - 
-//			found - 
+// Purpose:
+// Input  : *name -
+//			found -
 // Output : float
 //-----------------------------------------------------------------------------
 float CResponseSystem::LookupEnumeration( const char *name, bool& found )
@@ -280,8 +280,8 @@ float CResponseSystem::LookupEnumeration( const char *name, bool& found )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : matcher - 
+// Purpose:
+// Input  : matcher -
 //-----------------------------------------------------------------------------
 void CResponseSystem::ResolveToken( Matcher& matcher, char *token, size_t bufsize, char const *rawtoken )
 {
@@ -747,7 +747,7 @@ float CResponseSystem::ScoreCriteriaAgainstRule( const CriteriaSet& set, Respons
 			CGMsg( 1, CON_GROUP_RESPONSE_SYSTEM, ", score %4.2f\n", score );
 		}
 
-		if ( exclude ) 
+		if ( exclude )
 		{
 			score = 0.0f;
 			break;
@@ -792,7 +792,7 @@ void CResponseSystem::DebugPrint( int depth, const char *fmt, ... )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::ResetResponseGroups()
 {
@@ -815,7 +815,7 @@ void CResponseSystem::ResetResponseGroups()
 
 #ifdef MAPBASE
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::DisableEmptyRules()
 {
@@ -846,7 +846,7 @@ void CResponseSystem::DisableEmptyRules()
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: Make certain responses unavailable by marking them as depleted 
+// Purpose: Make certain responses unavailable by marking them as depleted
 //-----------------------------------------------------------------------------
 void CResponseSystem::FakeDepletes( ResponseGroup *g, IResponseFilter *pFilter )
 {
@@ -880,7 +880,7 @@ void CResponseSystem::FakeDepletes( ResponseGroup *g, IResponseFilter *pFilter )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Restore responses that were faked as being depleted 
+// Purpose: Restore responses that were faked as being depleted
 //-----------------------------------------------------------------------------
 void CResponseSystem::RevertFakedDepletes( ResponseGroup *g )
 {
@@ -892,8 +892,8 @@ void CResponseSystem::RevertFakedDepletes( ResponseGroup *g )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *g - 
+// Purpose:
+// Input  : *g -
 // Output : int
 //-----------------------------------------------------------------------------
 int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, IResponseFilter *pFilter )
@@ -949,11 +949,11 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 			for ( i = 0; i < c; i++ )
 			{
 				ParserResponse *r = &g->group[ i ];
-				if ( checkrepeats && 
+				if ( checkrepeats &&
 					( r->depletioncount == depletioncount ) )
 				{
 					continue;
-				}		
+				}
 
 				if ( r->last )
 				{
@@ -965,7 +965,7 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 				break;
 			}
 
-			// No more undepleted so use the r->last slot 
+			// No more undepleted so use the r->last slot
 			if ( i >= c )
 			{
 				slot = check;
@@ -978,7 +978,7 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 		for ( int i = 0; i < c; i++ )
 		{
 			ParserResponse *r = &g->group[ i ];
-			if ( checkrepeats && 
+			if ( checkrepeats &&
 				( r->depletioncount == depletioncount ) )
 			{
 				continue;
@@ -1026,11 +1026,11 @@ int CResponseSystem::SelectWeightedResponseFromResponseGroup( ResponseGroup *g, 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : searchResult - 
-//			depth - 
-//			*name - 
-//			verbose - 
+// Purpose:
+// Input  : searchResult -
+//			depth -
+//			*name -
+//			verbose -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CResponseSystem::ResolveResponse( ResponseSearchResult& searchResult, int depth, const char *name, bool verbose /*= false*/, IResponseFilter *pFilter )
@@ -1056,7 +1056,7 @@ bool CResponseSystem::ResolveResponse( ResponseSearchResult& searchResult, int d
 		int initialIndex = g->GetCurrentIndex();
 		bool bFoundValid = false;
 
-		do 
+		do
 		{
 			idx = g->GetCurrentIndex();
 			g->SetCurrentIndex( idx + 1 );
@@ -1122,10 +1122,10 @@ bool CResponseSystem::ResolveResponse( ResponseSearchResult& searchResult, int d
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *group - 
-//			selected - 
-//			depth - 
+// Purpose:
+// Input  : *group -
+//			selected -
+//			depth -
 //-----------------------------------------------------------------------------
 void CResponseSystem::DescribeResponseGroup( ResponseGroup *group, int selected, int depth )
 {
@@ -1143,8 +1143,8 @@ void CResponseSystem::DescribeResponseGroup( ResponseGroup *group, int selected,
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *rule - 
+// Purpose:
+// Input  : *rule -
 // Output : CResponseSystem::Response
 //-----------------------------------------------------------------------------
 bool CResponseSystem::GetBestResponse( ResponseSearchResult& searchResult, Rule *rule, bool verbose /*=false*/, IResponseFilter *pFilter )
@@ -1174,7 +1174,7 @@ bool CResponseSystem::GetBestResponse( ResponseSearchResult& searchResult, Rule 
 		int initialIndex = g->GetCurrentIndex();
 		bool bFoundValid = false;
 
-		do 
+		do
 		{
 			responseIndex = g->GetCurrentIndex();
 			g->SetCurrentIndex( responseIndex + 1 );
@@ -1244,11 +1244,11 @@ bool CResponseSystem::GetBestResponse( ResponseSearchResult& searchResult, Rule 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : set - 
-//			verbose - 
+// Purpose:
+// Input  : set -
+//			verbose -
 // Output : int
-// Warning: If you change this, be sure to also change 
+// Warning: If you change this, be sure to also change
 //          ResponseSystemImplementationCLI::FindAllRulesMatchingCriteria().
 //-----------------------------------------------------------------------------
 ResponseRulePartition::tIndex CResponseSystem::FindBestMatchingRule( const CriteriaSet& set, bool verbose, float &scoreOfBestMatchingRule )
@@ -1305,8 +1305,8 @@ ResponseRulePartition::tIndex CResponseSystem::FindBestMatchingRule( const Crite
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : set - 
+// Purpose:
+// Input  : set -
 // Output : CRR_Response
 //-----------------------------------------------------------------------------
 bool CResponseSystem::FindBestResponse( const CriteriaSet& set, CRR_Response& response, IResponseFilter *pFilter )
@@ -1319,9 +1319,9 @@ bool CResponseSystem::FindBestResponse( const CriteriaSet& set, CRR_Response& re
 
 	// Look for match. verbose mode used to be at level 2, but disabled because the writers don't actually care for that info.
 	float scoreOfBestRule;
-	ResponseRulePartition::tIndex bestRule = FindBestMatchingRule( set, 
-		( iDbgResponse >= 3 && iDbgResponse < RR_DEBUGRESPONSES_SPECIALCASE ), 
-		scoreOfBestRule ); 
+	ResponseRulePartition::tIndex bestRule = FindBestMatchingRule( set,
+		( iDbgResponse >= 3 && iDbgResponse < RR_DEBUGRESPONSES_SPECIALCASE ),
+		scoreOfBestRule );
 
 	ResponseType_t responseType = RESPONSE_NONE;
 	ResponseParams rp;
@@ -1565,7 +1565,7 @@ void CResponseSystem::LoadFromBuffer( const char *scriptfile, const char *buffer
 		{
 			int byteoffset = m_ScriptStack[ 0 ].currenttoken - (const char *)m_ScriptStack[ 0 ].buffer;
 
-			Error( "CResponseSystem::LoadFromBuffer:  Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n", 
+			Error( "CResponseSystem::LoadFromBuffer:  Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n",
 				token, scriptfile, byteoffset );
 			break;
 		}
@@ -1589,7 +1589,7 @@ void CResponseSystem::LoadFromBuffer( const char *scriptfile, const char *buffer
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::LoadRuleSet( const char *basescript )
 {
@@ -1970,7 +1970,7 @@ void CResponseSystem::ParseResponseGroup_Soundlevel( char const *responseGroupNa
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::ParseResponse( void )
 {
@@ -2015,8 +2015,8 @@ void CResponseSystem::ParseResponse( void )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *criterion - 
+// Purpose:
+// Input  : *criterion -
 //-----------------------------------------------------------------------------
 int CResponseSystem::ParseOneCriterion( const char *criterionName )
 {
@@ -2130,8 +2130,8 @@ int CResponseSystem::ParseOneCriterion( const char *criterionName )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *kv - 
+// Purpose:
+// Input  : *kv -
 //-----------------------------------------------------------------------------
 void CResponseSystem::ParseCriterion( void )
 {
@@ -2144,8 +2144,8 @@ void CResponseSystem::ParseCriterion( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *kv - 
+// Purpose:
+// Input  : *kv -
 //-----------------------------------------------------------------------------
 void CResponseSystem::ParseEnumeration( void )
 {
@@ -2273,7 +2273,7 @@ void CResponseSystem::ParseRule_ForceWeight( Rule &newRule )
 		newRule.m_nForceWeight = atoi(token);
 		if ( newRule.m_nForceWeight == 0 )
 		{
-			ResponseWarning( "Rule '%s' had forceweight '%s', which doesn't work out to a nonzero number. Ignoring.\n", 
+			ResponseWarning( "Rule '%s' had forceweight '%s', which doesn't work out to a nonzero number. Ignoring.\n",
 				m_pParseRuleName, token );
 				}
 			}
@@ -2302,8 +2302,8 @@ void CResponseSystem::ParseRule_Criteria( Rule &newRule )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *kv - 
+// Purpose:
+// Input  : *kv -
 //-----------------------------------------------------------------------------
 void CResponseSystem::ParseRule( void )
 {
@@ -2367,7 +2367,7 @@ void CResponseSystem::ParseRule( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int	CResponseSystem::GetCurrentToken() const
 {
@@ -2465,7 +2465,7 @@ void CResponseSystem::CopyResponsesFrom( Rule *pSrcRule, Rule *pDstRule, CRespon
 		ResponseGroup *pSrcResponseGroup = &m_Responses[iSrcResponseGroup];
 		if ( pSrcResponseGroup )
 		{
-			// Add response group.			
+			// Add response group.
 			ResponseGroup dstResponseGroup;
 
 			dstResponseGroup.m_bDepleteBeforeRepeat = pSrcResponseGroup->m_bDepleteBeforeRepeat;
@@ -2504,7 +2504,7 @@ void CResponseSystem::CopyResponsesFrom( Rule *pSrcRule, Rule *pDstRule, CRespon
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::CopyEnumerationsFrom( CResponseSystem *pCustomSystem )
 {
@@ -2522,7 +2522,7 @@ void CResponseSystem::CopyEnumerationsFrom( CResponseSystem *pCustomSystem )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CResponseSystem::CopyRuleFrom( Rule *pSrcRule, ResponseRulePartition::tIndex iRule, CResponseSystem *pCustomSystem )
 {
@@ -2772,7 +2772,7 @@ const Criteria *Rule::GetPointerForRuleCriterionByName( CResponseSystem *pSystem
 	return retval;
 }
 
-const char *Rule::RecursiveGetValueForRuleCriterionByName( CResponseSystem * RESTRICT pSystem, 
+const char *Rule::RecursiveGetValueForRuleCriterionByName( CResponseSystem * RESTRICT pSystem,
 														    const Criteria * RESTRICT pCrit, const CUtlSymbol &pCritNameSym )
 {
 	Assert( pCrit );
@@ -2859,7 +2859,7 @@ static void CC_RR_Debug_ResponseConcept_Exclude( const CCommand &args )
 		CGMsg( 0, CON_GROUP_RESPONSE_SYSTEM, "\tseparate multiple concepts with spaces.\n");
 		CGMsg( 0, CON_GROUP_RESPONSE_SYSTEM, "\tcall with no arguments to see this message and a list of current excludes.\n");
 		CGMsg( 0, CON_GROUP_RESPONSE_SYSTEM, "\tto reset the exclude list, type \"rr_debugresponseconcept_exclude !\"\n");
-		
+
 		// print current excludes
 		CGMsg( 0, CON_GROUP_RESPONSE_SYSTEM, "\nCurrent exclude list:\n" );
 		if ( !CResponseSystem::m_DebugExcludeList.IsValidIndex( CResponseSystem::m_DebugExcludeList.Head() ) )
@@ -2895,8 +2895,8 @@ static void CC_RR_Debug_ResponseConcept_Exclude( const CCommand &args )
 			{
 				CGMsg( 0, CON_GROUP_RESPONSE_SYSTEM, "\t'%s' is not a known concept (adding it anyway)\n", args[i] );
 			}
-			CRR_Concept concept( args[i] );
-			CResponseSystem::m_DebugExcludeList.AddToTail( concept );
+			CRR_Concept rrConcept( args[i] );
+			CResponseSystem::m_DebugExcludeList.AddToTail( rrConcept );
 		}
 	}
 }
