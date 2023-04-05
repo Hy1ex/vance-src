@@ -92,6 +92,8 @@ $Project "Server (Vance)"
 			$File	"vance\vance_player.h"
 			$File	"vance\lights_deferred.cpp"
 			$File	"vance\lights_deferred.h"
+      $File "projectile_bullet.cpp"
+      $File "projectile_bullet.h"
 
 			$File	"$SRCDIR\game\shared\vance\vance_baseweapon_shared.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_baseweapon_shared.h"

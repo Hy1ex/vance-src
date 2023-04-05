@@ -59,7 +59,7 @@ class CHudTexture;
 class KeyValues;
 
 //-----------------------------------------------------------------------------
-// Purpose: Contains the data read from the weapon's script file. 
+// Purpose: Contains the data read from the weapon's script file.
 // It's cached so we only read each weapon's script file once.
 // Each game provides a CreateWeaponInfo function so it can have game-specific
 // data (like CS move speeds) in the weapon script.
@@ -69,12 +69,12 @@ class FileWeaponInfo_t
 public:
 
 	FileWeaponInfo_t();
-	
+
 	// Each game can override this to get whatever values it wants from the script.
 	virtual void Parse( KeyValues *pKeyValuesData, const char *szWeaponName );
 
-	
-public:	
+
+public:
 	bool					bParsedScript;
 	bool					bLoadedHudElements;
 #ifdef MAPBASE
@@ -104,7 +104,7 @@ public:
 	char					szAmmo2[MAX_WEAPON_AMMO_NAME];			// "secondary" ammo type
 
 	// Sound blocks
-	char					aShootSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];	
+	char					aShootSounds[NUM_SHOOT_SOUND_TYPES][MAX_WEAPON_STRING];
 
 	int						iAmmoType;
 	int						iAmmo2Type;
@@ -115,6 +115,9 @@ public:
 	bool					m_bBuiltRightHanded;
 	bool					m_bAllowFlipping;	// False to disallow flipping the model, regardless of whether
 												// it is built left or right handed.
+
+	float					flBulletSpeed;
+	float					flBulletSize;
 
 #ifdef MAPBASE
 	float					m_flViewmodelFOV;
@@ -148,7 +151,7 @@ public:
 };
 
 // The weapon parse function
-bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, 
+bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName,
 	WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL );
 
 #ifdef MAPBASE
@@ -165,8 +168,8 @@ WEAPON_FILE_INFO_HANDLE GetInvalidWeaponInfoHandle( void );
 void PrecacheFileWeaponInfoDatabase( IFileSystem *filesystem, const unsigned char *pICEKey );
 
 
-// 
-// Read a possibly-encrypted KeyValues file in. 
+//
+// Read a possibly-encrypted KeyValues file in.
 // If pICEKey is NULL, then it appends .txt to the filename and loads it as an unencrypted file.
 // If pICEKey is non-NULL, then it appends .ctx to the filename and loads it as an encrypted file.
 //

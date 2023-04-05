@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $Workfile:     $
 // $Date:         $
@@ -36,14 +36,14 @@
 #define ALL_VISIBLE_CONTENTS (LAST_VISIBLE_CONTENTS | (LAST_VISIBLE_CONTENTS-1))
 
 #define CONTENTS_TESTFOGVOLUME	0x100
-#define CONTENTS_UNUSED			0x200	
+#define CONTENTS_UNUSED			0x200
 
-// unused 
+// unused
 // NOTE: If it's visible, grab from the top + update LAST_VISIBLE_CONTENTS
 // if not visible, then grab from the bottom.
 #define CONTENTS_UNUSED6		0x400
 
-#define CONTENTS_TEAM1			0x800	// per team contents used to differentiate collisions 
+#define CONTENTS_TEAM1			0x800	// per team contents used to differentiate collisions
 #define CONTENTS_TEAM2			0x1000	// between players and objects on different teams
 
 // ignore CONTENTS_OPAQUE on surfaces that have SURF_NODRAW
@@ -93,7 +93,7 @@
 #define SURF_BUMPLIGHT	0x0800	// calculate three lightmaps for the surface for bumpmapping
 #define SURF_NOSHADOWS	0x1000	// Don't receive shadows
 #define SURF_NODECALS	0x2000	// Don't receive decals
-#define SURF_NOCHOP		0x4000	// Don't subdivide patches on this surface 
+#define SURF_NOCHOP		0x4000	// Don't subdivide patches on this surface
 #define SURF_HITBOX		0x8000	// surface is part of a hitbox
 
 
@@ -145,5 +145,8 @@
 // everything that blocks corpse movement
 // UNDONE: Not used yet / may be deleted
 #define	MASK_DEADSOLID				(CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_WINDOW|CONTENTS_GRATE)
+
+// Things projectile bullets should collide with
+#define MASK_BULLETSCANTOUCH		(MASK_ALL & ~CONTENTS_GRATE)
 
 #endif // BSPFLAGS_H

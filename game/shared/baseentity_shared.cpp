@@ -29,6 +29,9 @@
 	#include "player_pickup.h"
 	#include "waterbullet.h"
 	#include "func_break.h"
+#ifdef VANCE
+  #include "projectile_bullet.h"
+#endif
 
 #ifdef HL2MP
 	#include "te_hl2mp_shotgun_shot.h"
@@ -82,6 +85,8 @@ float k_flMaxEntitySpinRate = k_flMaxAngularVelocity * 10.0f;
 ConVar	ai_shot_bias_min( "ai_shot_bias_min", "-1.0", FCVAR_REPLICATED );
 ConVar	ai_shot_bias_max( "ai_shot_bias_max", "1.0", FCVAR_REPLICATED );
 ConVar	ai_debug_shoot_positions( "ai_debug_shoot_positions", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
+
+ConVar sv_bulletspeed_override( "sv_bulletspeed_override", "0", FCVAR_CHEAT | FCVAR_REPLICATED );
 
 // Utility func to throttle rate at which the "reasonable position" spew goes out
 static double s_LastEntityReasonableEmitTime;
@@ -1608,6 +1613,111 @@ public:
 };
 #else
 typedef CTraceFilterSimpleList CBulletsTraceFilter;
+#endif
+
+
+#ifdef VANCE
+void CBaseEntity::FireBulletProjectiles(const ProjectileBulletsInfo_t& info)
+{
+	return FireBullets(info); // TEMPORARY until we fix projectile bullets
+
+	// fix up bullet vars here, it's cleaner that way
+	ProjectileBulletsInfo_t safeInfo = info;
+	safeInfo.m_pAttacker = info.m_pAttacker ? info.m_pAttacker : this;
+	safeInfo.m_pAdditionalIgnoreEnt = info.m_pAdditionalIgnoreEnt ? info.m_pAdditionalIgnoreEnt : this;
+
+	if (float speed = sv_bulletspeed_override.GetFloat() != 0.0f)
+		safeInfo.m_flBulletSpeed = speed;
+
+	CBaseCombatCharacter* pAttacker = ToBaseCombatCharacter(info.m_pAttacker);
+	if (pAttacker)
+		safeInfo.m_flBulletSize = static_cast<CBaseCombatWeapon *>(pAttacker->GetActiveWeapon())->GetWpnData().flBulletSize;
+
+#if defined( GAME_DLL )
+	if (IsPlayer())
+	{
+		CBasePlayer* pPlayer = dynamic_cast<CBasePlayer*>(this);
+
+		int rumbleEffect = pPlayer->GetActiveWeapon()->GetRumbleEffect();
+
+		if (rumbleEffect != RUMBLE_INVALID)
+		{
+			if (rumbleEffect == RUMBLE_SHOTGUN_SINGLE)
+			{
+				if (safeInfo.m_iShots == 12)
+				{
+					// Upgrade to double barrel rumble effect
+					rumbleEffect = RUMBLE_SHOTGUN_DOUBLE;
+				}
+			}
+
+			pPlayer->RumbleEffect(rumbleEffect, 0, RUMBLE_FLAG_RESTART);
+		}
+	}
+#endif// GAME_DLL
+
+	Vector vecDir;
+
+	// Prediction is only usable on players
+	int iSeed = 0;
+	if (IsPlayer())
+	{
+		iSeed = CBaseEntity::GetPredictionRandomSeed() & 255;
+	}
+
+	//-----------------------------------------------------
+	// Set up our shot manipulator.
+	//-----------------------------------------------------
+	CShotManipulator Manipulator(safeInfo.m_vecDirShooting);
+
+	for (int iShot = 0; iShot < safeInfo.m_iShots; iShot++)
+	{
+		// Prediction is only usable on players
+		if (IsPlayer())
+		{
+			RandomSeed(iSeed);	// init random system with this seed
+		}
+
+		// If we're firing multiple shots, and the first shot has to be bang on target, ignore spread
+		if (iShot == 0 && safeInfo.m_iShots > 1 && (safeInfo.m_nFlags & FIRE_BULLETS_FIRST_SHOT_ACCURATE))
+		{
+			vecDir = Manipulator.GetShotDirection();
+		}
+		else
+		{
+			// Don't run the biasing code for the player at the moment.
+			vecDir = Manipulator.ApplySpread(safeInfo.m_vecSpread);
+		}
+
+#ifdef GAME_DLL
+		CProjectileBulletTrace::Create(safeInfo, vecDir);
+
+		trace_t tr;
+		Vector startPos, endPos;
+		ComputeTracerStartPosition(safeInfo.m_vecSrc, &startPos);
+		if (safeInfo.m_pAttacker->IsPlayer())
+		{
+			CBasePlayer* pPlayer = ToBasePlayer(safeInfo.m_pAttacker);
+			CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
+			pWeapon->GetAttachment(pWeapon->LookupAttachment("muzzle"), startPos);
+			endPos = startPos + vecDir * MAX_TRACE_LENGTH;
+		}
+		else
+		{
+			startPos = safeInfo.m_vecSrc;
+			endPos = startPos + vecDir * MAX_TRACE_LENGTH;
+		}
+
+		endPos = startPos + vecDir * MAX_TRACE_LENGTH;
+
+		UTIL_TraceLine(startPos, endPos, MASK_BULLETSCANTOUCH, safeInfo.m_pAdditionalIgnoreEnt, COLLISION_GROUP_NONE, &tr);
+
+		MakeTracer(startPos, tr, GetAmmoDef()->TracerType(safeInfo.m_iAmmoType));
+#endif
+
+		iSeed++;
+	}
+}
 #endif
 
 void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )

@@ -17,7 +17,7 @@
 // The sound categories found in the weapon classname.txt files
 // This needs to match the WeaponSound_t enum in weapon_parse.h
 #if !defined(_STATIC_LINKED) || defined(CLIENT_DLL)
-const char *pWeaponSoundCategories[ NUM_SHOOT_SOUND_TYPES ] = 
+const char *pWeaponSoundCategories[ NUM_SHOOT_SOUND_TYPES ] =
 {
 	"empty",
 	"single_shot",
@@ -85,8 +85,8 @@ bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { 0 };
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *name - 
+// Purpose:
+// Input  : *name -
 // Output : FileWeaponInfo_t
 //-----------------------------------------------------------------------------
 static WEAPON_FILE_INFO_HANDLE FindWeaponInfoSlot( const char *name )
@@ -118,8 +118,8 @@ static FileWeaponInfo_t gNullWeaponInfo;
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : handle - 
+// Purpose:
+// Input  : handle -
 // Output : FileWeaponInfo_t
 //-----------------------------------------------------------------------------
 FileWeaponInfo_t *GetFileWeaponInfoFromHandle( WEAPON_FILE_INFO_HANDLE handle )
@@ -138,7 +138,7 @@ FileWeaponInfo_t *GetFileWeaponInfoFromHandle( WEAPON_FILE_INFO_HANDLE handle )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : WEAPON_FILE_INFO_HANDLE
 //-----------------------------------------------------------------------------
 WEAPON_FILE_INFO_HANDLE GetInvalidWeaponInfoHandle( void )
@@ -149,7 +149,7 @@ WEAPON_FILE_INFO_HANDLE GetInvalidWeaponInfoHandle( void )
 #if 0
 void ResetFileWeaponInfoDatabase( void )
 {
-	int c = m_WeaponInfoDatabase.Count(); 
+	int c = m_WeaponInfoDatabase.Count();
 	for ( int i = 0; i < c; ++i )
 	{
 		delete m_WeaponInfoDatabase[ i ];
@@ -231,9 +231,9 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameW
 			// load file into a null-terminated buffer
 			int fileSize = filesystem->Size(f);
 			char *buffer = (char*)MemAllocScratch(fileSize + 1);
-		
+
 			Assert(buffer);
-		
+
 			filesystem->Read(buffer, fileSize, f); // read into local buffer
 			buffer[fileSize] = 0; // null terminate file as EOF
 			filesystem->Close( f );	// close file after reading
@@ -278,7 +278,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 		Assert( 0 );
 		return false;
 	}
-	
+
 	*phandle = FindWeaponInfoSlot( szWeaponName );
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
@@ -324,7 +324,7 @@ bool ReadCustomWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *s
 		Assert( 0 );
 		return false;
 	}
-	
+
 	*phandle = FindWeaponInfoSlot( szWeaponName );
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
@@ -430,7 +430,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	Q_strncpy( szAnimationPrefix, pKeyValuesData->GetString( "anim_prefix" ), MAX_WEAPON_PREFIX );
 	iSlot = pKeyValuesData->GetInt( "bucket", 0 );
 	iPosition = pKeyValuesData->GetInt( "bucket_position", 0 );
-	
+
 	// Use the console (X360) buckets if hud_fastswitch is set to 2.
 #ifdef CLIENT_DLL
 	if ( hud_fastswitch.GetInt() == 2 )
@@ -448,7 +448,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	iWeight = pKeyValuesData->GetInt( "weight", 0 );
 
 	iRumbleEffect = pKeyValuesData->GetInt( "rumble", -1 );
-	
+
 	// LAME old way to specify item flags.
 	// Weapon scripts should use the flag names.
 	iFlags = pKeyValuesData->GetInt( "item_flags", ITEM_FLAG_LIMITINWORLD );
@@ -512,7 +512,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	else
 		Q_strncpy( szAmmo1, pAmmo, sizeof( szAmmo1 )  );
 	iAmmoType = GetAmmoDef()->Index( szAmmo1 );
-	
+
 	// Secondary ammo used
 	pAmmo = pKeyValuesData->GetString( "secondary_ammo", "None" );
 	if ( strcmp("None", pAmmo) == 0)
@@ -535,5 +535,8 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 			}
 		}
 	}
+
+	flBulletSpeed = ( pKeyValuesData->GetFloat( "BulletSpeed", 300 ) * 100 ) / 2;
+	flBulletSize = pKeyValuesData->GetFloat( "BulletSize", 0.0f );
 }
 
