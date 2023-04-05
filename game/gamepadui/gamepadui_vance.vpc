@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR        "..\.."
-$Macro GAMENAME     "VANCE"
+$Macro GAMENAME     "vance"
 $Macro OUTBINNAME    "gamepadui"
 
 $Include "$SRCDIR\game\gamepadui\gamepadui_base.vpc"
@@ -18,6 +18,6 @@ $Configuration
     }
 }
 
-$Project "GamepadUI (VANCE)"
+$Project "GamepadUI (Vance)"
 {
 }
