@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -27,9 +27,9 @@ ConVar rr_followup_maxdist( "rr_followup_maxdist", "1800", FCVAR_CHEAT, "'then A
 CResponseQueue::CResponseQueue( int queueSize ) : m_Queue(queueSize), m_ExpresserTargets(8,8)
 {};
 
-/// Add a deferred response. 
-void CResponseQueue::Add( const AIConcept_t &concept,  ///< concept to dispatch
-		 const AI_CriteriaSet * RESTRICT contexts, 
+/// Add a deferred response.
+void CResponseQueue::Add( const AIConcept_t &rrConcept,  ///< concept to dispatch
+		 const AI_CriteriaSet * RESTRICT contexts,
 		 float time,					 ///< when to dispatch it. You can specify a time of zero to mean "immediately."
 		 const CFollowupTargetSpec_t &targetspec,
 		 CBaseEntity *pIssuer
@@ -38,12 +38,12 @@ void CResponseQueue::Add( const AIConcept_t &concept,  ///< concept to dispatch
 	// Add a response.
 	AssertMsg( m_Queue.Count() < AI_RESPONSE_QUEUE_SIZE, "AI Response queue overfilled." );
 	QueueType_t::IndexLocalType_t idx = m_Queue.AddToTail();
-	m_Queue[idx].Init( concept, contexts, time, targetspec, pIssuer );
+	m_Queue[idx].Init( rrConcept, contexts, time, targetspec, pIssuer );
 }
 
 
-/// Remove a deferred response matching the concept and issuer. 
-void CResponseQueue::Remove( const AIConcept_t &concept,  ///< concept to dispatch
+/// Remove a deferred response matching the concept and issuer.
+void CResponseQueue::Remove( const AIConcept_t &rrConcept,  ///< concept to dispatch
 			CBaseEntity * const RESTRICT pIssuer		  ///< the entity issuing the response, if one exists.
 			) RESTRICT
 {
@@ -54,7 +54,7 @@ void CResponseQueue::Remove( const AIConcept_t &concept,  ///< concept to dispat
 		CDeferredResponse &response = m_Queue[idx];
 		QueueType_t::IndexLocalType_t previdx = idx; // advance the index immediately because we may be deleting the "current" element
 		idx = m_Queue.Next(idx); // is now the next index
-		if ( CompareConcepts( response.m_concept, concept ) && // if concepts match and 
+		if ( CompareConcepts( response.m_concept, rrConcept ) && // if concepts match and
 			( !pIssuer || ( response.m_hIssuer.Get() == pIssuer ) ) // issuer is null, or matches the one in the response
 			)
 		{
@@ -70,7 +70,7 @@ void CResponseQueue::RemoveSpeechQueuedFor( const CBaseEntity *pSpeaker )
 	// because responses are dispatched from inside a loop that is already walking through the
 	// queue, it's not safe to actually remove the elements. Instead, quash it by replacing it
 	// with a null event.
-	
+
 	for ( QueueType_t::IndexLocalType_t idx = m_Queue.Head() ;
 		  idx != m_Queue.InvalidIndex() ;
 		  idx = m_Queue.Next(idx) ) // is now the next index
@@ -112,7 +112,7 @@ failsafe:
 		}
 		else if ( response.m_fDispatchTime <= gpGlobals->curtime )
 		{
-			// dispatch. we've had bugs where dispatches removed things from inside the queue; 
+			// dispatch. we've had bugs where dispatches removed things from inside the queue;
 			// so, as a failsafe, if the queue length changes as a result, start over.
 			int oldLength = m_Queue.Count();
 			DispatchOneResponse(response);
@@ -218,7 +218,7 @@ bool CResponseQueue::DispatchOneResponse(CDeferredResponse &response)
 		CFlexExpresser * RESTRICT pOrator = CFlexExpresser::AsFlexExpresser( pIssuer );
 		if ( pOrator )
 		{
-			// max dist is overridden. "0" means infinite distance (for orators only), 
+			// max dist is overridden. "0" means infinite distance (for orators only),
 			// anything else is a finite distance.
 			if ( pOrator->m_flThenAnyMaxDist > 0 )
 			{
@@ -228,7 +228,7 @@ bool CResponseQueue::DispatchOneResponse(CDeferredResponse &response)
 			{
 				followupMaxDistSq = FLT_MAX;
 			}
-			
+
 		}
 		else
 		*/
@@ -254,18 +254,18 @@ bool CResponseQueue::DispatchOneResponse(CDeferredResponse &response)
 		{
 			bool bSaidAnything = false;
 			Vector issuerLocation;
-			if ( pIssuer ) 
-			{ 
-					issuerLocation = pIssuer->GetAbsOrigin(); 
+			if ( pIssuer )
+			{
+					issuerLocation = pIssuer->GetAbsOrigin();
 			}
 
 			// find all characters
 			int numExprs = GetNumExpresserTargets();
-			for ( int i = 0 ; i < numExprs; ++i ) 
+			for ( int i = 0 ; i < numExprs; ++i )
 			{
 				pTarget = GetExpresserHost(i);
 				float distIssuerToTargetSq = 0.0f;
-				if ( pIssuer ) 
+				if ( pIssuer )
 				{
 					distIssuerToTargetSq = (pTarget->GetAbsOrigin() - issuerLocation).LengthSqr();
 					if ( distIssuerToTargetSq > followupMaxDistSq )
@@ -273,12 +273,12 @@ bool CResponseQueue::DispatchOneResponse(CDeferredResponse &response)
 				}
 
 				pEx = InferExpresserFromBaseEntity(pTarget);
-				if ( !pEx || pTarget == pIssuer ) 
+				if ( !pEx || pTarget == pIssuer )
 					continue;
 				AI_CriteriaSet characterCriteria;
 				pEx->GatherCriteria(&characterCriteria, response.m_concept, NULL);
 				characterCriteria.Merge(&deferredCriteria);
-				if ( pIssuer ) 
+				if ( pIssuer )
 				{
 					characterCriteria.AppendCriteria( "dist_from_issuer",  UTIL_VarArgs( "%f", sqrt(distIssuerToTargetSq) ) );
 				}
@@ -303,21 +303,21 @@ bool CResponseQueue::DispatchOneResponse(CDeferredResponse &response)
 	if (!pTarget)
 		return false; // we're done right here.
 
-	// Get the expresser for the target. 
+	// Get the expresser for the target.
 	pEx = InferExpresserFromBaseEntity(pTarget);
 	if (!pEx)
 		return false;
-	
+
 
 	AI_CriteriaSet characterCriteria;
 	pEx->GatherCriteria(&characterCriteria, response.m_concept, NULL);
 	characterCriteria.Merge(&deferredCriteria);
 	pEx->Speak( response.m_concept, &characterCriteria );
-	
+
 	return true;
 }
 
-// 
+//
 ConVar rr_thenany_score_slop( "rr_thenany_score_slop", "0.0", FCVAR_CHEAT, "When computing respondents for a 'THEN ANY' rule, all rule-matching scores within this much of the best score will be considered." );
 #define EXARRAYMAX 32 // maximum number of prospective expressers in the array (hardcoded for simplicity)
 bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, AI_CriteriaSet * RESTRICT pDeferredCriteria, CBaseEntity *  const RESTRICT pIssuer, float followupMaxDistSq )
@@ -338,16 +338,16 @@ bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, A
 	int numExFound = 0; // and this is the high water mark for the array.
 
 	// Here's the algorithm: we're going to walk through all the characters, finding the
-	// highest scoring ones for this rule. Let the highest score be called k. 
+	// highest scoring ones for this rule. Let the highest score be called k.
 	// Because there may be (n) many characters all scoring k, we store an array of
-	// all characters with score k, then choose randomly from that array at return. 
+	// all characters with score k, then choose randomly from that array at return.
 	// We also define an allowable error for k in the global cvar
 	// rr_thenany_score_slop , which may be zero.
 
 	// find all characters (except the issuer)
 	int numExprs = GetNumExpresserTargets();
 	AssertMsg1( numExprs <= EXARRAYMAX, "Response queue has %d possible expresser targets, please increase EXARRAYMAX ", numExprs );
-	for ( int i = 0 ; i < numExprs; ++i ) 
+	for ( int i = 0 ; i < numExprs; ++i )
 	{
 		pTarget = GetExpresserHost(i);
 		if ( pTarget == pIssuer )
@@ -365,7 +365,7 @@ bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, A
 		}
 
 		pEx = InferExpresserFromBaseEntity(pTarget);
-		if ( !pEx  ) 
+		if ( !pEx  )
 			continue;
 
 		AI_CriteriaSet characterCriteria;
@@ -386,8 +386,8 @@ bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, A
 		{
 			float score = prospectiveResponse.GetMatchScore();
 			if ( score > 0 && !prospectiveResponse.IsEmpty() ) // ignore scores that are zero, regardless of slop
-			{	
-				// if this score is better than all we've seen (outside the slop), then replace the array with 
+			{
+				// if this score is better than all we've seen (outside the slop), then replace the array with
 				// an entry just to this expresser
 				if ( score > bestScore + slop )
 				{
@@ -396,7 +396,7 @@ bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, A
 					bestScore = score;
 					numExFound = 1;
 				}
-				else if ( score >= bestScore - slop ) // if this score is at least as good as the best we've seen, but not better than all 
+				else if ( score >= bestScore - slop ) // if this score is at least as good as the best we've seen, but not better than all
 				{
 					if ( numExFound >= EXARRAYMAX )
 					{
@@ -437,7 +437,7 @@ bool CResponseQueue::DispatchOneResponse_ThenANY( CDeferredResponse &response, A
 			AssertMsg( false, "Response queue somehow found a response, but no expresser for it.\n" );
 			return false;
 		}
-	}	
+	}
 	else
 	{	// I did not find a response.
 		return false;

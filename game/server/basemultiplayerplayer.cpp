@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose:		
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================
@@ -32,7 +32,7 @@ CBaseMultiplayerPlayer::~CBaseMultiplayerPlayer()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CAI_Expresser *CBaseMultiplayerPlayer::CreateExpresser( void )
 {
@@ -45,7 +45,7 @@ CAI_Expresser *CBaseMultiplayerPlayer::CreateExpresser( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CBaseMultiplayerPlayer::PostConstructor( const char *szClassname )
 {
@@ -54,7 +54,7 @@ void CBaseMultiplayerPlayer::PostConstructor( const char *szClassname )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CBaseMultiplayerPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 {
@@ -64,10 +64,10 @@ void CBaseMultiplayerPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-bool CBaseMultiplayerPlayer::SpeakIfAllowed( AIConcept_t conceptId, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter ) 
-{ 
+bool CBaseMultiplayerPlayer::SpeakIfAllowed( AIConcept_t conceptId, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter )
+{
 	if ( !IsAlive() )
 		return false;
 
@@ -76,7 +76,7 @@ bool CBaseMultiplayerPlayer::SpeakIfAllowed( AIConcept_t conceptId, const char *
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 IResponseSystem *CBaseMultiplayerPlayer::GetResponseSystem()
 {
@@ -93,7 +93,7 @@ bool CBaseMultiplayerPlayer::SpeakConcept( AI_Response &response, int iConcept )
 	m_iCurrentConcept = iConcept;
 #ifdef NEW_RESPONSE_SYSTEM
 	CAI_Concept conceptId(g_pszMPConcepts[iConcept]);
-	concept.SetSpeaker(this);
+	conceptId.SetSpeaker(this);
 	return FindResponse( response, conceptId );
 #else
 	AI_Response *pResponse = SpeakFindResponse( g_pszMPConcepts[iConcept] );
@@ -104,7 +104,7 @@ bool CBaseMultiplayerPlayer::SpeakConcept( AI_Response &response, int iConcept )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CBaseMultiplayerPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter )
 {
@@ -114,7 +114,7 @@ bool CBaseMultiplayerPlayer::SpeakConceptIfAllowed( int iConcept, const char *mo
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CBaseMultiplayerPlayer::CanHearAndReadChatFrom( CBasePlayer *pPlayer )
 {
@@ -138,7 +138,7 @@ bool CBaseMultiplayerPlayer::CanHearAndReadChatFrom( CBasePlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CBaseMultiplayerPlayer::ShouldRunRateLimitedCommand( const CCommand &args )
 {
@@ -146,7 +146,7 @@ bool CBaseMultiplayerPlayer::ShouldRunRateLimitedCommand( const CCommand &args )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CBaseMultiplayerPlayer::ShouldRunRateLimitedCommand( const char *pszCommand )
 {
@@ -171,7 +171,7 @@ bool CBaseMultiplayerPlayer::ShouldRunRateLimitedCommand( const char *pszCommand
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CBaseMultiplayerPlayer::ClientCommand( const CCommand &args )
 {
@@ -314,7 +314,7 @@ void CBaseMultiplayerPlayer::EscortScoringThink( void )
 
 	if ( m_flCapPointScoreRate > 0 )
 	{
-		float flTimeForOnePoint = 1.0f / m_flCapPointScoreRate; 
+		float flTimeForOnePoint = 1.0f / m_flCapPointScoreRate;
 
 		int iPoints = 0;
 
@@ -336,7 +336,7 @@ void CBaseMultiplayerPlayer::EscortScoringThink( void )
 		}
 	}
 
-	SetContextThink( &CBaseMultiplayerPlayer::EscortScoringThink, gpGlobals->curtime + ESCORT_SCORE_INTERVAL, ESCORT_SCORE_CONTEXT );	
+	SetContextThink( &CBaseMultiplayerPlayer::EscortScoringThink, gpGlobals->curtime + ESCORT_SCORE_INTERVAL, ESCORT_SCORE_CONTEXT );
 }
 
 //-----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -76,15 +76,15 @@ void CSpeaker::Spawn( void )
 		return;
 	}
 
-//	const char *concept = (const char *)STRING( m_iszConcept );
-//	if ( Q_strlen( concept ) < 1 )
+//	const char *rrConcept = (const char *)STRING( m_iszConcept );
+//	if ( Q_strlen( rrConcept ) < 1 )
 //	{
 //		Warning( "'speaker' entity using rule set %s with empty concept string\n", soundfile );
 //	}
 
     SetSolid( SOLID_NONE );
     SetMoveType( MOVETYPE_NONE );
-	
+
 	SetThink(&CSpeaker::SpeakerThink);
 	SetNextThink( TICK_NEVER_THINK );
 
@@ -111,7 +111,7 @@ void CSpeaker::Precache( void )
 //-----------------------------------------------------------------------------
 // Purpose: Need a custom save restore so we can restore the instanced response system by name
 //  after we've loaded the filename from disk...
-// Input  : &save - 
+// Input  : &save -
 //-----------------------------------------------------------------------------
 int	CSpeaker::Save( ISave &save )
 {
@@ -134,8 +134,8 @@ int	CSpeaker::Save( ISave &save )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &restore - 
+// Purpose:
+// Input  : &restore -
 //-----------------------------------------------------------------------------
 int	CSpeaker::Restore( IRestore &restore )
 {
@@ -182,19 +182,19 @@ void CSpeaker::SpeakerThink( void )
 		SetNextThink( releaseTime );
 		return;
 	}
-	
+
 	DispatchResponse( m_iszConcept.ToCStr() );
 
 	SetNextThink( gpGlobals->curtime + random->RandomFloat(m_delayMin, m_delayMax) );
 
 	// time delay until it's ok to speak: used so that two NPCs don't talk at once
-	g_AIFriendliesTalkSemaphore.Acquire( 5, this );		
-	g_AIFoesTalkSemaphore.Acquire( 5, this );		
+	g_AIFriendliesTalkSemaphore.Acquire( 5, this );
+	g_AIFoesTalkSemaphore.Acquire( 5, this );
 }
 
 #ifdef MAPBASE
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 inline CBaseEntity *CSpeaker::GetTarget()
 {
@@ -205,7 +205,7 @@ inline CBaseEntity *CSpeaker::GetTarget()
 
 //-----------------------------------------------------------------------------
 // Purpose: Copied from CBaseEntity so we could use a !target for everything
-// Input  : *conceptName - 
+// Input  : *conceptName -
 //-----------------------------------------------------------------------------
 void CSpeaker::DispatchResponse( const char *conceptName )
 {
@@ -377,9 +377,9 @@ void CSpeaker::InputToggle( inputdata_t &inputdata )
 		// turn off announcements
 		SetNextThink( TICK_NEVER_THINK );
 	}
-	else 
+	else
 	{
 		// turn on announcements
 		SetNextThink( gpGlobals->curtime + 0.1f );
-	} 
+	}
 }

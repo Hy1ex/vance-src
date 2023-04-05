@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -39,7 +39,7 @@ CAI_PolicingBehavior::CAI_PolicingBehavior( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_PolicingBehavior::TargetIsHostile( void )
@@ -51,8 +51,8 @@ bool CAI_PolicingBehavior::TargetIsHostile( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pGoal - 
+// Purpose:
+// Input  : *pGoal -
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::Enable( CAI_PoliceGoal *pGoal )
 {
@@ -67,7 +67,7 @@ void CAI_PolicingBehavior::Enable( CAI_PoliceGoal *pGoal )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::Disable( void )
 {
@@ -76,7 +76,7 @@ void CAI_PolicingBehavior::Disable( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_PolicingBehavior::CanSelectSchedule( void )
@@ -89,8 +89,8 @@ bool CAI_PolicingBehavior::CanSelectSchedule( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : false - 
+// Purpose:
+// Input  : false -
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::HostSetBatonState( bool state )
 {
@@ -105,8 +105,8 @@ void CAI_PolicingBehavior::HostSetBatonState( bool state )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : false - 
+// Purpose:
+// Input  : false -
 //-----------------------------------------------------------------------------
 bool CAI_PolicingBehavior::HostBatonIsOn( void )
 {
@@ -119,7 +119,7 @@ bool CAI_PolicingBehavior::HostBatonIsOn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, SentencePriority_t nSoundPriority, SentenceCriteria_t nCriteria )
 {
@@ -144,8 +144,8 @@ void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, SentencePri
 	else if ( GetOuter()->GetExpresser() )
 	{
 #ifdef NEW_RESPONSE_SYSTEM
-		CAI_Concept concept = pSentence;
-		GetOuter()->GetExpresser()->Speak( concept );
+		CAI_Concept rrConcept = pSentence;
+		GetOuter()->GetExpresser()->Speak( rrConcept );
 #else
 		GetOuter()->GetExpresser()->Speak( pSentence );
 #endif
@@ -155,7 +155,7 @@ void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, SentencePri
 
 #ifdef METROPOLICE_USES_RESPONSE_SYSTEM
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, const char *modifiers, SentencePriority_t nSoundPriority, SentenceCriteria_t nCriteria )
 {
@@ -174,8 +174,8 @@ void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, const char 
 	else if ( GetOuter()->GetExpresser() )
 	{
 #ifdef NEW_RESPONSE_SYSTEM
-		CAI_Concept concept( pSentence );
-		GetOuter()->GetExpresser()->Speak( concept, modifiers );
+		CAI_Concept rrConcept( pSentence );
+		GetOuter()->GetExpresser()->Speak( rrConcept, modifiers );
 #else
 		GetOuter()->GetExpresser()->Speak( pSentence, modifiers );
 #endif
@@ -185,7 +185,7 @@ void CAI_PolicingBehavior::HostSpeakSentence( const char *pSentence, const char 
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::BuildScheduleTestBits( void )
 {
@@ -201,7 +201,7 @@ void CAI_PolicingBehavior::BuildScheduleTestBits( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::GatherConditions( void )
 {
@@ -268,7 +268,7 @@ void CAI_PolicingBehavior::GatherConditions( void )
 void CAI_PolicingBehavior::AnnouncePolicing( void )
 {
 	// We're policing
-	static const char *pWarnings[3] = 
+	static const char *pWarnings[3] =
 	{
 		"METROPOLICE_MOVE_ALONG_A",
 		"METROPOLICE_MOVE_ALONG_B",
@@ -282,9 +282,9 @@ void CAI_PolicingBehavior::AnnouncePolicing( void )
 	{
 		HostSpeakSentence( pWarnings[ m_nNumWarnings - 1 ], SENTENCE_PRIORITY_MEDIUM, SENTENCE_CRITERIA_NORMAL );
 	}
-	else 
+	else
 	{
-		// We loop at m_nNumWarnings == 4 for players who aren't moving 
+		// We loop at m_nNumWarnings == 4 for players who aren't moving
 		// but still pissing us off, and we're not allowed to do anything about it. (i.e. can't leave post)
 		// First two sentences sound pretty good, so randomly pick one of them.
 		int iSentence = RandomInt( 0, 1 );
@@ -294,8 +294,8 @@ void CAI_PolicingBehavior::AnnouncePolicing( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : scheduleType - 
+// Purpose:
+// Input  : scheduleType -
 // Output : int
 //-----------------------------------------------------------------------------
 int CAI_PolicingBehavior::TranslateSchedule( int scheduleType )
@@ -316,8 +316,8 @@ int CAI_PolicingBehavior::TranslateSchedule( int scheduleType )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : newActivity - 
+// Purpose:
+// Input  : newActivity -
 // Output : Activity
 //-----------------------------------------------------------------------------
 Activity CAI_PolicingBehavior::NPC_TranslateActivity( Activity newActivity )
@@ -342,7 +342,7 @@ Activity CAI_PolicingBehavior::NPC_TranslateActivity( Activity newActivity )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : CBaseEntity
 //-----------------------------------------------------------------------------
 CBaseEntity *CAI_PolicingBehavior::GetGoalTarget( void )
@@ -358,8 +358,8 @@ CBaseEntity *CAI_PolicingBehavior::GetGoalTarget( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : time - 
+// Purpose:
+// Input  : time -
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::SetTargetHostileDuration( float time )
 {
@@ -367,8 +367,8 @@ void CAI_PolicingBehavior::SetTargetHostileDuration( float time )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pTask - 
+// Purpose:
+// Input  : *pTask -
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::StartTask( const Task_t *pTask )
 {
@@ -396,7 +396,7 @@ void CAI_PolicingBehavior::StartTask( const Task_t *pTask )
 
 				// See how far away the default one is
 				float testDist = UTIL_DistApprox2D( m_hPoliceGoal->GetAbsOrigin(), harassPos );
-				
+
 				// If our other goal is closer, choose it
 				if ( testDist > UTIL_DistApprox2D( m_hPoliceGoal->GetAbsOrigin(), vPos ) )
 				{
@@ -420,7 +420,7 @@ void CAI_PolicingBehavior::StartTask( const Task_t *pTask )
 			}
 		}
 		break;
-	
+
 	case TASK_POLICE_GET_PATH_TO_POLICE_GOAL:
 		{
 			if ( GetNavigator()->SetGoal( m_hPoliceGoal->GetAbsOrigin(), pTask->flTaskData ) )
@@ -454,7 +454,7 @@ void CAI_PolicingBehavior::StartTask( const Task_t *pTask )
 			if ( m_hPoliceGoal )
 			{
 				GetMotor()->SetIdealYaw( m_hPoliceGoal->GetAbsAngles().y );
-				GetOuter()->SetTurnActivity(); 
+				GetOuter()->SetTurnActivity();
 			}
 		}
 		break;
@@ -466,16 +466,16 @@ void CAI_PolicingBehavior::StartTask( const Task_t *pTask )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CAI_PolicingBehavior::RunTask( const Task_t *pTask )		
-{ 
+void CAI_PolicingBehavior::RunTask( const Task_t *pTask )
+{
 	switch ( pTask->iTask )
 	{
 	case TASK_POLICE_FACE_ALONG_GOAL:
 		{
    			GetMotor()->UpdateYaw();
-   
+
    			if ( GetOuter()->FacingIdeal() )
    			{
    				TaskComplete();
@@ -489,7 +489,7 @@ void CAI_PolicingBehavior::RunTask( const Task_t *pTask )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_PolicingBehavior::MaintainGoalPosition( void )
@@ -509,7 +509,7 @@ bool CAI_PolicingBehavior::MaintainGoalPosition( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_PolicingBehavior::ShouldKnockOutTarget( CBaseEntity *pTarget )
@@ -526,8 +526,8 @@ bool CAI_PolicingBehavior::ShouldKnockOutTarget( CBaseEntity *pTarget )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pTarget - 
+// Purpose:
+// Input  : *pTarget -
 //-----------------------------------------------------------------------------
 void CAI_PolicingBehavior::KnockOutTarget( CBaseEntity *pTarget )
 {
@@ -542,7 +542,7 @@ void CAI_PolicingBehavior::KnockOutTarget( CBaseEntity *pTarget )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : int
 //-----------------------------------------------------------------------------
 int CAI_PolicingBehavior::SelectSuppressSchedule( void )
@@ -555,14 +555,14 @@ int CAI_PolicingBehavior::SelectSuppressSchedule( void )
 	{
 		// Mark this as a valid target
 		m_bTargetIsHostile = true;
-		
+
 		// Attack the target
 		GetOuter()->SetEnemy( pTarget );
 		GetOuter()->SetState( NPC_STATE_COMBAT );
 		GetOuter()->UpdateEnemyMemory( pTarget, pTarget->GetAbsOrigin() );
 
 		HostSetBatonState( true );
-		
+
 		// Remember that we're angry with the target
 		m_nNumWarnings = POLICE_MAX_WARNINGS;
 
@@ -594,7 +594,7 @@ int CAI_PolicingBehavior::SelectSuppressSchedule( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : int
 //-----------------------------------------------------------------------------
 int CAI_PolicingBehavior::SelectHarassSchedule( void )
@@ -606,7 +606,7 @@ int CAI_PolicingBehavior::SelectHarassSchedule( void )
 	// If we just started to police, make sure we're on our mark
 	if ( MaintainGoalPosition() )
 		return SCHED_POLICE_RETURN_FROM_HARASS;
-	
+
 	// Look at the target if they're too close
 	GetOuter()->AddLookTarget( pTarget, 0.5f, 5.0f );
 
@@ -615,7 +615,7 @@ int CAI_PolicingBehavior::SelectHarassSchedule( void )
 	{
 		// Gesture the player away
 		GetOuter()->SetTarget( pTarget );
-		
+
 		// Send outputs for each level of warning
 		if ( m_nNumWarnings == 0 )
 		{
@@ -643,7 +643,7 @@ int CAI_PolicingBehavior::SelectHarassSchedule( void )
 				GetOuter()->SetState( NPC_STATE_COMBAT );
 				GetOuter()->UpdateEnemyMemory( pTarget, pTarget->GetAbsOrigin() );
 				HostSetBatonState( true );
-				
+
 				m_hPoliceGoal->FireWarningLevelOutput( 4 );
 
 				return SCHED_COMBAT_FACE;
@@ -652,14 +652,14 @@ int CAI_PolicingBehavior::SelectHarassSchedule( void )
 			if ( m_hPoliceGoal->ShouldRemainAtPost() == false )
 				return SCHED_CHASE_ENEMY;
 		}
-			
+
 		// On our last warning, approach the target
 		if ( m_nNumWarnings == (POLICE_MAX_WARNINGS-1) )
 		{
 			m_hPoliceGoal->FireWarningLevelOutput( 3 );
 
 			GetOuter()->SetTarget( pTarget );
-			
+
 			HostSetBatonState( true );
 
 			if ( m_hPoliceGoal->ShouldRemainAtPost() == false )
@@ -674,7 +674,7 @@ int CAI_PolicingBehavior::SelectHarassSchedule( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : int
 //-----------------------------------------------------------------------------
 int CAI_PolicingBehavior::SelectSchedule( void )
@@ -685,7 +685,7 @@ int CAI_PolicingBehavior::SelectSchedule( void )
 	if ( pTarget == NULL )
 	{
 		DevMsg( "ai_goal_police with NULL target entity!\n" );
-		
+
 		// Turn us off
 		Disable();
 		return SCHED_NONE;
@@ -702,7 +702,7 @@ int CAI_PolicingBehavior::SelectSchedule( void )
 	{
 		return SelectSuppressSchedule();
 	}
-	
+
 	int newSchedule = SCHED_NONE;
 
 	// See if we're harassing
@@ -728,7 +728,7 @@ int CAI_PolicingBehavior::SelectSchedule( void )
 
 		HostSetBatonState( false );
 		m_bTargetIsHostile = false;
-	}	
+	}
 
 	// If we just started to police, make sure we're on our mark
 	if ( MaintainGoalPosition() )
@@ -746,7 +746,7 @@ int CAI_PolicingBehavior::SelectSchedule( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int CAI_PolicingBehavior::SelectFailSchedule( int failedSchedule, int failedTask, AI_TaskFailureCode_t taskFailCode )
 {
@@ -758,7 +758,7 @@ int CAI_PolicingBehavior::SelectFailSchedule( int failedSchedule, int failedTask
 
 		return SCHED_POLICE_WARN_TARGET;
 	}
-	
+
 	return BaseClass::SelectFailSchedule( failedSchedule, failedTask, taskFailCode );
 }
 

@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -116,12 +116,12 @@ public:
 	// Speaking
 	virtual void SpeakSentence( int nSentenceType );
 #ifdef METROPOLICE_USES_RESPONSE_SYSTEM
-	bool			SpeakIfAllowed( const char *concept, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD )
+	bool			SpeakIfAllowed( const char *rrConcept, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD )
 	{
-		return SpeakIfAllowed( concept, NULL, sentencepriority, sentencecriteria );
+		return SpeakIfAllowed( rrConcept, NULL, sentencepriority, sentencecriteria );
 	}
-	bool			SpeakIfAllowed( const char *concept, const char *modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
-	bool			SpeakIfAllowed( const char *concept, AI_CriteriaSet& modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
+	bool			SpeakIfAllowed( const char *rrConcept, const char *modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
+	bool			SpeakIfAllowed( const char *rrConcept, AI_CriteriaSet& modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
 	void			ModifyOrAppendCriteria( AI_CriteriaSet& set );
 #endif
 
@@ -192,7 +192,7 @@ private:
 	bool		ShouldHitPlayer( const Vector &targetDir, float targetDist );
 
 	void		PrescheduleThink( void );
-	
+
 	void		SetPlayerCriminalDuration( float time );
 
 	void		IncrementPlayerCriminalStatus( void );
@@ -237,7 +237,7 @@ private:
 
 	bool HasBaton( void );
 
-	// Normal schedule selection 
+	// Normal schedule selection
 	int SelectCombatSchedule();
 	int SelectScheduleNewEnemy();
 	int SelectScheduleArrestEnemy();
@@ -331,10 +331,10 @@ private:
 	float StitchTightWeight( float flDist, float flSpeed, const Vector &vecTargetToGun, const Vector &vecVelocity );
 	int SelectStitchSchedule();
 
-	// Can me enemy see me? 
+	// Can me enemy see me?
 	bool CanEnemySeeMe( );
 
-	// Combat schedule selection 
+	// Combat schedule selection
 	int SelectMoveToLedgeSchedule();
 
 	// position to shoot at
@@ -434,7 +434,7 @@ private:
 #endif
 	};
 
-	enum 
+	enum
 	{
 		TASK_METROPOLICE_HARASS = BaseClass::NEXT_TASK,
 		TASK_METROPOLICE_DIE_INSTANTLY,
@@ -494,12 +494,12 @@ private:
 	float			m_flValidStitchTime;
 	float			m_flNextLedgeCheckTime;
 	float			m_flTaskCompletionTime;
-	
+
 	bool			m_bShouldActivateBaton;
 	float			m_flBatonDebounceTime;	// Minimum amount of time before turning the baton off
 	float			m_flLastPhysicsFlinchTime;
 	float			m_flLastDamageFlinchTime;
-	
+
 	// Sentences
 	float			m_flNextPainSoundTime;
 	float			m_flNextLostSoundTime;

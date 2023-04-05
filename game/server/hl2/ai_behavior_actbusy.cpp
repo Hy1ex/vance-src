@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -136,7 +136,7 @@ void CActBusyAnimData::LevelInitPostEntity( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CActBusyAnimData::LevelShutdownPostEntity( void )
 {
@@ -175,7 +175,7 @@ void CActBusyAnimData::ParseAnimDataFile( void )
 		}
 	}
 	pKVAnimData->deleteThis();
-}	
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Parse a keyvalues section into the prop
@@ -198,7 +198,7 @@ bool CActBusyAnimData::ParseActBusyFromKV( busyanim_t *pAnim, KeyValues *pSectio
 	pAnim->iszSounds[BA_BUSY] = AllocPooledString( pSection->GetString( "busy_sound", NULL ) );
 	pAnim->iszSounds[BA_ENTRY] = AllocPooledString( pSection->GetString( "entry_sound", NULL ) );
 	pAnim->iszSounds[BA_EXIT] = AllocPooledString( pSection->GetString( "exit_sound", NULL ) );
-	
+
 	// Times
 	pAnim->flMinTime = pSection->GetFloat( "min_time", 10.0 );
 	pAnim->flMaxTime = pSection->GetFloat( "max_time", 20.0 );
@@ -276,7 +276,7 @@ int CActBusyAnimData::FindBusyAnim( Activity iActivity, const char *pSequence )
 //=============================================================================================================
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CAI_ActBusyBehavior::CAI_ActBusyBehavior()
 {
@@ -288,7 +288,7 @@ CAI_ActBusyBehavior::CAI_ActBusyBehavior()
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::Enable( CAI_ActBusyGoal *pGoal, float flRange, bool bVisibleOnly )
 {
@@ -357,7 +357,7 @@ void CAI_ActBusyBehavior::OnRestore()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::SetBusySearchRange( float flRange )
 {
@@ -365,7 +365,7 @@ void CAI_ActBusyBehavior::SetBusySearchRange( float flRange )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::Disable( void )
 {
@@ -384,7 +384,7 @@ void CAI_ActBusyBehavior::Disable( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::ForceActBusy( CAI_ActBusyGoal *pGoal, CAI_Hint *pHintNode, float flMaxTime, bool bVisibleOnly, bool bTeleportToBusy, bool bUseNearestBusy, CBaseEntity *pSeeEntity, Activity activity )
 {
@@ -574,13 +574,13 @@ CAI_Hint *CAI_ActBusyBehavior::FindCombatActBusyHintNode()
 	//	-The player can see
 	//	-Is within the accepted max dist from player
 	int iBits = bits_HINT_NODE_USE_GROUP;
-	
+
 	if ( m_bVisibleOnly )
 		iBits |= bits_HINT_NODE_VISIBLE;
-	
+
 	if ( ai_debug_actbusy.GetInt() == 3 && GetOuter()->m_debugOverlays & OVERLAY_NPC_SELECTED_BIT )
 		iBits |= bits_HINT_NODE_REPORT_FAILURES;
-	
+
 	if ( m_bUseNearestBusy )
 		iBits |= bits_HINT_NODE_NEAREST;
 	else
@@ -633,7 +633,7 @@ CAI_Hint *CAI_ActBusyBehavior::FindCombatActBusyTeleportHintNode()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::FValidateHintType( CAI_Hint *pHint )
 {
@@ -669,7 +669,7 @@ bool CAI_ActBusyBehavior::FValidateHintType( CAI_Hint *pHint )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::CanSelectSchedule( void )
 {
@@ -685,7 +685,7 @@ bool CAI_ActBusyBehavior::CanSelectSchedule( void )
 
 	if ( CountEnemiesInSafeZone() > 0 )
 	{
-		// I have enemies left in the safe zone. Actbusy isn't appropriate. 
+		// I have enemies left in the safe zone. Actbusy isn't appropriate.
 		// I should be off fighting them.
 		return false;
 	}
@@ -713,13 +713,13 @@ bool CAI_ActBusyBehavior::IsCurScheduleOverridable( void )
 	if ( GetOuter()->IsInAVehicle() )
 		return false;
 
-	// Only if we're about to idle (or SCHED_NONE to catch newly spawned guys)		
+	// Only if we're about to idle (or SCHED_NONE to catch newly spawned guys)
 	return ( IsCurSchedule( SCHED_IDLE_STAND ) || IsCurSchedule( SCHED_NONE ) );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pSound - 
+// Purpose:
+// Input  : *pSound -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::ShouldIgnoreSound( CSound *pSound )
@@ -757,7 +757,7 @@ bool CAI_ActBusyBehavior::ShouldIgnoreSound( CSound *pSound )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::OnFriendDamaged( CBaseCombatCharacter *pSquadmate, CBaseEntity *pAttacker )
 {
@@ -779,10 +779,10 @@ void CAI_ActBusyBehavior::OnFriendDamaged( CBaseCombatCharacter *pSquadmate, CBa
 // Purpose: Count the number of enemies of mine that are inside my safe zone
 //			volume.
 //
-//			NOTE: We keep this count to prevent the NPC re-entering combat 
+//			NOTE: We keep this count to prevent the NPC re-entering combat
 //			actbusy whilst too many enemies are present in the safe zone.
 //			This count does not automatically alert the NPC that there are
-//			enemies in the safe zone. 
+//			enemies in the safe zone.
 //			You must set COND_ACTBUSY_AWARE_OF_ENEMY_IN_SAFE_ZONE to let
 //			the NPC know.
 //-----------------------------------------------------------------------------
@@ -794,7 +794,7 @@ int CAI_ActBusyBehavior::CountEnemiesInSafeZone()
 	}
 
 	// Grovel the AI list and count the enemies in the zone. By enemies, I mean
-	// anyone that I would fight if I saw. 
+	// anyone that I would fight if I saw.
 	CAI_BaseNPC **	ppAIs 	= g_AI_Manager.AccessAIs();
 	int 			nAIs 	= g_AI_Manager.NumAIs();
 	int				count = 0;
@@ -814,7 +814,7 @@ int CAI_ActBusyBehavior::CountEnemiesInSafeZone()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int	CAI_ActBusyBehavior::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
@@ -828,7 +828,7 @@ int	CAI_ActBusyBehavior::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::GatherConditions( void )
 {
@@ -836,7 +836,7 @@ void CAI_ActBusyBehavior::GatherConditions( void )
 	// set this condition if it is relevant.
 	if( !IsCurSchedule(SCHED_ACTBUSY_BUSY, false) )
 	{
-		// Only clear this condition when we aren't busying. We want it to be sticky 
+		// Only clear this condition when we aren't busying. We want it to be sticky
 		// during that time so that schedule selection works properly (sjb)
 		ClearCondition( COND_ACTBUSY_ENEMY_TOO_CLOSE );
 	}
@@ -994,7 +994,7 @@ void CAI_ActBusyBehavior::GatherConditions( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::EndScheduleSelection( void )
 {
@@ -1004,8 +1004,8 @@ void CAI_ActBusyBehavior::EndScheduleSelection( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : nActivity - 
+// Purpose:
+// Input  : nActivity -
 //-----------------------------------------------------------------------------
 Activity CAI_ActBusyBehavior::NPC_TranslateActivity( Activity nActivity )
 {
@@ -1064,7 +1064,7 @@ void CAI_ActBusyBehavior::CheckAndCleanupOnExit( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::BuildScheduleTestBits( void )
 {
@@ -1161,7 +1161,7 @@ void CAI_ActBusyBehavior::BuildScheduleTestBits( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int	CAI_ActBusyBehavior::SelectScheduleForLeaving( void )
 {
@@ -1220,7 +1220,7 @@ int	CAI_ActBusyBehavior::SelectScheduleForLeaving( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 {
@@ -1248,7 +1248,7 @@ int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 		{
 			if( IsCombatActBusy() )
 			{
-				if ( m_hActBusyGoal->IsCombatActBusyTeleportAllowed() && m_iNumConsecutivePathFailures >= 2 && !AI_GetSinglePlayer()->FInViewCone(GetOuter()) ) 
+				if ( m_hActBusyGoal->IsCombatActBusyTeleportAllowed() && m_iNumConsecutivePathFailures >= 2 && !AI_GetSinglePlayer()->FInViewCone(GetOuter()) )
 				{
 					// Looks like I've tried several times to find a path to a valid hint node and
 					// haven't been able to. This means I'm on a patch of node graph that simply
@@ -1286,12 +1286,12 @@ int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 
 				char sActOrSeqName[512];
 				Q_strncpy( sActOrSeqName, pSequenceOrActivity, (cSpace-pSequenceOrActivity)+1 );
-				iNodeActivity = (Activity)CAI_BaseNPC::GetActivityID( sActOrSeqName ); 
+				iNodeActivity = (Activity)CAI_BaseNPC::GetActivityID( sActOrSeqName );
 				iBusyAnim = g_ActBusyAnimDataSystem.FindBusyAnim( iNodeActivity, sActOrSeqName );
 			}
 			else
 			{
-				iNodeActivity = (Activity)CAI_BaseNPC::GetActivityID( pSequenceOrActivity ); 
+				iNodeActivity = (Activity)CAI_BaseNPC::GetActivityID( pSequenceOrActivity );
 				iBusyAnim = g_ActBusyAnimDataSystem.FindBusyAnim( iNodeActivity, pSequenceOrActivity );
 			}
 
@@ -1348,7 +1348,7 @@ int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 						m_hSeeEntity.Set( gEntList.FindEntityByName(NULL, m_hActBusyGoal->m_iszSeeEntityName) );
 					}
 
-					// At this point we know we're starting. 
+					// At this point we know we're starting.
 					ClearCondition( COND_ACTBUSY_AWARE_OF_ENEMY_IN_SAFE_ZONE );
 
 					// If we're supposed to teleport, do that instead
@@ -1383,7 +1383,7 @@ int CAI_ActBusyBehavior::SelectScheduleWhileNotBusy( int iBase )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int	CAI_ActBusyBehavior::SelectScheduleWhileBusy( void )
 {
@@ -1408,7 +1408,7 @@ int	CAI_ActBusyBehavior::SelectScheduleWhileBusy( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int CAI_ActBusyBehavior::SelectSchedule()
 {
@@ -1469,18 +1469,18 @@ int CAI_ActBusyBehavior::SelectSchedule()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::ActBusyNodeStillActive( void )
 {
 	if ( !GetHintNode() )
 		return false;
-	
+
 	return ( GetHintNode()->IsDisabled() == false );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::IsInterruptable( void )
@@ -1492,7 +1492,7 @@ bool CAI_ActBusyBehavior::IsInterruptable( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::CanFlinch( void )
@@ -1504,7 +1504,7 @@ bool CAI_ActBusyBehavior::CanFlinch( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::CanRunAScriptedNPCInteraction( bool bForced )
 {
@@ -1516,7 +1516,7 @@ bool CAI_ActBusyBehavior::CanRunAScriptedNPCInteraction( bool bForced )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::OnScheduleChange()
 {
@@ -1537,12 +1537,12 @@ void CAI_ActBusyBehavior::OnScheduleChange()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::QueryHearSound( CSound *pSound )
 {
 	// Ignore friendly created combat sounds while in an actbusy.
-	// Fixes friendly NPCs going in & out of actbusies when the 
+	// Fixes friendly NPCs going in & out of actbusies when the
 	// player fires shots at their feet.
 	if ( pSound->IsSoundType( SOUND_COMBAT ) || pSound->IsSoundType( SOUND_BULLET_IMPACT ) )
 	{
@@ -1573,7 +1573,7 @@ void CAI_ActBusyBehavior::OnSeeEntity( CBaseEntity *pEntity )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CAI_ActBusyBehavior::ShouldPlayerAvoid( void )
@@ -1756,7 +1756,7 @@ void CAI_ActBusyBehavior::PlaySoundForActBusy( busyanimparts_t AnimPart )
 			if ( pExpresser )
 			{
 #ifdef NEW_RESPONSE_SYSTEM
-				CAI_Concept concept = STRING(pBusyAnim->iszSounds[AnimPart]);
+				CAI_Concept conceptId = STRING(pBusyAnim->iszSounds[AnimPart]);
 #else
 				const char *conceptId = STRING(pBusyAnim->iszSounds[AnimPart]);
 #endif
@@ -1803,7 +1803,7 @@ bool CAI_ActBusyBehavior::PlayAnimForActBusy( busyanimparts_t AnimPart )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::StartTask( const Task_t *pTask )
 {
@@ -1841,7 +1841,7 @@ void CAI_ActBusyBehavior::StartTask( const Task_t *pTask )
 			// We only do this check if we're still moving to the busy. This will only
 			// be true if there was no entry animation for this busy. We do it this way
 			// because the entry code contains this same check, and so we assume we're
-			// valid even if we're off now, because some entry animations move the 
+			// valid even if we're off now, because some entry animations move the
 			// character off the node.
 			if ( m_bMovingToBusy )
 			{
@@ -1972,13 +1972,13 @@ void CAI_ActBusyBehavior::StartTask( const Task_t *pTask )
 			// before they exit their actbusy. This task is designed to delay until that time if necessary.
 			if( !m_bUseRenderBoundsForCollision )
 			{
-				// Don't bother if we didn't alter our BBox. 
+				// Don't bother if we didn't alter our BBox.
 				TaskComplete();
 				break;
 			}
 
 			// Set up a timer to check immediately.
-			GetOuter()->SetWait( 0 );			
+			GetOuter()->SetWait( 0 );
 		}
 		break;
 
@@ -2112,10 +2112,10 @@ void CAI_ActBusyBehavior::StartTask( const Task_t *pTask )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CAI_ActBusyBehavior::RunTask( const Task_t *pTask )		
-{ 
+void CAI_ActBusyBehavior::RunTask( const Task_t *pTask )
+{
 	switch ( pTask->iTask )
 	{
 	case TASK_WAIT_FOR_MOVEMENT:
@@ -2249,7 +2249,7 @@ void CAI_ActBusyBehavior::RunTask( const Task_t *pTask )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyBehavior::NotifyBusyEnding( void )
 {
@@ -2344,7 +2344,7 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER( CAI_ActBusyBehavior )
 	//---------------------------------
 
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ACTBUSY_START_BUSYING,
 
 		"	Tasks"
@@ -2362,7 +2362,7 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER( CAI_ActBusyBehavior )
 	)
 
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ACTBUSY_BUSY,
 
 		"	Tasks"
@@ -2373,7 +2373,7 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER( CAI_ActBusyBehavior )
 	)
 
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ACTBUSY_STOP_BUSYING,
 
 		"	Tasks"
@@ -2386,7 +2386,7 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER( CAI_ActBusyBehavior )
 	)
 
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ACTBUSY_LEAVE,
 
 		"	Tasks"
@@ -2400,7 +2400,7 @@ AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER( CAI_ActBusyBehavior )
 	)
 
 	DEFINE_SCHEDULE
-	( 
+	(
 		SCHED_ACTBUSY_TELEPORT_TO_BUSY,
 
 		"	Tasks"
@@ -2472,7 +2472,7 @@ END_SCRIPTDESC();
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CAI_ActBusyBehavior *CAI_ActBusyGoal::GetBusyBehaviorForNPC( CBaseEntity *pEntity, const char *sInputName )
 {
@@ -2495,7 +2495,7 @@ CAI_ActBusyBehavior *CAI_ActBusyGoal::GetBusyBehaviorForNPC( CBaseEntity *pEntit
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CAI_ActBusyBehavior *CAI_ActBusyGoal::GetBusyBehaviorForNPC( const char *pszActorName, CBaseEntity *pActivator, CBaseEntity *pCaller, const char *sInputName )
 {
@@ -2510,8 +2510,8 @@ CAI_ActBusyBehavior *CAI_ActBusyGoal::GetBusyBehaviorForNPC( const char *pszActo
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::EnableGoal( CAI_BaseNPC *pAI )
 {
@@ -2535,8 +2535,8 @@ void CAI_ActBusyGoal::EnableGoal( CAI_BaseNPC *pAI )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::InputActivate( inputdata_t &inputdata )
 {
@@ -2549,8 +2549,8 @@ void CAI_ActBusyGoal::InputActivate( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::InputDeactivate( inputdata_t &inputdata )
 {
@@ -2583,7 +2583,7 @@ void CAI_ActBusyGoal::InputDeactivate( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::InputSetBusySearchRange( inputdata_t &inputdata )
 {
@@ -2606,7 +2606,7 @@ void CAI_ActBusyGoal::InputSetBusySearchRange( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 {
@@ -2631,7 +2631,7 @@ void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 	// Do we have a specified node too?
 	pszParam = strtok(NULL," ");
 	if ( pszParam )
-	{	
+	{
 		// Find the specified hintnode
 		CBaseEntity *pEntity = gEntList.FindEntityByName( NULL, pszParam, NULL, inputdata.pActivator, inputdata.pCaller );
 		if ( pEntity )
@@ -2685,7 +2685,7 @@ void CAI_ActBusyGoal::InputForceNPCToActBusy( inputdata_t &inputdata )
 				activity = ACT_SCRIPT_CUSTOM_MOVE;
 			}
 		}
-		else 
+		else
 		{
 			// Do we have a specified time?
 			flMaxTime = atof( pszParam );
@@ -2755,8 +2755,8 @@ void CAI_ActBusyGoal::InputForceThisNPCToStopBusy( inputdata_t &inputdata )
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCMovingToBusy( CAI_BaseNPC *pNPC )
 {
@@ -2766,8 +2766,8 @@ void CAI_ActBusyGoal::NPCMovingToBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCStartedBusy( CAI_BaseNPC *pNPC )
 {
@@ -2775,7 +2775,7 @@ void CAI_ActBusyGoal::NPCStartedBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCStartedLeavingBusy( CAI_BaseNPC *pNPC )
 {
@@ -2785,8 +2785,8 @@ void CAI_ActBusyGoal::NPCStartedLeavingBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCAbortedMoveTo( CAI_BaseNPC *pNPC )
 {
@@ -2796,8 +2796,8 @@ void CAI_ActBusyGoal::NPCAbortedMoveTo( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCFinishedBusy( CAI_BaseNPC *pNPC )
 {
@@ -2805,8 +2805,8 @@ void CAI_ActBusyGoal::NPCFinishedBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyGoal::NPCLeft( CAI_BaseNPC *pNPC )
 {
@@ -2889,7 +2889,7 @@ void CAI_ActBusyGoal::ScriptStopBusy( HSCRIPT hNPC )
 // ACT BUSY QUEUE
 //==========================================================================================================
 //-----------------------------------------------------------------------------
-// Purpose: A level tool to control the actbusy behavior to create NPC queues 
+// Purpose: A level tool to control the actbusy behavior to create NPC queues
 //-----------------------------------------------------------------------------
 LINK_ENTITY_TO_CLASS( ai_goal_actbusy_queue, CAI_ActBusyQueueGoal );
 
@@ -2943,7 +2943,7 @@ END_DATADESC()
 #define QUEUE_MOVEUP_THINK_CONTEXT	"ActBusyQueueMoveUpThinkContext"
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::Spawn( void )
 {
@@ -2953,7 +2953,7 @@ void CAI_ActBusyQueueGoal::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::DrawDebugGeometryOverlays( void )
 {
@@ -2976,7 +2976,7 @@ void CAI_ActBusyQueueGoal::DrawDebugGeometryOverlays( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::InputActivate( inputdata_t &inputdata )
 {
@@ -3035,8 +3035,8 @@ void CAI_ActBusyQueueGoal::InputActivate( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iCount - 
+// Purpose:
+// Input  : iCount -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::RecalculateQueueCount( void )
 {
@@ -3088,8 +3088,8 @@ void CAI_ActBusyQueueGoal::RecalculateQueueCount( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::InputPlayerStartedBlocking( inputdata_t &inputdata )
 {
@@ -3109,7 +3109,7 @@ void CAI_ActBusyQueueGoal::InputPlayerStartedBlocking( inputdata_t &inputdata )
 		CAI_ActBusyBehavior *pBehavior = GetQueueBehaviorForNPC( pNPC );
 		if ( pBehavior->IsMovingToBusy() )
 		{
-			// We may be ahead of the player in the queue, which means we can safely 
+			// We may be ahead of the player in the queue, which means we can safely
 			// be left alone to reach the node. Make sure we're not closer to it than the player is
 			float flPlayerDistToNode = (inputdata.pActivator->GetAbsOrigin() - m_hNodes[i]->GetAbsOrigin()).LengthSqr();
 			if ( (pNPC->GetAbsOrigin() - m_hNodes[i]->GetAbsOrigin()).LengthSqr() < flPlayerDistToNode )
@@ -3165,8 +3165,8 @@ void CAI_ActBusyQueueGoal::PushNPCBackInQueue( CAI_BaseNPC *pNPC, int iStartingN
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::InputPlayerStoppedBlocking( inputdata_t &inputdata )
 {
@@ -3180,8 +3180,8 @@ void CAI_ActBusyQueueGoal::InputPlayerStoppedBlocking( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::InputMoveQueueUp( inputdata_t &inputdata )
 {
@@ -3218,8 +3218,8 @@ void CAI_ActBusyQueueGoal::InputMoveQueueUp( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::NPCMovingToBusy( CAI_BaseNPC *pNPC )
 {
@@ -3228,8 +3228,8 @@ void CAI_ActBusyQueueGoal::NPCMovingToBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::NPCStartedBusy( CAI_BaseNPC *pNPC )
 {
@@ -3251,7 +3251,7 @@ void CAI_ActBusyQueueGoal::MoveQueueUp( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::MoveQueueUpThink( void )
 {
@@ -3282,8 +3282,8 @@ void CAI_ActBusyQueueGoal::MoveQueueUpThink( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::NPCAbortedMoveTo( CAI_BaseNPC *pNPC )
 {
@@ -3293,8 +3293,8 @@ void CAI_ActBusyQueueGoal::NPCAbortedMoveTo( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::NPCFinishedBusy( CAI_BaseNPC *pNPC )
 {
@@ -3312,8 +3312,8 @@ void CAI_ActBusyQueueGoal::NPCFinishedBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pNPC - 
+// Purpose:
+// Input  : *pNPC -
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::NPCStartedLeavingBusy( CAI_BaseNPC *pNPC )
 {
@@ -3327,7 +3327,7 @@ void CAI_ActBusyQueueGoal::NPCStartedLeavingBusy( CAI_BaseNPC *pNPC )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CAI_ActBusyQueueGoal::RemoveNPCFromQueue( CAI_BaseNPC *pNPC )
 {
@@ -3351,16 +3351,16 @@ void CAI_ActBusyQueueGoal::QueueThink( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-inline bool	CAI_ActBusyQueueGoal::NodeIsOccupied( int i ) 
-{ 
-	return ( m_hNodes[i] && !m_hNodes[i]->IsDisabled() && m_hNodes[i]->IsLocked() ); 
+inline bool	CAI_ActBusyQueueGoal::NodeIsOccupied( int i )
+{
+	return ( m_hNodes[i] && !m_hNodes[i]->IsDisabled() && m_hNodes[i]->IsLocked() );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iNode - 
+// Purpose:
+// Input  : iNode -
 // Output : CAI_BaseNPC
 //-----------------------------------------------------------------------------
 CAI_BaseNPC *CAI_ActBusyQueueGoal::GetNPCOnNode( int iNode )
@@ -3372,8 +3372,8 @@ CAI_BaseNPC *CAI_ActBusyQueueGoal::GetNPCOnNode( int iNode )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iNode - 
+// Purpose:
+// Input  : iNode -
 // Output : CAI_ActBusyBehavior
 //-----------------------------------------------------------------------------
 CAI_ActBusyBehavior *CAI_ActBusyQueueGoal::GetQueueBehaviorForNPC( CAI_BaseNPC *pNPC )

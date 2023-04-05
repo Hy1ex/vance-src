@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: An event queue of AI concepts that dispatches them to appropriate characters.
 //
@@ -25,35 +25,35 @@ enum DeferredResponseTarget_t // possible targets for a deferred response
 	kDRT_MAX, // high water mark
 };
 
-// Allows you to postpone AI speech concepts to a later time, or to direct them to 
+// Allows you to postpone AI speech concepts to a later time, or to direct them to
 // a specific character, or all of them.
 class CResponseQueue
 {
 	//////////////////// Local types ////////////////////
-public: 
+public:
 
 	// We pack up contexts to send along with the concept.
 	// For now I'll just copy criteria sets, but it will be better to do something
 	// more efficient in the future.
-	typedef AI_CriteriaSet DeferredContexts_t; 
+	typedef AI_CriteriaSet DeferredContexts_t;
 
 	struct CFollowupTargetSpec_t ///< to whom a followup is directed. Can be a specific entity or something more exotic.
 	{
 		DeferredResponseTarget_t m_iTargetType; ///< ANY, ALL, or SPECIFIC. If specific, pass through a handle to:
-		EHANDLE	m_hHandle; ///< a specific target for the message, or a specific character to OMIT. 
+		EHANDLE	m_hHandle; ///< a specific target for the message, or a specific character to OMIT.
 		inline bool IsValid( void ) const;
 
 		// constructors/destructors
 		explicit CFollowupTargetSpec_t(const DeferredResponseTarget_t &targetType, const EHANDLE &handle)
-			: m_iTargetType(targetType), m_hHandle(handle) 
+			: m_iTargetType(targetType), m_hHandle(handle)
 		{};
 		explicit CFollowupTargetSpec_t(const EHANDLE &handle)
-			: m_iTargetType(kDRT_SPECIFIC), m_hHandle(handle) 
+			: m_iTargetType(kDRT_SPECIFIC), m_hHandle(handle)
 		{};
-		CFollowupTargetSpec_t(DeferredResponseTarget_t target) // eg, ANY, ALL, etc. 
-			: m_iTargetType(target)  
-		{	
-			AssertMsg(m_iTargetType != kDRT_SPECIFIC, "Response rule followup tried to specify an entity target, but didn't provide the target.\n" ); 
+		CFollowupTargetSpec_t(DeferredResponseTarget_t target) // eg, ANY, ALL, etc.
+			: m_iTargetType(target)
+		{
+			AssertMsg(m_iTargetType != kDRT_SPECIFIC, "Response rule followup tried to specify an entity target, but didn't provide the target.\n" );
 		}
 		CFollowupTargetSpec_t(void) // default: invalid
 			: m_iTargetType(kDRT_MAX)
@@ -73,7 +73,7 @@ public:
 		*/
 		CFollowupTargetSpec_t m_Target;
 
-		inline void Init( const AIConcept_t &concept, const AI_CriteriaSet * RESTRICT contexts, float dtime, const CFollowupTargetSpec_t &target, CBaseEntity *pIssuer );
+		inline void Init( const AIConcept_t &rrConcept, const AI_CriteriaSet * RESTRICT contexts, float dtime, const CFollowupTargetSpec_t &target, CBaseEntity *pIssuer );
 		inline bool IsQuashed() { return !m_Target.IsValid(); }
 		void Quash(); ///< make this response invalid.
 	};
@@ -84,8 +84,8 @@ public:
 public:
 	CResponseQueue( int queueSize );
 
-	/// Add a deferred response. 
-	void Add( const AIConcept_t &concept,  ///< concept to dispatch
+	/// Add a deferred response.
+	void Add( const AIConcept_t &rrConcept,  ///< concept to dispatch
 			  const AI_CriteriaSet * RESTRICT contexts, ///< the contexts that come with it (may be NULL)
 			  float time,					 ///< when to dispatch it. You can specify a time of zero to mean "immediately."
 			  const CFollowupTargetSpec_t &targetspec, /// All information necessary to target this response
@@ -93,13 +93,13 @@ public:
 			  );
 
 	/// Remove all deferred responses matching the concept and issuer.
-	void Remove( const AIConcept_t &concept,  ///< concept to dispatch
+	void Remove( const AIConcept_t &rrConcept,  ///< concept to dispatch
 		CBaseEntity * const pIssuer = NULL ///< the entity issuing the response, if one exists.
 		);
 
 	/// Remove all deferred responses queued to be spoken by given character
 	void RemoveSpeechQueuedFor( const CBaseEntity *pSpeaker	);
-	
+
     /// Empty out all pending events
 	void Evacuate();
 
@@ -133,16 +133,16 @@ protected:
 	/// Note  about the queue type: if you move to replace it with a sorted priority queue,
 	/// make sure it is a type such that an iterator is not invalidated by inserts and deletes.
 	/// CResponseQueue::PerFrameDispatch() iterates over the queue calling DispatchOneResponse
-	/// on each in turn, and those responses may very easily add new events to the queue. 
+	/// on each in turn, and those responses may very easily add new events to the queue.
 	/// A crash will result if the iterator used in CResponseQueue::PerFrameDispatch()'s loop
 	/// becomes invalid.
 
 	CUtlVector<EHANDLE> m_ExpresserTargets; // a list of legitimate expresser targets
 };
 
-inline void CResponseQueue::CDeferredResponse::Init(const AIConcept_t &concept, const AI_CriteriaSet * RESTRICT contexts, float dtime, const CFollowupTargetSpec_t &target, CBaseEntity *pIssuer )
+inline void CResponseQueue::CDeferredResponse::Init(const AIConcept_t &rrConcept, const AI_CriteriaSet * RESTRICT contexts, float dtime, const CFollowupTargetSpec_t &target, CBaseEntity *pIssuer )
 {
-	m_concept = concept; 
+	m_concept = rrConcept;
 	m_fDispatchTime = dtime;
 	/*
 	m_iTargetType = targetType;
@@ -185,13 +185,13 @@ protected:
 };
 
 
-// Valid if the target type enum is within bounds. Furthermore if it 
+// Valid if the target type enum is within bounds. Furthermore if it
 // specifies a specific entity, that handle must be valid.
 bool CResponseQueue::CFollowupTargetSpec_t::IsValid( void ) const
 {
-	if (m_iTargetType >= kDRT_MAX) 
+	if (m_iTargetType >= kDRT_MAX)
 		return false;
-	if (m_iTargetType < 0) 
+	if (m_iTargetType < 0)
 		return false;
 	if (m_iTargetType == kDRT_SPECIFIC && !m_hHandle.IsValid())
 		return false;
@@ -205,32 +205,32 @@ extern CResponseQueueManager g_ResponseQueueManager;
 // Handy global helper funcs
 
 /// Automatically queue up speech to happen immediately -- calls straight through to response rules add
-inline void QueueSpeak( const AIConcept_t &concept,					///< concept name to say
+inline void QueueSpeak( const AIConcept_t &rrConcept,					///< concept name to say
 					    const CResponseQueue::CFollowupTargetSpec_t& targetspec,	///< kDRT_ANY, kDRT_ALL, etc
 						CBaseEntity *pIssuer = NULL					///< if specifying ANY or ALL, use this to specify the one you *don't* want to speak
 						)
 {
-	return g_ResponseQueueManager.GetQueue()->Add( concept, NULL, 0.0f, targetspec, pIssuer );
+	return g_ResponseQueueManager.GetQueue()->Add( rrConcept, NULL, 0.0f, targetspec, pIssuer );
 }
 
 /// Automatically queue up speech to happen immediately -- calls straight through to response rules add
-inline void QueueSpeak( const AIConcept_t &concept,					///< concept name to say
+inline void QueueSpeak( const AIConcept_t &rrConcept,					///< concept name to say
 					    const CResponseQueue::CFollowupTargetSpec_t& targetspec,	///< kDRT_ANY, kDRT_ALL, etc
 						const AI_CriteriaSet &criteria,				///< criteria to pass in
 					    CBaseEntity *pIssuer = NULL					///< if specifying ANY or ALL, use this to specify the one you *don't* want to speak
 					   )
 {
-	return g_ResponseQueueManager.GetQueue()->Add( concept, &criteria, 0.0f, targetspec, pIssuer );
+	return g_ResponseQueueManager.GetQueue()->Add( rrConcept, &criteria, 0.0f, targetspec, pIssuer );
 }
 
 /// Automatically queue up speech to happen immediately -- calls straight through to response rules add
-inline void QueueSpeak( const AIConcept_t &concept,					///< concept name to say
+inline void QueueSpeak( const AIConcept_t &rrConcept,					///< concept name to say
 					   const EHANDLE &target,						///< which entity shall speak
 					   float delay,									///< how far in the future to speak
 					   const AI_CriteriaSet &criteria,				///< criteria to pass in
 					   CBaseEntity *pIssuer = NULL )
 {
-	return g_ResponseQueueManager.GetQueue()->Add( concept, &criteria, gpGlobals->curtime + delay,
+	return g_ResponseQueueManager.GetQueue()->Add( rrConcept, &criteria, gpGlobals->curtime + delay,
 		CResponseQueue::CFollowupTargetSpec_t(target), pIssuer );
 }
 

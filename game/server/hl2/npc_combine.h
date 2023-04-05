@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -196,12 +196,12 @@ public:
 	// Speaking
 	void			SpeakSentence( int sentType );
 #ifdef COMBINE_SOLDIER_USES_RESPONSE_SYSTEM
-	bool			SpeakIfAllowed( const char *concept, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD )
+	bool			SpeakIfAllowed( const char *rrConcept, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD )
 	{
-		return SpeakIfAllowed( concept, NULL, sentencepriority, sentencecriteria );
+		return SpeakIfAllowed( rrConcept, NULL, sentencepriority, sentencecriteria );
 	}
-	bool			SpeakIfAllowed( const char *concept, const char *modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
-	bool			SpeakIfAllowed( const char *concept, AI_CriteriaSet& modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
+	bool			SpeakIfAllowed( const char *rrConcept, const char *modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
+	bool			SpeakIfAllowed( const char *rrConcept, AI_CriteriaSet& modifiers, SentencePriority_t sentencepriority = SENTENCE_PRIORITY_NORMAL, SentenceCriteria_t sentencecriteria = SENTENCE_CRITERIA_IN_SQUAD );
 	void			ModifyOrAppendCriteria( AI_CriteriaSet& set );
 #endif
 
@@ -261,7 +261,7 @@ private:
 	//=========================================================
 	// Combine Tasks
 	//=========================================================
-	enum 
+	enum
 	{
 		TASK_COMBINE_FACE_TOSS_DIR = BaseClass::NEXT_TASK,
 		TASK_COMBINE_IGNORE_ATTACKS,
@@ -335,7 +335,7 @@ private:
 	float			m_flNextPainSoundTime;
 	float			m_flNextAlertSoundTime;
 #ifndef MAPBASE // CAI_GrenadeUser
-	float			m_flNextGrenadeCheck;	
+	float			m_flNextGrenadeCheck;
 #endif
 	float			m_flNextLostSoundTime;
 	float			m_flAlertPatrolTime;		// When to stop doing alert patrol

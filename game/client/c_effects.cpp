@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -117,7 +117,7 @@ void DrawPrecipitation()
 //-----------------------------------------------------------------------------
 static bool IsInAir( const Vector& position )
 {
-	int contents = enginetrace->GetPointContents( position ); 	
+	int contents = enginetrace->GetPointContents( position );
 	return (contents & CONTENTS_SOLID) == 0;
 }
 
@@ -174,7 +174,7 @@ inline bool CClient_Precipitation::SimulateRain( CPrecipitationParticle* pPartic
 	Vector vOldPos = pParticle->m_Pos;
 
 	// Update position
-	VectorMA( pParticle->m_Pos, dt, pParticle->m_Velocity, 
+	VectorMA( pParticle->m_Pos, dt, pParticle->m_Velocity,
 				pParticle->m_Pos );
 
 		// wind blows rain around
@@ -229,7 +229,7 @@ inline bool CClient_Precipitation::SimulateSnow( CPrecipitationParticle* pPartic
 	if ( IsInAir( pParticle->m_Pos ) )
 	{
 		// Update position
-		VectorMA( pParticle->m_Pos, dt, pParticle->m_Velocity, 
+		VectorMA( pParticle->m_Pos, dt, pParticle->m_Velocity,
 					pParticle->m_Pos );
 
 		// wind blows rain around
@@ -368,7 +368,7 @@ inline void CClient_Precipitation::RenderParticle( CPrecipitationParticle* pPart
 		scale = GetLength() * pParticle->m_Ramp;
 	else
 		scale = lifetimeRemaining * pParticle->m_Ramp;
-	
+
 	// NOTE: We need to do everything in screen space
 	Vector3DMultiplyPosition( CurrentWorldToViewMatrix(), pParticle->m_Pos, start );
 	if ( start.z > -1 )
@@ -384,7 +384,7 @@ inline void CClient_Precipitation::RenderParticle( CPrecipitationParticle* pPart
 
 		if ( pParticle->m_Mass > 1.0f )
 		{
-			SinCos( gpGlobals->curtime * M_PI * (1+pParticle->m_Mass * 0.1f) + 
+			SinCos( gpGlobals->curtime * M_PI * (1+pParticle->m_Mass * 0.1f) +
 					pParticle->m_Mass * 5.0f, &s , &c );
 
 			// only spiral particles with a mass > 1, so some fall straight down
@@ -430,7 +430,7 @@ void CClient_Precipitation::CreateWaterSplashes()
 	for ( int i=0; i < m_Splashes.Count(); i++ )
 	{
 		Vector vSplash = m_Splashes[i];
-		
+
 		if ( CurrentViewForward().Dot( vSplash - CurrentViewOrigin() ) > 1 )
 		{
 			FX_WaterRipple( vSplash, g_flSplashScale, &g_vSplashColor, g_flSplashLifetime, g_flSplashAlpha );
@@ -464,12 +464,12 @@ void CClient_Precipitation::Render()
 	// Create any queued up water splashes.
 	CreateWaterSplashes();
 
-	
+
 	CFastTimer timer;
 	timer.Start();
 
 	CMatRenderContextPtr pRenderContext( materials );
-	
+
 	// We want to do our calculations in view space.
 	VMatrix	tempView;
 	pRenderContext->GetMatrix( MATERIAL_VIEW, &tempView );
@@ -523,7 +523,7 @@ CClient_Precipitation::CClient_Precipitation() : m_Remainder(0.0f)
 	m_pParticlePrecipInnerFar = NULL;
 	m_pParticlePrecipOuter = NULL;
 	m_bActiveParticlePrecipEmitter = false;
-	
+
 	g_Precipitations.AddToTail( this );
 }
 
@@ -655,7 +655,7 @@ bool CClient_Precipitation::ComputeEmissionArea( Vector& origin, Vector2D& size 
 	float emissionHeight = MIN( vMaxs[2], pPlayer->GetAbsOrigin()[2] + 512 );
 	float distToFall = emissionHeight - pPlayer->GetAbsOrigin()[2];
 	float fallTime = distToFall / GetSpeed();
-	
+
 	// Based on the windspeed, figure out the center point of the emission
 	Vector2D center;
 	center[0] = pPlayer->GetAbsOrigin()[0] - fallTime * s_WindVector[0];
@@ -686,8 +686,8 @@ bool CClient_Precipitation::ComputeEmissionArea( Vector& origin, Vector2D& size 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pDebugName - 
+// Purpose:
+// Input  : *pDebugName -
 // Output : AshDebrisEffect*
 //-----------------------------------------------------------------------------
 AshDebrisEffect* AshDebrisEffect::Create( const char *pDebugName )
@@ -696,9 +696,9 @@ AshDebrisEffect* AshDebrisEffect::Create( const char *pDebugName )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pParticle - 
-//			timeDelta - 
+// Purpose:
+// Input  : *pParticle -
+//			timeDelta -
 // Output : float
 //-----------------------------------------------------------------------------
 float AshDebrisEffect::UpdateAlpha( const SimpleParticle *pParticle )
@@ -841,7 +841,7 @@ void CClient_Precipitation::CreateAshParticle( void )
 		m_iAshCount++;
 
 			bool bEmberTime = false;
-			
+
 		if ( m_iAshCount >= 250 )
 			{
 				bEmberTime = true;
@@ -861,7 +861,7 @@ void CClient_Precipitation::CreateAshParticle( void )
 		pParticle = (SimpleParticle *) m_pAshEmitter->AddParticle( sizeof(SimpleParticle), hMaterial[iRandom], offset );
 
 			if (pParticle == NULL)
-				continue; 
+				continue;
 
 			pParticle->m_flLifetime	= 0.0f;
 			pParticle->m_flDieTime	= RemapVal( iRandomAltitude, 0, 128, 4, 8 );
@@ -1042,7 +1042,7 @@ void CClient_Precipitation::UpdateParticlePrecip( C_BasePlayer *pPlayer )
 		Vector vPlayerPos = pPlayer->EyePosition();
 		Vector vOffsetPos = vPlayerPos + Vector ( 0, 0, 180 );
 		Vector vOffsetPosNear = vPlayerPos + Vector ( 0, 0, 180 ) + ( vForward * 32 );
-		Vector vOffsetPosFar = vPlayerPos + Vector ( 0, 0, 180 ) + ( vForward * 100 );	
+		Vector vOffsetPosFar = vPlayerPos + Vector ( 0, 0, 180 ) + ( vForward * 100 );
 
 #ifdef MAPBASE
 		if (m_spawnflags & SF_PRECIP_PARTICLE_CLAMP)
@@ -1053,17 +1053,17 @@ void CClient_Precipitation::UpdateParticlePrecip( C_BasePlayer *pPlayer )
 
 		Vector vDensity = Vector( r_RainParticleDensity.GetFloat(), 0, 0 ) * m_flDensity;
 
-		// Get the rain volume Ray Tracing Environment.  Currently hard coded to 0, should have this lookup 
+		// Get the rain volume Ray Tracing Environment.  Currently hard coded to 0, should have this lookup
 		RayTracingEnvironment *RtEnv = g_RayTraceEnvironments.Element( 0 );
 
 		// Our 4 Rays are forward, off to the left and right, and directly up.
 		// Use the first three to determine if there's generally visible rain where we're looking.
-		// The forth, straight up, tells us if we're standing inside a rain volume 
+		// The forth, straight up, tells us if we're standing inside a rain volume
 		// (based on the normal that we hit or if we miss entirely)
 		FourRays frRays;
 		FourVectors fvDirection;
 		fvDirection = FourVectors( vForward, vForward45Left, vForward45Right, Vector( 0, 0, 1 ) );
-		frRays.direction = fvDirection; 
+		frRays.direction = fvDirection;
 		frRays.origin.DuplicateVector( vPlayerPos );
 		RayTracingResult Result;
 
@@ -1085,12 +1085,12 @@ void CClient_Precipitation::UpdateParticlePrecip( C_BasePlayer *pPlayer )
 			if ( !bInside && SubFloat( FindLowestSIMD3( Result.HitDistance ), 0 ) >= m_flParticleInnerDist )
 			{
 				// Kill the inner rain if it's previously been in use
-				if ( m_pParticlePrecipInnerNear != NULL )
+				if ( m_pParticlePrecipInnerNear != nullptr )
 				{
 					DestroyInnerParticlePrecip();
 				}
 				// Update if we've already got systems, otherwise, create them.
-				if ( m_pParticlePrecipOuter != NULL )
+				if ( m_pParticlePrecipOuter != nullptr )
 				{
 					m_pParticlePrecipOuter->SetControlPoint( 1,  vOffsetPos );
 					m_pParticlePrecipOuter->SetControlPoint( 3, vDensity );
@@ -1105,12 +1105,12 @@ void CClient_Precipitation::UpdateParticlePrecip( C_BasePlayer *pPlayer )
 				// Update if we've already got systems, otherwise, create them.
 #ifdef MAPBASE
 				// The outer can now be suppressed without interfering with other functionality
-				if ( m_pParticlePrecipOuter != NULL )
+				if ( m_pParticlePrecipOuter != nullptr )
 				{
 					m_pParticlePrecipOuter->SetControlPoint( 1, vOffsetPos );
 					m_pParticlePrecipOuter->SetControlPoint( 3, vDensity );
 				}
-				if ( m_pParticlePrecipInnerNear != NULL && m_pParticlePrecipInnerFar != NULL )
+				if ( m_pParticlePrecipInnerNear != nullptr && m_pParticlePrecipInnerFar != nullptr )
 				{
 					m_pParticlePrecipInnerNear->SetControlPoint( 1, vOffsetPosNear );
 					m_pParticlePrecipInnerFar->SetControlPoint( 1, vOffsetPosFar );
@@ -1217,12 +1217,12 @@ void CClient_Precipitation::InitializeParticlePrecip( void )
 
 void CClient_Precipitation::DestroyInnerParticlePrecip( void )
 {
-	if ( m_pParticlePrecipInnerFar != NULL )
+	if ( m_pParticlePrecipInnerFar != nullptr )
 	{
 		m_pParticlePrecipInnerFar->StopEmission();
 		m_pParticlePrecipInnerFar = NULL;
 	}
-	if ( m_pParticlePrecipInnerNear != NULL )
+	if ( m_pParticlePrecipInnerNear != nullptr )
 	{
 		m_pParticlePrecipInnerNear->StopEmission();
 		m_pParticlePrecipInnerNear = NULL;
@@ -1231,7 +1231,7 @@ void CClient_Precipitation::DestroyInnerParticlePrecip( void )
 
 void CClient_Precipitation::DestroyOuterParticlePrecip( void )
 {
-	if ( m_pParticlePrecipOuter != NULL )
+	if ( m_pParticlePrecipOuter != nullptr )
 	{
 		m_pParticlePrecipOuter->StopEmission();
 		m_pParticlePrecipOuter = NULL;
@@ -1297,7 +1297,7 @@ void CClient_Precipitation::CreateRainOrSnowParticle( Vector vSpawnPosition, Vec
 {
 	// Create the particle
 	CPrecipitationParticle* p = CreateParticle();
-	if (!p) 
+	if (!p)
 		return;
 
 	VectorCopy( vVelocity, p->m_Velocity );
@@ -1334,11 +1334,11 @@ void CClient_Precipitation::EmitParticles( float fTimeDelta )
 		// FIXME: Compute the precipitation density based on computational power
 	float density = m_flDensity;
 
-		if (density > 0.01f) 
+		if (density > 0.01f)
 			density = 0.01f;
 
 		// Compute number of particles to emit based on precip density and emission area and dt
-		float fParticles = size[0] * size[1] * density * fTimeDelta + m_Remainder; 
+		float fParticles = size[0] * size[1] * density * fTimeDelta + m_Remainder;
 		int cParticles = (int)fParticles;
 		m_Remainder = fParticles - cParticles;
 
@@ -1354,7 +1354,7 @@ void CClient_Precipitation::EmitParticles( float fTimeDelta )
 			vParticlePos[ 0 ] += size[ 0 ] * random->RandomFloat(0, 1);
 			vParticlePos[ 1 ] += size[ 1 ] * random->RandomFloat(0, 1);
 
-			// Figure out where the particle should lie in Z by tracing a line from the player's height up to the 
+			// Figure out where the particle should lie in Z by tracing a line from the player's height up to the
 			// desired height and making sure it doesn't hit a wall.
 			Vector vPlayerHeight = vParticlePos;
 			vPlayerHeight.z = vPlayerCenter.z;
@@ -1417,7 +1417,7 @@ public:
 		}
 		m_bLevelInitted = true;
 	}
-	
+
 	virtual void LevelShutdownPreEntity()
 	{
 		if ( r_RainHack.GetInt() && g_pPrecipHackEnt )
@@ -1513,7 +1513,7 @@ void C_EnvWind::OnDataChanged( DataUpdateType_t updateType )
 	// Whenever we get an update, reset the entire state.
 	// Note that the fields have already been stored by the datatables,
 	// but there's still work to be done in the init block
-	m_EnvWindShared.Init( entindex(), m_EnvWindShared.m_iWindSeed, 
+	m_EnvWindShared.Init( entindex(), m_EnvWindShared.m_iWindSeed,
 		m_EnvWindShared.m_flStartTime, m_EnvWindShared.m_iInitialWindDir,
 		m_EnvWindShared.m_flInitialWindSpeed );
 
@@ -1549,8 +1549,8 @@ private:
 
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : fTimeDelta - 
+// Purpose:
+// Input  : fTimeDelta -
 // Output : Vector
 //-----------------------------------------------------------------------------
 CEmberEmitter::CEmberEmitter( const char *pDebugName ) : CSimpleEmitter( pDebugName )
@@ -1581,9 +1581,9 @@ void CEmberEmitter::UpdateVelocity( SimpleParticle *pParticle, float timeDelta )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pParticle - 
-//			timeDelta - 
+// Purpose:
+// Input  : *pParticle -
+//			timeDelta -
 //-----------------------------------------------------------------------------
 Vector CEmberEmitter::UpdateColor( const SimpleParticle *pParticle )
 {
@@ -1641,8 +1641,8 @@ IMPLEMENT_CLIENTCLASS_DT( C_Embers, DT_Embers, CEmbers )
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : bnewentity - 
+// Purpose:
+// Input  : bnewentity -
 //-----------------------------------------------------------------------------
 C_Embers::C_Embers()
 {
@@ -1666,7 +1666,7 @@ void C_Embers::OnDataChanged( DataUpdateType_t updateType )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool C_Embers::ShouldDraw()
@@ -1675,20 +1675,20 @@ bool C_Embers::ShouldDraw()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_Embers::Start( void )
 {
 	//Various setup info
 	m_tParticleSpawn.Init( m_nDensity );
-	
+
 	m_hMaterial	= m_pEmitter->GetPMaterial( "particle/fire" );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void C_Embers::AddEntity( void ) 
+void C_Embers::AddEntity( void )
 {
 	if ( m_bEmit == false )
 		return;
@@ -1702,12 +1702,12 @@ void C_Embers::AddEntity( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void C_Embers::SpawnEmber( void )
 {
 	Vector	offset, mins, maxs;
-	
+
 	modelinfo->GetModelBounds( GetModel(), mins, maxs );
 
 	//Setup our spawn position
@@ -1752,7 +1752,7 @@ void C_Embers::SpawnEmber( void )
 }
 
 //-----------------------------------------------------------------------------
-// Quadratic spline beam effect 
+// Quadratic spline beam effect
 //-----------------------------------------------------------------------------
 #include "beamdraw.h"
 
@@ -1840,7 +1840,7 @@ public:
 	void SimulateParticles( CParticleSimulateIterator *pIterator )
 	{
 		float timeDelta = pIterator->GetTimeDelta();
-	
+
 		SimpleParticle *pParticle = (SimpleParticle*)pIterator->GetFirst();
 		while ( pParticle )
 		{
@@ -1866,8 +1866,8 @@ public:
 	}
 
 	int	GetParticleCount( void )
-	{	
-		return GetBinding().GetNumActiveParticles(); 
+	{
+		return GetBinding().GetNumActiveParticles();
 	}
 
 	void SetBounds( const Vector &vecMin, const Vector &vecMax )
@@ -1958,7 +1958,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CSnowFallManager::CSnowFallManager( void )
 {
@@ -1973,7 +1973,7 @@ CSnowFallManager::CSnowFallManager( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 CSnowFallManager::~CSnowFallManager( void )
 {
@@ -1981,7 +1981,7 @@ CSnowFallManager::~CSnowFallManager( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CSnowFallManager::CreateEmitter( void )
@@ -1990,7 +1990,7 @@ bool CSnowFallManager::CreateEmitter( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CSnowFallManager::SpawnClientEntity( void )
 {
@@ -2003,7 +2003,7 @@ void CSnowFallManager::SpawnClientEntity( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CSnowFallManager::CreateSnowFallEmitter( void )
@@ -2015,7 +2015,7 @@ bool CSnowFallManager::CreateSnowFallEmitter( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CSnowFallManager::ClientThink( void )
 {
@@ -2033,8 +2033,8 @@ void CSnowFallManager::ClientThink( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pSnowEntity - 
+// Purpose:
+// Input  : *pSnowEntity -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::AddSnowFallEntity( CClient_Precipitation *pSnowEntity )
 {
@@ -2064,7 +2064,7 @@ void CSnowFallManager::AddSnowFallEntity( CClient_Precipitation *pSnowEntity )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CSnowFallManager::UpdateBounds( const Vector &vecSnowMin, const Vector &vecSnowMax )
 {
@@ -2087,8 +2087,8 @@ void CSnowFallManager::UpdateBounds( const Vector &vecSnowMin, const Vector &vec
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &vecPoint - 
+// Purpose:
+// Input  : &vecPoint -
 // Output : int
 //-----------------------------------------------------------------------------
 int CSnowFallManager::StandingInSnowVolume( Vector &vecPoint )
@@ -2108,9 +2108,9 @@ int CSnowFallManager::StandingInSnowVolume( Vector &vecPoint )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &vecCenter - 
-//			flRadius - 
+// Purpose:
+// Input  : &vecCenter -
+//			flRadius -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::FindSnowVolumes( Vector &vecCenter, float flRadius, Vector &vecEyePos, Vector &vecForward )
 {
@@ -2139,7 +2139,7 @@ void CSnowFallManager::FindSnowVolumes( Vector &vecCenter, float flRadius, Vecto
 			}
 		}
 		// Check to see if a snow volume is outside of the sphere radius, but is along line-of-sight.
-		else		
+		else
 		{
 			CBaseTrace trace;
 			Vector vecNewForward;
@@ -2178,7 +2178,7 @@ void CSnowFallManager::FindSnowVolumes( Vector &vecCenter, float flRadius, Vecto
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateSnowFall( void )
 {
@@ -2268,12 +2268,12 @@ void CSnowFallManager::CreateSnowFall( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flCurrentTime - 
-//			flRadius - 
-//			&vecEyePos - 
-//			&vecForward - 
-//			flZoomScale - 
+// Purpose:
+// Input  : flCurrentTime -
+//			flRadius -
+//			&vecEyePos -
+//			&vecForward -
+//			flZoomScale -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateSnowFallParticles( float flCurrentTime, float flRadius, const Vector &vecEyePos, const Vector &vecForward, float flZoomScale )
 		{
@@ -2290,10 +2290,10 @@ void CSnowFallManager::CreateSnowFallParticles( float flCurrentTime, float flRad
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flCurrentTime - 
-//			flRadius - 
-//			flZoomScale - 
+// Purpose:
+// Input  : flCurrentTime -
+//			flRadius -
+//			flZoomScale -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateOutsideVolumeSnowParticles( float flCurrentTime, float flRadius, float flZoomScale )
 {
@@ -2326,12 +2326,12 @@ void CSnowFallManager::CreateOutsideVolumeSnowParticles( float flCurrentTime, fl
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flCurrentTime - 
-//			flRadius - 
-//			&vecEyePos - 
-//			&vecForward - 
-//			flZoomScale - 
+// Purpose:
+// Input  : flCurrentTime -
+//			flRadius -
+//			&vecEyePos -
+//			&vecForward -
+//			flZoomScale -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateInsideVolumeSnowParticles( float flCurrentTime, float flRadius, const Vector &vecEyePos, const Vector &vecForward, float flZoomScale )
 {
@@ -2377,8 +2377,8 @@ void CSnowFallManager::CreateInsideVolumeSnowParticles( float flCurrentTime, flo
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flRadius - 
+// Purpose:
+// Input  : flRadius -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateSnowParticlesSphere( float flRadius )
 {
@@ -2408,9 +2408,9 @@ void CSnowFallManager::CreateSnowParticlesSphere( float flRadius )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &vecEyePos - 
-//			&vecForward - 
+// Purpose:
+// Input  : &vecEyePos -
+//			&vecForward -
 //-----------------------------------------------------------------------------
 void CSnowFallManager::CreateSnowParticlesRay( float flRadius, const Vector &vecEyePos, const Vector &vecForward )
 {
@@ -2452,10 +2452,10 @@ void CSnowFallManager::CreateSnowParticlesRay( float flRadius, const Vector &vec
 }
 
 void CSnowFallManager::CreateSnowFallParticle( const Vector &vecParticleSpawn, int iSnow )
-{	
+{
 	SimpleParticle *pParticle = ( SimpleParticle* )m_pSnowFallEmitter->AddParticle( sizeof( SimpleParticle ), m_aSnow[iSnow].m_hMaterial, vecParticleSpawn );
 	if ( pParticle == NULL )
-		return; 
+		return;
 
 	pParticle->m_flLifetime	= 0.0f;
 	pParticle->m_vecVelocity = Vector( RandomFloat( -5.0f, 5.0f ), RandomFloat( -5.0f, 5.0f ), ( RandomFloat( -25, -35 ) * r_SnowFallSpeed.GetFloat() ) );
@@ -2483,7 +2483,7 @@ void CSnowFallManager::CreateSnowFallParticle( const Vector &vecParticleSpawn, i
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool SnowFallManagerCreate( CClient_Precipitation *pSnowEntity )
 {
@@ -2501,7 +2501,7 @@ bool SnowFallManagerCreate( CClient_Precipitation *pSnowEntity )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void SnowFallManagerDestroy( void )
 {
