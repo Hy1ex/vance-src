@@ -12,7 +12,8 @@
 #include "tier1/mapbase_con_groups.h"
 #include "igamesystem.h"
 #include "filesystem.h"
-#include <vgui_controls/Controls.h> 
+#include <vgui_controls/Controls.h>
+#include <vgui_controls/AnimationController.h>
 #include <vgui/ILocalize.h>
 #include "saverestore_utlvector.h"
 #include "props_shared.h"
@@ -70,7 +71,6 @@ ConVar mapbase_version_client( "mapbase_version_client", MAPBASE_VERSION, FCVAR_
 // This is from the vgui_controls library
 extern vgui::HScheme g_iCustomClientSchemeOverride;
 
-bool g_bUsingCustomHudAnimations = false;
 bool g_bUsingCustomHudLayout = false;
 #endif
 
@@ -415,7 +415,7 @@ public:
 
 		pKV->deleteThis();
 	}
-	
+
 	void AddManifestFile( const char *file )
 	{
 		KeyValues *pKV = new KeyValues(file);
