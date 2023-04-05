@@ -187,8 +187,19 @@ public:
 	virtual void	TeamChange( int iNewTeam );
 
 	// Flashlight
-	void	Flashlight( void );
-	virtual void	UpdateFlashlight( void );
+	void				Flashlight();
+	virtual void		UpdateFlashlight();
+	void				TurnOffFlashlight();
+	virtual const char	*GetFlashlightTextureName() const { return "effects/flashlight002"; }
+	virtual float		GetFlashlightFOV() const;
+	virtual float		GetFlashlightFarZ() const { return 750.0f; }
+	virtual float		GetFlashlightLinearAtten() const { return 100.0f; }
+	virtual bool		CastsFlashlightShadows() { return true; }
+	virtual void		GetFlashlightOffset( const Vector &vecForward, const Vector &vecRight, const Vector &vecUp, Vector *pVecOffset ) const;
+	Vector m_vecFlashlightOrigin;
+	Vector m_vecFlashlightForward;
+	Vector m_vecFlashlightUp;
+	Vector m_vecFlashlightRight;
 
 	// Weapon selection code
 	virtual bool				IsAllowedToSwitchWeapons( void ) { return !IsObserver(); }

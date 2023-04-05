@@ -1294,36 +1294,30 @@ void C_BasePlayer::UpdateFlashlight()
 	// The dim light is the flashlight.
 	if ( IsEffectActive( EF_DIMLIGHT ) )
 	{
-		if (!m_pFlashlight)
-		{
-			// Turned on the headlight; create it.
-			m_pFlashlight = new CFlashlightEffect(index);
+		// Turned on the headlight; create it.
+		FlashlightEffectManager().TurnOnFlashlight( index, GetFlashlightTextureName(), GetFlashlightFOV(),
+			GetFlashlightFarZ(), GetFlashlightLinearAtten() );
 
-			if (!m_pFlashlight)
-				return;
-
-			m_pFlashlight->TurnOn();
-		}
-
-		Vector vecForward, vecRight, vecUp;
-		EyeVectors( &vecForward, &vecRight, &vecUp );
-
-		// Update the light with the new position and direction.		
-		m_pFlashlight->UpdateLight( EyePosition(), vecForward, vecRight, vecUp, FLASHLIGHT_DISTANCE );
 	}
-	else if (m_pFlashlight)
+	else
 	{
 		// Turned off the flashlight; delete it.
-		delete m_pFlashlight;
-		m_pFlashlight = NULL;
+		FlashlightEffectManager().TurnOffFlashlight();
 	}
-}
 
+	Vector vecForward, vecRight, vecUp;
+	EyeVectors( &vecForward, &vecRight, &vecUp );
+
+	// Update the light with the new position and direction.		
+	FlashlightEffectManager().UpdateFlashlight( EyePosition(), vecForward, vecRight, vecUp, GetFlashlightFOV(),
+		CastsFlashlightShadows(), GetFlashlightFarZ(), GetFlashlightLinearAtten(),
+		GetFlashlightTextureName() );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Creates player flashlight if it's ative
 //-----------------------------------------------------------------------------
-void C_BasePlayer::Flashlight( void )
+void C_BasePlayer::Flashlight()
 {
 	UpdateFlashlight();
 
@@ -1333,6 +1327,22 @@ void C_BasePlayer::Flashlight( void )
 	{
 		ve = dynamic_cast< C_BaseAnimating* >( GetObserverTarget() );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Turns off flashlight if it's active (TERROR)
+//-----------------------------------------------------------------------------
+void C_BasePlayer::TurnOffFlashlight()
+{
+	FlashlightEffectManager().TurnOffFlashlight();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Turns off flashlight if it's active (TERROR)
+//-----------------------------------------------------------------------------
+float C_BasePlayer::GetFlashlightFOV() const
+{ 
+	return r_flashlightfov.GetFloat();
 }
 
 
