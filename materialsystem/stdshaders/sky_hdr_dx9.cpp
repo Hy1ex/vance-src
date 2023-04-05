@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $Header: $
 // $NoKeywords: $
@@ -155,7 +155,7 @@ BEGIN_VS_SHADER( Sky_HDR_DX9, "Help for Sky_HDR_DX9 shader" )
 				{
 					pShaderShadow->EnableTexture( SHADER_SAMPLER1, true );
 					pShaderShadow->EnableTexture( SHADER_SAMPLER2, true );
-					
+
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0,false);
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER1,false);
 					pShaderShadow->EnableSRGBRead(SHADER_SAMPLER2,false);
@@ -178,7 +178,7 @@ BEGIN_VS_SHADER( Sky_HDR_DX9, "Help for Sky_HDR_DX9 shader" )
 						pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0,false);
 					else
 						pShaderShadow->EnableSRGBRead(SHADER_SAMPLER0,true);
-					
+
 					if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 					{
 						DECLARE_STATIC_PIXEL_SHADER( sky_ps20b );
@@ -210,7 +210,7 @@ BEGIN_VS_SHADER( Sky_HDR_DX9, "Help for Sky_HDR_DX9 shader" )
 			{
 				memcpy(c0,params[COLOR]->GetVecValue(),3*sizeof(float));
 			}
-			if ( 
+			if (
 				params[HDRCOMPRESSEDTEXTURE]->IsDefined() &&
 				mat_use_compressed_hdr_textures.GetBool()
 				)
@@ -219,7 +219,7 @@ BEGIN_VS_SHADER( Sky_HDR_DX9, "Help for Sky_HDR_DX9 shader" )
 				ITexture *txtr=params[HDRCOMPRESSEDTEXTURE]->GetTextureValue();
 				float w=txtr->GetActualWidth();
 				float h=txtr->GetActualHeight();
-				float FUDGE=0.01/max(w,h);					// per ATI
+				float FUDGE=0.01/MAX(w,h);					// per ATI
 				float c1[4]={0.5/w-FUDGE, 0.5/h-FUDGE, w, h };
 				pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, c1);
 
@@ -269,7 +269,7 @@ BEGIN_VS_SHADER( Sky_HDR_DX9, "Help for Sky_HDR_DX9 shader" )
 					ImageFormat fmt=txtr->GetImageFormat();
 					if (
 						(fmt==IMAGE_FORMAT_RGBA16161616) ||
-						( (fmt==IMAGE_FORMAT_RGBA16161616F) && 
+						( (fmt==IMAGE_FORMAT_RGBA16161616F) &&
 						  (g_pHardwareConfig->GetHDRType()==HDR_TYPE_INTEGER))
 						)
 					{

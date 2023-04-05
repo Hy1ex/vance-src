@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -50,8 +50,8 @@ void LogReset( void )
 char *va( const char *fmt, ... );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *words - 
+// Purpose:
+// Input  : *words -
 //-----------------------------------------------------------------------------
 void LogWords( CSentence& sentence )
 {
@@ -65,8 +65,8 @@ void LogWords( CSentence& sentence )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *phonemes - 
+// Purpose:
+// Input  : *phonemes -
 //-----------------------------------------------------------------------------
 void LogPhonemes( CSentence& sentence )
 {
@@ -91,9 +91,9 @@ void LogPhonemes( CSentence& sentence )
 //-----------------------------------------------------------------------------
 // Purpose: Walk list of words and phonemes and create phoneme tags in CSentence object
 //  FIXME:  Right now, phonemes are assumed to evenly space out across a word.
-// Input  : *converter - 
-//			result - 
-//			sentence - 
+// Input  : *converter -
+//			result -
+//			sentence -
 //-----------------------------------------------------------------------------
 void EnumeratePhonemes( ISpPhoneConverter *converter, const ISpRecoResult* result, CSentence& sentence )
 {
@@ -177,10 +177,10 @@ void EnumeratePhonemes( ISpPhoneConverter *converter, const ISpRecoResult* resul
 				wszPhoneme[ 0 ] = L'\0';
 
 				converter->IdToPhone( pstr, wszPhoneme );
- 
+
 				CPhonemeTag *p = new CPhonemeTag( W2A( wszPhoneme ) );
 				Assert( p );
-				
+
 				float weight = WeightForPhoneme( W2A( wszPhoneme ) );
 
 				p->m_uiStartByte = wordstart + (int)( startWeight * psize );
@@ -195,7 +195,7 @@ void EnumeratePhonemes( ISpPhoneConverter *converter, const ISpRecoResult* resul
 
 				number++;
 			}
-		}	
+		}
 	}
 
 	// Free memory
@@ -215,10 +215,10 @@ typedef struct
 
 //-----------------------------------------------------------------------------
 // Purpose: Creates start for word of sentence
-// Input  : cpRecoGrammar - 
-//			*root - 
-//			*rules - 
-//			word - 
+// Input  : cpRecoGrammar -
+//			*root -
+//			*rules -
+//			word -
 //-----------------------------------------------------------------------------
 void AddWordRule( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector< WORDRULETYPE > *rules, CSpDynamicString& word )
 {
@@ -241,10 +241,10 @@ void AddWordRule( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : cpRecoGrammar - 
-//			*from - 
-//			*to - 
+// Purpose:
+// Input  : cpRecoGrammar -
+//			*from -
+//			*to -
 //-----------------------------------------------------------------------------
 void AddWordTransitionRule( ISpRecoGrammar* cpRecoGrammar, WORDRULETYPE *from, WORDRULETYPE *to )
 {
@@ -267,10 +267,10 @@ void AddWordTransitionRule( ISpRecoGrammar* cpRecoGrammar, WORDRULETYPE *from, W
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : cpRecoGrammar - 
-//			*from - 
-//			*to - 
+// Purpose:
+// Input  : cpRecoGrammar -
+//			*from -
+//			*to -
 //-----------------------------------------------------------------------------
 void AddOptionalTransitionRule( ISpRecoGrammar* cpRecoGrammar, WORDRULETYPE *from, WORDRULETYPE *to )
 {
@@ -295,10 +295,10 @@ void AddOptionalTransitionRule( ISpRecoGrammar* cpRecoGrammar, WORDRULETYPE *fro
 #define MAX_WORD_SKIP 1
 //-----------------------------------------------------------------------------
 // Purpose: Links together all word rule states into a sentence rule CFG
-// Input  : singleword - 
-//			cpRecoGrammar - 
-//			*root - 
-//			*rules - 
+// Input  : singleword -
+//			cpRecoGrammar -
+//			*root -
+//			*rules -
 //-----------------------------------------------------------------------------
 bool BuildRules( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector< WORDRULETYPE > *rules )
 {
@@ -330,7 +330,7 @@ bool BuildRules( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector<
 
 	if ( numrules > 1 )
 	{
-		for ( int skip = 1; skip <= min( MAX_WORD_SKIP, numrules ); skip++ )
+		for ( int skip = 1; skip <= MIN( MAX_WORD_SKIP, numrules ); skip++ )
 		{
 			OutputDebugString( va( "Opt transition from Root to %s\r\n", (*rules)[ 0 ].plaintext ) );
 
@@ -340,7 +340,7 @@ bool BuildRules( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector<
 			for ( int i = 1; i < numrules; i++ )
 			{
 				// Start at the beginning?
-				rule = &(*rules)[ i ];	
+				rule = &(*rules)[ i ];
 				if ( i < numrules - skip )
 				{
 					next = &(*rules)[ i + skip ];
@@ -369,8 +369,8 @@ bool BuildRules( ISpRecoGrammar* cpRecoGrammar, SPSTATEHANDLE *root, CUtlVector<
 
 //-----------------------------------------------------------------------------
 // Purpose: Debugging, prints alternate list if one is created
-// Input  : cpResult - 
-//			(*pfnPrint - 
+// Input  : cpResult -
+//			(*pfnPrint -
 //-----------------------------------------------------------------------------
 void PrintAlternates( ISpRecoResult* cpResult, void (*pfnPrint)( const char *fmt, ... ) )
 {
@@ -378,7 +378,7 @@ void PrintAlternates( ISpRecoResult* cpResult, void (*pfnPrint)( const char *fmt
 	memset( rgPhraseAlt, 0, sizeof( rgPhraseAlt ) );
 
 	ULONG ulCount;
-	
+
 	ISpPhrase *phrase = ( ISpPhrase * )cpResult;
 	if ( phrase )
 	{
@@ -389,13 +389,13 @@ void PrintAlternates( ISpRecoResult* cpResult, void (*pfnPrint)( const char *fmt
 			{
 				HRESULT hr = cpResult->GetAlternates(
 					pElements->Rule.ulFirstElement,
-					pElements->Rule.ulCountOfElements, 
+					pElements->Rule.ulCountOfElements,
 					32,
 					rgPhraseAlt,
 					&ulCount);
-				
+
 				Assert( !FAILED( hr ) );
-				
+
 				for ( ULONG r = 0 ; r < ulCount; r++ )
 				{
 					CSpDynamicString dstrText;
@@ -408,7 +408,7 @@ void PrintAlternates( ISpRecoResult* cpResult, void (*pfnPrint)( const char *fmt
 				}
 			}
 		}
-		
+
 	}
 
 	for ( int i = 0; i < 32; i++ )
@@ -434,7 +434,7 @@ void PrintWordsAndPhonemes( CSentence& sentence, void (*pfnPrint)( const char *f
 		if ( !word )
 			continue;
 
-		sprintf( sz, "<%u - %u> %s\r\n", 
+		sprintf( sz, "<%u - %u> %s\r\n",
 			word->m_uiStartByte, word->m_uiEndByte, word->GetWord() );
 
 		pfnPrint( sz );
@@ -445,7 +445,7 @@ void PrintWordsAndPhonemes( CSentence& sentence, void (*pfnPrint)( const char *f
 			if ( !phoneme )
 				continue;
 
-			sprintf( sz, "  <%u - %u> %s\r\n", 
+			sprintf( sz, "  <%u - %u> %s\r\n",
 				phoneme->m_uiStartByte, phoneme->m_uiEndByte, phoneme->GetTag() );
 
 			pfnPrint( sz );
@@ -458,10 +458,10 @@ void PrintWordsAndPhonemes( CSentence& sentence, void (*pfnPrint)( const char *f
 //-----------------------------------------------------------------------------
 // Purpose: Given a wave file and a string of words "text", creates a CFG from the
 //  sentence and stores the resulting words/phonemes in CSentence
-// Input  : *wavname - 
-//			text - 
-//			sentence - 
-//			(*pfnPrint - 
+// Input  : *wavname -
+//			text -
+//			sentence -
+//			(*pfnPrint -
 // Output : SR_RESULT
 //-----------------------------------------------------------------------------
 SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentence& sentence, void (*pfnPrint)( const char *fmt, ...) )
@@ -477,7 +477,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 
 	USES_CONVERSION;
 	HRESULT hr;
-	
+
 	CUtlVector < WORDRULETYPE > wordRules;
 
 	CComPtr<ISpStream> cpInputStream;
@@ -485,7 +485,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 	CComPtr<ISpRecoContext> cpRecoContext;
 	CComPtr<ISpRecoGrammar> cpRecoGrammar;
 	CComPtr<ISpPhoneConverter>  cpPhoneConv;
-    
+
 	// Create basic SAPI stream object
 	// NOTE: The helper SpBindToFile can be used to perform the following operations
 	hr = cpInputStream.CoCreateInstance(CLSID_SpStream);
@@ -496,7 +496,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 	}
 
 	CSpStreamFormat sInputFormat;
-	
+
 	// setup stream object with wav file MY_WAVE_AUDIO_FILENAME
 	//   for read-only access, since it will only be access by the SR engine
 	hr = cpInputStream->BindToFile(
@@ -511,7 +511,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 		pfnPrint( "Error: couldn't open wav file %s\n", wavname );
 		return result;
 	}
-	
+
 	// Create in-process speech recognition engine
 	hr = cpRecognizer.CoCreateInstance(CLSID_SpInprocRecognizer);
 	if ( FAILED( hr ) )
@@ -527,7 +527,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 		pfnPrint( "Error:  SAPI 5.1 Unable to create recognizer context\n" );
 		return result;
 	}
-	
+
 	// Create a grammar
 	hr = cpRecoContext->CreateGrammar( EP_GRAM_ID, &cpRecoGrammar );
 	if ( FAILED( hr ) )
@@ -662,15 +662,15 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 	}
 
 	// check for recognitions and end of stream event
-	const ULONGLONG ullInterest = 
-		SPFEI(SPEI_RECOGNITION) | SPFEI(SPEI_END_SR_STREAM) | SPFEI(SPEI_FALSE_RECOGNITION) | 
+	const ULONGLONG ullInterest =
+		SPFEI(SPEI_RECOGNITION) | SPFEI(SPEI_END_SR_STREAM) | SPFEI(SPEI_FALSE_RECOGNITION) |
 		SPFEI(SPEI_PHRASE_START ) | SPFEI(SPEI_HYPOTHESIS ) | SPFEI(SPEI_INTERFERENCE) ;
 	hr = cpRecoContext->SetInterest( ullInterest, ullInterest );
 	if ( FAILED( hr ) )
 	{
 		pfnPrint( "Error:  SAPI 5.1 Unable to set interest level\n" );
 		return result;
-	}	
+	}
 	// use Win32 events for command-line style application
 	hr = cpRecoContext->SetNotifyWin32Event();
 	if ( FAILED( hr ) )
@@ -685,7 +685,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 	{
 		pfnPrint( "Error:  SAPI 5.1 Unable to associate input stream\n" );
 		return result;
-	}	
+	}
 
 	// Activate the CFG ( rather than using dictation )
 	hr = cpRecoGrammar->SetRuleState( NULL, NULL, SPRS_ACTIVE );
@@ -723,7 +723,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 	{
 		CSpEvent spEvent;
 		// pull all queued events from the reco context's event queue
-		
+
 		while (!fEndStreamReached && S_OK == spEvent.GetFrom(cpRecoContext))
 		{
 			// Check event type
@@ -797,7 +797,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 
 						pfnPrint( va( "%s%s\r\n", spEvent.eEventId == SPEI_HYPOTHESIS ? "[ Hypothesis ] " : "", dstrText.CopyToChar() ) );
 					}
-                    
+
                     cpResult.Release();
 				}
 				break;
@@ -806,12 +806,12 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 				fEndStreamReached = TRUE;
 				break;
 			}
-			
+
 			// clear any event data/object references
 			spEvent.Clear();
 		}// END event pulling loop - break on empty event queue OR end stream
 	}// END event polling loop - break on event timeout OR end stream
-	
+
 	// Deactivate rule
 	hr = cpRecoGrammar->SetRuleState( NULL, NULL, SPRS_INACTIVE );
 	if ( FAILED( hr ) )
@@ -835,7 +835,7 @@ SR_RESULT ExtractPhonemes( const char *wavname, CSpDynamicString& text, CSentenc
 //-----------------------------------------------------------------------------
 // Purpose: HACK HACK:  We have to delete the RecoContext key or sapi starts to train
 //  itself on each iteration which was causing some problems.
-// Input  : hKey - 
+// Input  : hKey -
 //-----------------------------------------------------------------------------
 void RecursiveRegDelKey(HKEY hKey)
 {
@@ -855,7 +855,7 @@ void RecursiveRegDelKey(HKEY hKey)
 		LONG lResult2;
 		LONG lDelResult;
 		lResult2=RegOpenKeyEx(hKey,keyname,0,KEY_ALL_ACCESS,&subkey);
-		
+
 		if (lResult2==ERROR_SUCCESS)
 		{
 			RecursiveRegDelKey(subkey);
@@ -867,7 +867,7 @@ void RecursiveRegDelKey(HKEY hKey)
 			lResult=RegEnumKeyEx(hKey,0,keyname,&namesize,NULL,NULL,NULL,NULL);
 		}
 
-		else 
+		else
 		{
 			break;
 		}
@@ -928,7 +928,7 @@ int FindFirstUsableWord( CSentence& outwords )
 
 //-----------------------------------------------------------------------------
 // Purpose: Counts words which have either a valid start or end byte
-// Input  : *outwords - 
+// Input  : *outwords -
 // Output : int
 //-----------------------------------------------------------------------------
 int CountUsableWords( CSentence& outwords )
@@ -954,7 +954,7 @@ int CountUsableWords( CSentence& outwords )
 
 //-----------------------------------------------------------------------------
 // Purpose: Counts words which have either a valid start or end byte
-// Input  : *outwords - 
+// Input  : *outwords -
 // Output : int
 //-----------------------------------------------------------------------------
 int CountUnuseableWords( CSentence& outwords )
@@ -991,7 +991,7 @@ void RepartitionPhonemes( CWordTag *word, unsigned int oldStart, unsigned int ol
 
 		float frac1 = 0.0f, frac2 = 0.0f;
 		float delta1, delta2;
-		
+
 		delta1 = ( float ) ( tag->m_uiStartByte - oldStart );
 		delta2 = ( float ) ( tag->m_uiEndByte - oldStart );
 		if ( oldRange > 0.0f )
@@ -1034,8 +1034,8 @@ void MergeWords( CWordTag *w1, CWordTag *w2 )
 {
 	unsigned int start, end;
 
-	start = min( w1->m_uiStartByte, w2->m_uiStartByte );
-	end = max( w1->m_uiEndByte, w2->m_uiEndByte );
+	start = MIN( w1->m_uiStartByte, w2->m_uiStartByte );
+	end = MAX( w1->m_uiEndByte, w2->m_uiEndByte );
 
 	unsigned int mid = ( start + end ) / 2;
 
@@ -1195,14 +1195,14 @@ void ComputeMissingByteSpans( int numsamples, CSentence& outwords )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Given a wavfile and a list of inwords, determines the word/phonene 
+// Purpose: Given a wavfile and a list of inwords, determines the word/phonene
 //  sample counts for the sentce
-// Input  : *wavfile - 
-//			*inwords - 
-//			*outphonemes{	text.Clear( - 
+// Input  : *wavfile -
+//			*inwords -
+//			*outphonemes{	text.Clear( -
 // Output : SR_RESULT
 //-----------------------------------------------------------------------------
-static SR_RESULT SAPI_ExtractPhonemes( 
+static SR_RESULT SAPI_ExtractPhonemes(
 	const char *wavfile,
 	int numsamples,
 	void (*pfnPrint)( const char *fmt, ... ),
@@ -1251,7 +1251,7 @@ static SR_RESULT SAPI_ExtractPhonemes(
 		outwords.Reset();
 
 		outwords.SetText( inwords.GetText() );
-		
+
 		Log( "Starting\n" );
 		LogWords( inwords );
 
@@ -1346,7 +1346,7 @@ static SR_RESULT SAPI_ExtractPhonemes(
 				else
 				{
 					// Copy words from from source list into destination
-					// 
+					//
 					int skipCount = skipAhead - frompos;
 
 					while ( --skipCount>= 0 )
@@ -1411,7 +1411,7 @@ public:
 		return "MS SAPI 5.1";
 	}
 
-	SR_RESULT Extract( 
+	SR_RESULT Extract(
 		const char *wavfile,
 		int numsamples,
 		void (*pfnPrint)( const char *fmt, ... ),

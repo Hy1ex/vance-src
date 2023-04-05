@@ -141,7 +141,7 @@ void RayTracingEnvironment::AddAxisAlignedRectangularSolid(int id,Vector minc, V
 			Vector(maxc.x,maxc.y,minc.z),
 			Vector(maxc.x,minc.y,minc.z),
 			Vector(maxc.x,minc.y,maxc.z),color);
-	
+
 	// "top" face
 	AddQuad(id,
 			Vector(minc.x,maxc.y,maxc.z),
@@ -244,8 +244,8 @@ int CacheOptimizedTriangle::ClassifyAgainstAxisSplit(int split_plane, float spli
 	float maxc=minc;
 	for(int v=1;v<3;v++)
 	{
-		minc=min(minc,Vertex(v)[split_plane]);
-		maxc=max(maxc,Vertex(v)[split_plane]);
+		minc=MIN(minc,Vertex(v)[split_plane]);
+		maxc=MAX(maxc,Vertex(v)[split_plane]);
 	}
 
 	if (minc>=split_value)
@@ -339,7 +339,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 						rslt_out->surface_normal.Y(i) = tmpresults.surface_normal.Y(i);
 						rslt_out->surface_normal.Z(i) = tmpresults.surface_normal.Z(i);
 					}
-				
+
 			}
 		}
 	}
@@ -359,7 +359,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 	rslt_out->surface_normal.DuplicateVector(Vector(0.,0.,0.));
 	FourVectors OneOverRayDir=rays.direction;
 	OneOverRayDir.MakeReciprocalSaturate();
-	
+
 	// now, clip rays against bounding box
 	for(int c=0;c<3;c++)
 	{
@@ -410,17 +410,17 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 		back_idx[2]=1;
 		front_idx[2]=0;
 	}
-		
+
 	NodeToVisit NodeQueue[MAX_NODE_STACK_LEN];
 	CacheOptimizedKDNode const *CurNode=&(OptimizedKDTree[0]);
 	NodeToVisit *stack_ptr=&NodeQueue[MAX_NODE_STACK_LEN];
 	while(1)
 	{
 		while (CurNode->NodeType() != KDNODE_STATE_LEAF)		// traverse until next leaf
-		{	   
+		{
 			int split_plane_number=CurNode->NodeType();
 			CacheOptimizedKDNode const *FrontChild=&(OptimizedKDTree[CurNode->LeftChild()]);
-			
+
 			fltx4 dist_to_sep_plane=						// dist=(split-org)/dir
 				MulSIMD(
 					SubSIMD(ReplicateX4(CurNode->SplittingPlaneValue),
@@ -511,7 +511,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 										MulSIMD( isect_t, rays.direction[ tri->m_nCoordSelect0] ) );
 					fltx4 hitc2 = AddSIMD( rays.origin[tri->m_nCoordSelect1],
 										   MulSIMD( isect_t, rays.direction[tri->m_nCoordSelect1] ) );
-					
+
 					// do barycentric coordinate check
 					fltx4 B0 = MulSIMD( ReplicateX4( tri->m_ProjectedEdgeEquations[0] ), hitc1 );
 
@@ -530,7 +530,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 
 					B1 = AddSIMD(
 						B1, ReplicateX4( tri->m_ProjectedEdgeEquations[5] ) );
-					
+
 					did_hit = AndSIMD( did_hit, CmpGeSIMD( B1, FourZeros ) );
 
 					fltx4 B2 = AddSIMD( B1, B0 );
@@ -575,7 +575,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 					rslt_out->surface_normal.z=OrSIMD(
 						AndSIMD(N.z,did_hit),
 						AndNotSIMD(did_hit,rslt_out->surface_normal.z));
-					
+
 				}
 			} while (--ntris);
 			// now, check if all rays have terminated
@@ -585,7 +585,7 @@ void RayTracingEnvironment::Trace4Rays(const FourRays &rays, fltx4 TMin, fltx4 T
 				return;
 			}
 		}
-		
+
  		if (stack_ptr==&NodeQueue[MAX_NODE_STACK_LEN])
 		{
 			return;
@@ -622,8 +622,8 @@ void RayTracingEnvironment::CalculateTriangleListBounds(int32 const *tris,int nt
 		for(int v=0; v<3; v++)
 			for(int c=0; c<3; c++)
 			{
-				minout[c]=min(minout[c],tri.Vertex(v)[c]);
-							  maxout[c]=max(maxout[c],tri.Vertex(v)[c]);
+				minout[c]=MIN(minout[c],tri.Vertex(v)[c]);
+							  maxout[c]=MAX(maxout[c],tri.Vertex(v)[c]);
 			}
 	}
 }
@@ -644,9 +644,9 @@ void RayTracingEnvironment::CalculateTriangleListBounds(int32 const *tris,int nt
 //  termination criterion.
 //
 // the "quick" method just splits down the middle, while the slow method splits at the best
-// discontinuity of the cost formula. The quick method splits along the longest axis ; the 
+// discontinuity of the cost formula. The quick method splits along the longest axis ; the
 // regular algorithm tries all 3 to find which one results in the minimum cost
-// 
+//
 // both methods use the additional optimization of "growing" empty nodes - if the split results in
 // one side being devoid of triangles, the empty side is "grown" as much as possible.
 //
@@ -664,7 +664,7 @@ float RayTracingEnvironment::CalculateCostsOfSplit(
 	// that axis by storing the value in coordselect0. It will also return the number of
 	// tris in the left, right, and nboth groups, in order to facilitate memory
 	nleft=nboth=nright=0;
-	
+
 	// now, label each triangle. Since we have not converted the triangles into
 	// intersection fromat yet, we can use the CoordSelect0 field of each as a temp.
 	nleft=0;
@@ -678,8 +678,8 @@ float RayTracingEnvironment::CalculateCostsOfSplit(
 		// determine max and min coordinate values for later optimization
 		for(int v=0;v<3;v++)
 		{
-			min_coord = min( min_coord, tri.Vertex(v)[split_plane] );
-			max_coord = max( max_coord, tri.Vertex(v)[split_plane] );
+			min_coord = MIN( min_coord, tri.Vertex(v)[split_plane] );
+			max_coord = MAX( max_coord, tri.Vertex(v)[split_plane] );
 		}
 		switch(tri.ClassifyAgainstAxisSplit(split_plane,split_value))
 		{
@@ -766,7 +766,7 @@ void RayTracingEnvironment::RefineNode(int node_number,int32 const *tri_list,int
 					trial_splitvalue = tri.Vertex(tv)[axis];
 					if ((trial_splitvalue>MaxBound[axis]) || (trial_splitvalue<MinBound[axis]))
 						continue;							// don't try this vertex - not inside
-					
+
 				}
 //				printf("ts=%d tv=%d tp=%f\n",ts,tv,trial_splitvalue);
 				float trial_cost=
@@ -824,7 +824,7 @@ void RayTracingEnvironment::RefineNode(int node_number,int32 const *tri_list,int
 		Vector RightMaxes=MaxBound;
 		LeftMaxes[split_plane]=best_splitvalue;
 		RightMins[split_plane]=best_splitvalue;
-		
+
 		int n_left_output=0;
 		int n_both_output=0;
 		int n_right_output=0;
@@ -848,7 +848,7 @@ void RayTracingEnvironment::RefineNode(int node_number,int32 const *tri_list,int
 					n_both_output++;
 					break;
 
-					
+
 			}
 		}
 		int left_child=OptimizedKDTree.Count();
@@ -872,7 +872,7 @@ void RayTracingEnvironment::RefineNode(int node_number,int32 const *tri_list,int
 		RefineNode(right_child,new_triangle_list+best_nleft,best_nright+best_nboth,
 				   RightMins,RightMaxes,depth+1);
 		delete[] new_triangle_list;
-	}	
+	}
 }
 
 
@@ -899,7 +899,7 @@ void RayTracingEnvironment::AddInfinitePointLight(Vector position, Vector intens
 {
 	LightDesc_t mylight(position,intensity);
 	LightList.AddToTail(mylight);
-	
+
 }
 
 

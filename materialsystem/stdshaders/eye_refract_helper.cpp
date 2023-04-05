@@ -137,7 +137,7 @@ void Draw_Eyes_Refract_Internal( CBaseVSShader *pShader, IMaterialVar** params, 
 			}
 
 			pShaderShadow->EnableDepthWrites( false );
-			pShader->EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE ); // Write over the eyes that were already there 
+			pShader->EnableAlphaBlending( SHADER_BLEND_ONE, SHADER_BLEND_ONE ); // Write over the eyes that were already there
 			pShaderShadow->EnableTexture( SHADER_SAMPLER5, true );	// Flashlight cookie
 		}
 
@@ -249,7 +249,7 @@ void Draw_Eyes_Refract_Internal( CBaseVSShader *pShader, IMaterialVar** params, 
 		pShader->BindTexture( SHADER_SAMPLER1, info.m_nIris, info.m_nIrisFrame );
 		pShader->BindTexture( SHADER_SAMPLER2, info.m_nEnvmap );
 		pShader->BindTexture( SHADER_SAMPLER3, info.m_nAmbientOcclTexture );
-	
+
 		if ( bDiffuseWarp )
 		{
 			if ( r_lightwarpidentity.GetBool() )
@@ -311,7 +311,7 @@ void Draw_Eyes_Refract_Internal( CBaseVSShader *pShader, IMaterialVar** params, 
 #endif
 
 		// Get luminance of ambient cube and saturate it
-		float fAverageAmbient = max(0.0f, min( pShaderAPI->GetAmbientLightCubeLuminance(), 1.0f ) );
+		float fAverageAmbient = MAX(0.0f, MIN( pShaderAPI->GetAmbientLightCubeLuminance(), 1.0f ) );
 
 		// Special constant for DX9 eyes: { Dilation, Glossiness, x, x };
 		float vPSConst[4] = { 0.0f, 0.0f, 0.0f, 0.0f };

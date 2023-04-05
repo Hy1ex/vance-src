@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 #include "vbsp.h"
@@ -102,7 +102,7 @@ void Disp_AddCollisionModels( CUtlVector<CPhysCollisionEntry *> &collisionList, 
 	int dispIndex;
 
 	// Add each displacement to the grid hash
-	for ( dispIndex = 0; dispIndex < g_CoreDispInfos.Count(); dispIndex++ )	
+	for ( dispIndex = 0; dispIndex < g_CoreDispInfos.Count(); dispIndex++ )
 	{
 		CCoreDispInfo *pDispInfo = g_CoreDispInfos[ dispIndex ];
 		mapdispinfo_t *pMapDisp = &mapdispinfo[ dispIndex ];
@@ -150,7 +150,7 @@ void Disp_AddCollisionModels( CUtlVector<CPhysCollisionEntry *> &collisionList, 
 				CPhysCollide *pCollide = physcollision->ConvertPolysoupToCollide( pTerrainPhysics, false );
 				if ( pCollide )
 				{
-					collisionList.AddToTail( new CPhysCollisionEntryStaticMesh( pCollide, NULL ) );	
+					collisionList.AddToTail( new CPhysCollisionEntryStaticMesh( pCollide, NULL ) );
 				}
 				// Throw this polysoup away and start over for the remaining triangles
 				physcollision->PolysoupDestroy( pTerrainPhysics );
@@ -185,7 +185,7 @@ void Disp_AddCollisionModels( CUtlVector<CPhysCollisionEntry *> &collisionList, 
 		CPhysCollide *pCollide = physcollision->ConvertPolysoupToCollide( pTerrainPhysics, false );
 		if ( pCollide )
 		{
-			collisionList.AddToTail( new CPhysCollisionEntryStaticMesh( pCollide, NULL ) );	
+			collisionList.AddToTail( new CPhysCollisionEntryStaticMesh( pCollide, NULL ) );
 		}
 		// now that we have the collide, we're done with the soup
 		physcollision->PolysoupDestroy( pTerrainPhysics );
@@ -240,7 +240,7 @@ void CDispMeshEvent::GetVirtualMesh( void *userData, virtualmeshlist_t *pList )
 	pList->surfacePropsIndex = 0;	// doesn't matter here, reset at runtime
 	pList->pHull = NULL;
 	int indexMax = ARRAYSIZE(pList->indices);
-	int indexCount = min(m_indexCount, indexMax);
+	int indexCount = MIN(m_indexCount, indexMax);
 	Assert(m_indexCount < indexMax);
 	Q_memcpy( pList->indices, m_pIndices, sizeof(*m_pIndices) * indexCount );
 }
@@ -260,7 +260,7 @@ void CDispMeshEvent::GetTrianglesInSphere( void *userData, const Vector &center,
 	Assert(userData==((void *)this));
 	pList->triangleCount = m_indexCount/3;
 	int indexMax = ARRAYSIZE(pList->triangleIndices);
-	int indexCount = min(m_indexCount, indexMax);
+	int indexCount = MIN(m_indexCount, indexMax);
 	Assert(m_indexCount < MAX_VIRTUAL_TRIANGLES*3);
 	Q_memcpy( pList->triangleIndices, m_pIndices, sizeof(*m_pIndices) * indexCount );
 }
@@ -269,7 +269,7 @@ void Disp_BuildVirtualMesh( int contentsMask )
 {
 	CUtlVector<CPhysCollide *> virtualMeshes;
 	virtualMeshes.EnsureCount( g_CoreDispInfos.Count() );
-	for ( int i = 0; i < g_CoreDispInfos.Count(); i++ )	
+	for ( int i = 0; i < g_CoreDispInfos.Count(); i++ )
 	{
 		CCoreDispInfo *pDispInfo = g_CoreDispInfos[ i ];
 		mapdispinfo_t *pMapDisp = &mapdispinfo[ i ];

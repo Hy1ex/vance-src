@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -60,7 +60,7 @@ public:
 	virtual void SelectWeaponSlot( int iSlot );
 
 	virtual C_BaseCombatWeapon	*GetSelectedWeapon( void )
-	{ 
+	{
 		return m_hSelectedWeapon;
 	}
 
@@ -75,7 +75,7 @@ protected:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 
 	virtual bool IsWeaponSelectable()
-	{ 
+	{
 		if (IsInSelectionMode())
 			return true;
 
@@ -110,17 +110,17 @@ private:
 	void ActivateWeaponHighlight( C_BaseCombatWeapon *pWeapon );
 	float GetWeaponBoxAlpha( bool bSelected );
 	int GetLastPosInSlot( int iSlot ) const;
-    
+
 	void FastWeaponSwitch( int iWeaponSlot );
 	void PlusTypeFastWeaponSwitch( int iWeaponSlot );
 
-	virtual	void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon ) 
-	{ 
+	virtual	void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon )
+	{
 		m_hSelectedWeapon = pWeapon;
 	}
 
-	virtual	void SetSelectedSlot( int slot ) 
-	{ 
+	virtual	void SetSelectedSlot( int slot )
+	{
 		m_iSelectedSlot = slot;
 	}
 
@@ -271,7 +271,7 @@ bool CHudWeaponSelection::ShouldDraw()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::LevelInit()
 {
@@ -464,7 +464,7 @@ void CHudWeaponSelection::Paint()
 
 	// interpolate the selected box size between the small box size and the large box size
 	// interpolation has been removed since there is no weapon pickup animation anymore, so it's all at the largest size
-	float percentageDone = 1.0f; //min(1.0f, (gpGlobals->curtime - m_flPickupStartTime) / m_flWeaponPickupGrowTime);
+	float percentageDone = 1.0f; //MIN(1.0f, (gpGlobals->curtime - m_flPickupStartTime) / m_flWeaponPickupGrowTime);
 	int largeBoxWide = m_flSmallBoxSize + ((m_flLargeBoxWide - m_flSmallBoxSize) * percentageDone);
 	int largeBoxTall = m_flSmallBoxSize + ((m_flLargeBoxTall - m_flSmallBoxSize) * percentageDone);
 	Color selectedColor;
@@ -655,14 +655,14 @@ void CHudWeaponSelection::Paint()
 #endif
 
 					// Draw the box with the appropriate icon
-					DrawLargeWeaponBox( pWeapon, 
-										selectedWeapon, 
-										x, 
-										y, 
-										boxWide, 
-										boxTall, 
-										selectedWeapon ? selectedColor : m_BoxColor, 
-										GetWeaponBoxAlpha( selectedWeapon ), 
+					DrawLargeWeaponBox( pWeapon,
+										selectedWeapon,
+										x,
+										y,
+										boxWide,
+										boxTall,
+										selectedWeapon ? selectedColor : m_BoxColor,
+										GetWeaponBoxAlpha( selectedWeapon ),
 										-1 );
 				}
 			}
@@ -699,14 +699,14 @@ void CHudWeaponSelection::Paint()
 						else
 						{
 							bool bSelected = (pWeapon == pSelectedWeapon);
-							DrawLargeWeaponBox( pWeapon, 
-												bSelected, 
-												xpos, 
-												ypos, 
-												largeBoxWide, 
-												largeBoxTall, 
-												bSelected ? selectedColor : m_BoxColor, 
-												GetWeaponBoxAlpha( bSelected ), 
+							DrawLargeWeaponBox( pWeapon,
+												bSelected,
+												xpos,
+												ypos,
+												largeBoxWide,
+												largeBoxTall,
+												bSelected ? selectedColor : m_BoxColor,
+												GetWeaponBoxAlpha( bSelected ),
 												bDrawBucketNumber ? i + 1 : -1 );
 						}
 
@@ -761,7 +761,7 @@ void CHudWeaponSelection::Paint()
 void CHudWeaponSelection::DrawLargeWeaponBox( C_BaseCombatWeapon *pWeapon, bool bSelected, int xpos, int ypos, int boxWide, int boxTall, Color selectedColor, float alpha, int number )
 {
 	Color col = bSelected ? m_SelectedFgColor : GetFgColor();
-	
+
 	switch ( hud_fastswitch.GetInt() )
 	{
 	case HUDTYPE_BUCKETS:
@@ -803,7 +803,7 @@ void CHudWeaponSelection::DrawLargeWeaponBox( C_BaseCombatWeapon *pWeapon, bool 
 					// draw an active version over the top
 					pWeapon->GetSpriteActive()->DrawSelf( xpos + x_offs, ypos + y_offs, col );
 				}
-				
+
 				// draw the inactive version
 				pWeapon->GetSpriteInactive()->DrawSelf( xpos + x_offs, ypos + y_offs, col );
 			}
@@ -946,7 +946,7 @@ void CHudWeaponSelection::DrawLargeWeaponBox( C_BaseCombatWeapon *pWeapon, bool 
 		{
 			for (wchar_t *pch = text; *pch != 0; pch++)
 			{
-				if (*pch == '\n') 
+				if (*pch == '\n')
 				{
 					// newline character, drop to the next line
 					if (slen > maxslen)
@@ -1042,7 +1042,7 @@ void CHudWeaponSelection::ApplySchemeSettings(vgui::IScheme *pScheme)
 
 	if ( hud_fastswitch.GetInt() == HUDTYPE_CAROUSEL )
 	{
-		// need bounds to be exact width for proper clipping during scroll 
+		// need bounds to be exact width for proper clipping during scroll
 		int width = MAX_CAROUSEL_SLOTS*m_flLargeBoxWide + (MAX_CAROUSEL_SLOTS-1)*m_flBoxGap;
 		SetBounds( (screenWide-width)/2, y, width, screenTall - y);
 	}
@@ -1278,7 +1278,7 @@ int CHudWeaponSelection::GetLastPosInSlot( int iSlot ) const
 	for ( int i = 0; i < MAX_WEAPONS; i++ )
 	{
 		C_BaseCombatWeapon *pWeapon = player->GetWeapon(i);
-		
+
 		if ( pWeapon == NULL )
 			continue;
 
@@ -1384,7 +1384,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 		// Changing vertical/horizontal direction. Reset the selected box position to zero.
 		m_iSelectedBoxPosition = 0;
 		m_iSelectedSlot = iWeaponSlot;
-			
+
 #ifdef MAPBASE
 		if (!hud_showemptyweaponslots.GetBool())
 		{
@@ -1408,7 +1408,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 		int increment = 1;
 		if ( m_iSelectedSlot != iWeaponSlot )
 		{
-			// Decrementing within the slot. If we're at the zero position in this slot, 
+			// Decrementing within the slot. If we're at the zero position in this slot,
 			// jump to the zero position of the opposite slot. This also counts as our increment.
 			increment = -1;
 #ifdef MAPBASE
@@ -1449,7 +1449,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 				lastSlotPos = slotPos;
 			}
 		}
-			
+
 #ifdef MAPBASE
 		if (!hud_showemptyweaponslots.GetBool())
 		{
@@ -1531,7 +1531,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 	// Don't try and read past our possible number of slots
 	if ( iSlot >= MAX_WEAPON_SLOTS )
 		return;
-	
+
 	// Make sure the player's allowed to switch weapons
 	if ( pPlayer->IsAllowedToSwitchWeapons() == false )
 		return;
@@ -1544,7 +1544,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 			FastWeaponSwitch( iSlot );
 			return;
 		}
-		
+
 	case HUDTYPE_PLUS:
 		{
 			if ( !IsInSelectionMode() )
@@ -1552,7 +1552,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 				// open the weapon selection
 				OpenSelection();
 			}
-				
+
 			PlusTypeFastWeaponSwitch( iSlot );
 			ActivateWeaponHighlight( GetSelectedWeapon() );
 		}
@@ -1575,7 +1575,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 			{
 				pActiveWeapon = GetNextActivePos( iSlot, 0 );
 			}
-			
+
 			if ( pActiveWeapon != NULL )
 			{
 				if ( !IsInSelectionMode() )

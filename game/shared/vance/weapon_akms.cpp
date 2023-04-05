@@ -98,7 +98,7 @@ void CWeaponAKMS::PrimaryAttack()
 	m_iHeat++;
 	m_bCoolingDown = false;
 	m_flCooldownTime = gpGlobals->curtime + 3.0f;
-	
+
 
 
 	pOwner->ViewPunchReset();
@@ -114,7 +114,7 @@ void CWeaponAKMS::PrimaryAttack()
 	WeaponSound(SINGLE);
 	SendWeaponAnim(GetPrimaryAttackActivity());
 	//pOwner->ViewPunch(QAngle(-3, random->RandomFloat(-1, 1), 0));
-	DoMachineGunKick(pOwner, 0.3f, 10.0f, max(1.0f, m_fFireDuration * 1.75), 5.0f);
+	DoMachineGunKick(pOwner, 0.3f, 10.0f, MAX(1.0f, m_fFireDuration * 1.75), 5.0f);
 	m_iClip1 = m_iClip1 - 1;
 
 	m_nShotsFired++;

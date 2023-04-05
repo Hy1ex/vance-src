@@ -299,7 +299,7 @@ SHADER_DRAW
 			numTexCoords = 8;
 		}
 		pShaderShadow->VertexShaderVertexFormat( flags,
-			numTexCoords, 
+			numTexCoords,
 			nSplineType? s_TexCoordSizeSpline : s_TexCoordSize, 0 );
 
 		if ( bDX8 )
@@ -424,7 +424,7 @@ SHADER_DRAW
 
 		// set fade constants in vsconsts 8 and 9
 		float flMaxDistance = params[MAXDISTANCE]->GetFloatValue();
-		float flStartFade = max( 1.0, flMaxDistance - params[FARFADEINTERVAL]->GetFloatValue() );
+		float flStartFade = MAX( 1.0, flMaxDistance - params[FARFADEINTERVAL]->GetFloatValue() );
 
 		float VC0[8]={ params[MINSIZE]->GetFloatValue(), params[MAXSIZE]->GetFloatValue(),
 			params[STARTFADESIZE]->GetFloatValue(), params[ENDFADESIZE]->GetFloatValue(),

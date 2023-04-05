@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -64,7 +64,7 @@ void CTextBuffer::WriteText( const char *pText )
 void CTextBuffer::WriteIntKey( const char *pKeyName, int outputData )
 {
 	char tmp[1024];
-	
+
 	// FAIL!
 	if ( strlen(pKeyName) > 1000 )
 	{
@@ -86,7 +86,7 @@ void CTextBuffer::WriteStringKey( const char *pKeyName, const char *outputData )
 void CTextBuffer::WriteFloatKey( const char *pKeyName, float outputData )
 {
 	char tmp[1024];
-	
+
 	// FAIL!
 	if ( strlen(pKeyName) > 1000 )
 	{
@@ -100,7 +100,7 @@ void CTextBuffer::WriteFloatKey( const char *pKeyName, float outputData )
 void CTextBuffer::WriteFloatArrayKey( const char *pKeyName, const float *outputData, int count )
 {
 	char tmp[1024];
-	
+
 	// FAIL!
 	if ( strlen(pKeyName) > 1000 )
 	{
@@ -141,8 +141,8 @@ void CTextBuffer::CopyData( const char *pData, int len )
 
 //-----------------------------------------------------------------------------
 // Purpose: Writes a glview text file containing the collision surface in question
-// Input  : *pCollide - 
-//			*pFilename - 
+// Input  : *pCollide -
+//			*pFilename -
 //-----------------------------------------------------------------------------
 void DumpCollideToGlView( CPhysCollide *pCollide, const char *pFilename )
 {
@@ -197,13 +197,13 @@ CPhysCollisionEntry::CPhysCollisionEntry( CPhysCollide *pCollide )
 	m_pCollide = pCollide;
 }
 
-unsigned int CPhysCollisionEntry::GetCollisionBinarySize() 
-{ 
-	return physcollision->CollideSize( m_pCollide ); 
+unsigned int CPhysCollisionEntry::GetCollisionBinarySize()
+{
+	return physcollision->CollideSize( m_pCollide );
 }
 
-unsigned int CPhysCollisionEntry::WriteCollisionBinary( char *pDest ) 
-{ 
+unsigned int CPhysCollisionEntry::WriteCollisionBinary( char *pDest )
+{
 	return physcollision->CollideWrite( pDest, m_pCollide );
 }
 
@@ -583,7 +583,7 @@ int CPlaneList::GetFirstBrushSide()
 	return 0;
 }
 
-// UNDONE: Try using this kind of algorithm if we run into precision problems.  
+// UNDONE: Try using this kind of algorithm if we run into precision problems.
 // NOTE: ConvexFromPlanes will be doing a bunch of matrix inversions that can suffer
 // if plane normals are too close to each other...
 #if 0
@@ -728,7 +728,7 @@ static bool IsLowerLeaf( const waterleaf_t &newleaf, const waterleaf_t &currentl
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:   Water surfaces are stored in an RB tree and the tree is used to 
+// Purpose:   Water surfaces are stored in an RB tree and the tree is used to
 //  create one-off .vmt files embedded in the .bsp for each surface so that the
 //  water depth effect occurs on a per-water surface level.
 //-----------------------------------------------------------------------------
@@ -753,8 +753,8 @@ struct WaterTexInfo
 
 //-----------------------------------------------------------------------------
 // Purpose: Helper for RB tree operations ( we compare full mangled names )
-// Input  : src1 - 
-//			src2 - 
+// Input  : src1 -
+//			src2 -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool WaterLessFunc( WaterTexInfo const& src1, WaterTexInfo const& src2 )
@@ -776,11 +776,11 @@ float GetSubdivSizeForFogVolume( int fogVolumeID )
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *mapname - 
-//			*materialname - 
-//			waterdepth - 
-//			*fullname - 
+// Purpose:
+// Input  : *mapname -
+//			*materialname -
+//			waterdepth -
+//			*fullname -
 //-----------------------------------------------------------------------------
 void GetWaterTextureName( char const *mapname, char const *materialname, int waterdepth, char *fullname  )
 {
@@ -808,7 +808,7 @@ void EmitWaterMaterialFile( WaterTexInfo *wti )
 	}
 
 	GetWaterTextureName( mapbase, wti->m_MaterialName.String(), ( int )wti->m_nWaterDepth, waterTextureName );
-	
+
 	// Convert to string
 	char szDepth[ 32 ];
 	sprintf( szDepth, "%i", wti->m_nWaterDepth );
@@ -818,8 +818,8 @@ void EmitWaterMaterialFile( WaterTexInfo *wti )
 //-----------------------------------------------------------------------------
 // Purpose: Takes the texinfo_t referenced by the .vmt and the computed depth for the
 //  surface and looks up or creates a texdata/texinfo for the mangled one-off water .vmt file
-// Input  : *pBaseInfo - 
-//			depth - 
+// Input  : *pBaseInfo -
+//			depth -
 // Output : int
 //-----------------------------------------------------------------------------
 int FindOrCreateWaterTexInfo( texinfo_t *pBaseInfo, float depth )
@@ -875,7 +875,7 @@ extern node_t *dfacenodes[MAX_MAP_FACES];
 static void WriteFogVolumeIDs( dmodel_t *pModel )
 {
 	int i;
-	
+
 	// write fog volume ID to each face in this model
 	for( i = pModel->firstface; i < pModel->firstface + pModel->numfaces; i++ )
 	{
@@ -889,7 +889,7 @@ static void WriteFogVolumeIDs( dmodel_t *pModel )
 			{
 				pFace->surfaceFogVolumeID = dleafs[pFaceNode->diskId].leafWaterDataID;
 				dleafwaterdata_t *pLeafWaterData = &dleafwaterdata[pFace->surfaceFogVolumeID];
-				
+
 				// HACKHACK: Should probably mark these faces as water bottom or "bottommaterial" faces.
 				// HACKHACK: Use a heuristic, if it points up, it's the water top.
 				if ( dplanes[pFace->planenum].normal.z > 0 )
@@ -1000,7 +1000,7 @@ static void BuildWaterLeaf( node_t *pLeafIn, waterleaf_t &waterLeafOut )
 				if ( (waterLeafOut.surfaceNormal.z == plane->normal.z) && waterLeafOut.surfaceDist >= plane->dist )
 					continue;
 			}
-			// water surface needs to point at least somewhat up, this is 
+			// water surface needs to point at least somewhat up, this is
 			// probably a map error
 			if ( plane->normal.z <= 0 )
 				continue;
@@ -1054,7 +1054,7 @@ static void Flood_FindConnectedWaterVolumes_r( CUtlVector<node_t *> &list, node_
 	visited.Set( pLeaf->diskId );
 	list.AddToTail( pLeaf );
 
-	baseleaf.minZ = min( pLeaf->mins.z, baseleaf.minZ );
+	baseleaf.minZ = MIN( pLeaf->mins.z, baseleaf.minZ );
 
 	for (portal_t *p = pLeaf->portals ; p ; p = p->next[!oppositeNodeIndex])
 	{
@@ -1087,7 +1087,7 @@ int FirstWaterTexinfo( bspbrush_t *brushlist, int contents )
 	return 0;
 }
 
-// This is a list of water data that will be turned into physics models 
+// This is a list of water data that will be turned into physics models
 struct watermodel_t
 {
 	int	modelIndex;
@@ -1111,7 +1111,7 @@ void EmitWaterVolumesForBSP( dmodel_t *pModel, node_t *node )
 
 	// make a sorted list to flood fill
 	CUtlVector<waterleaf_t>	list;
-	
+
 	int i;
 	for ( i = 0; i < leafListAnyWater.Count(); i++ )
 	{
@@ -1138,7 +1138,7 @@ void EmitWaterVolumesForBSP( dmodel_t *pModel, node_t *node )
 			tmp.waterLeafData = list[i];
 			tmp.firstWaterLeafIndex = g_WaterLeafList.Count();
 			tmp.waterLeafCount = waterAreaList.Count();
-			
+
 			float waterDepth = tmp.waterLeafData.surfaceDist - tmp.waterLeafData.minZ;
 			if ( tmp.waterLeafData.surfaceTexInfo < 0 )
 			{
@@ -1162,7 +1162,7 @@ void EmitWaterVolumesForBSP( dmodel_t *pModel, node_t *node )
 }
 
 
-static void ConvertWaterModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &collisionList, int modelIndex, 
+static void ConvertWaterModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &collisionList, int modelIndex,
 										    float shrinkSize, float mergeTolerance )
 {
 	dmodel_t *pModel = dmodels + modelIndex;
@@ -1176,7 +1176,7 @@ static void ConvertWaterModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &c
 		CPlaneList planes( shrinkSize, mergeTolerance );
 		int firstLeaf = waterModel.firstWaterLeafIndex;
 		planes.m_contentsMask = waterModel.contents;
-		
+
 		// push all of the leaves into the collision list
 		for ( int j = 0; j < waterModel.waterLeafCount; j++ )
 		{
@@ -1187,7 +1187,7 @@ static void ConvertWaterModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &c
 			pLeaf->leafWaterDataID = waterModel.fogVolumeIndex;
 			planes.ReferenceLeaf( leafIndex );
 		}
-	
+
 		// visit the referenced leaves that belong to this model
 		VisitLeaves_r( planes, pModel->headnode );
 
@@ -1226,7 +1226,7 @@ static void ConvertWaterModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &c
 				Vector top = physcollision->CollideGetExtent( pCollide, vec3_origin, vec3_angle, waterModel.waterLeafData.surfaceNormal );
 				waterModel.waterLeafData.surfaceDist = top.z;
 			}
-			CPhysCollisionEntryFluid *pCollisionEntryFuild = new CPhysCollisionEntryFluid( pCollide, 
+			CPhysCollisionEntryFluid *pCollisionEntryFuild = new CPhysCollisionEntryFluid( pCollide,
 				pSurfaceProp, damping, waterModel.waterLeafData.surfaceNormal, waterModel.waterLeafData.surfaceDist, waterModel.contents );
 			collisionList.AddToTail( pCollisionEntryFuild );
 		}
@@ -1240,7 +1240,7 @@ static Vector TriangleNormal( const Vector &p0, const Vector &p1, const Vector &
 	Vector e1 = p2 - p0;
 	Vector normal = CrossProduct( e1, e0 );
 	VectorNormalize( normal );
-	
+
 	return normal;
 }
 
@@ -1277,7 +1277,7 @@ static void ConvertWorldBrushesToPhysCollide( CUtlVector<CPhysCollisionEntry *> 
 
 	VisitLeaves_r( planes, dmodels[0].headnode );
 	planes.AddBrushes();
-	
+
 	int count = planes.m_convex.Count();
 	if ( count )
 	{
@@ -1370,11 +1370,11 @@ static void ConvertModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &collis
 	// So compute it for 1% error (on the smallest side, less on larger sides)
 	params.dragAreaEpsilon = clamp( minSurfaceArea * 1e-2f, 1.0f, 1024.0f );
 	CPhysCollide *pCollide = physcollision->ConvertConvexToCollideParams( planes.m_convex.Base(), count, params );
-	
+
 	if ( !pCollide )
 		return;
 
-	struct 
+	struct
 	{
 		int prop;
 		float area;
@@ -1435,13 +1435,13 @@ static void ConvertModelToPhysCollide( CUtlVector<CPhysCollisionEntry *> &collis
 		// add up the total surface area
 		totalArea += proplist[i].area;
 	}
-	
+
 	float mass = 1.0f;
 	const char *pMaterial = "default";
 	if ( maxIndex >= 0 )
 	{
 		int prop = proplist[maxIndex].prop;
-		
+
 		// use default if this material has no prop
 		if ( prop < 0 )
 			prop = 0;
@@ -1498,7 +1498,7 @@ static void ClearLeafWaterData( void )
 void EmitPhysCollision()
 {
 	ClearLeafWaterData();
-	
+
 	CreateInterfaceFn physicsFactory = GetPhysicsFactory();
 	if ( physicsFactory )
 	{
@@ -1534,7 +1534,7 @@ void EmitPhysCollision()
 		{
 			ConvertModelToPhysCollide( collisionList[i], i, MASK_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP|MASK_WATER, VPHYSICS_SHRINK, VPHYSICS_MERGE );
 		}
-		
+
 		pTextBuffer[i] = NULL;
 		if ( !collisionList[i].Count() )
 			continue;
@@ -1589,7 +1589,7 @@ void EmitPhysCollision()
 	}
 
 	//  add one for tail of list marker
-	physModelCount++;	
+	physModelCount++;
 
 	// DWORD align the lump because AddLump assumes that it is DWORD aligned.
 	byte *ptr ;

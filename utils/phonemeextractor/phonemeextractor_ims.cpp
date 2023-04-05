@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -42,7 +42,7 @@ public:
 		return "IMS (LipSinc)";
 	}
 
-	SR_RESULT Extract( 
+	SR_RESULT Extract(
 		const char *wavfile,
 		int numsamples,
 		void (*pfnPrint)( const char *fmt, ... ),
@@ -124,7 +124,7 @@ CPhonemeExtractorLipSinc::CPhonemeExtractorLipSinc( void )
 	m_pfnPrint = NULL;
 
 	m_bInitialized = false;
-	
+
 	m_flSampleCount = 0.0f;
 	m_flDuration = 0.0f;
 
@@ -175,15 +175,15 @@ void CPhonemeExtractorLipSinc::DescribeError( TALKBACK_ERR err )
 	{
 		talkback->TalkBackGetErrorString( err, sizeof(errorDesc), errorDesc );
 	}
-	
+
 	// Report or log the error...
 	(*m_pfnPrint)( "LIPSINC ERROR:  %s\n", errorDesc );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *fmt - 
-//			.. - 
+// Purpose:
+// Input  : *fmt -
+//			.. -
 //-----------------------------------------------------------------------------
 void CPhonemeExtractorLipSinc::Printf( char const *fmt, ... )
 {
@@ -244,7 +244,7 @@ bool CPhonemeExtractorLipSinc::CheckSoundFile( char const *filename )
 typedef IImsHelper *(*pfnImsHelper)(void);
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CPhonemeExtractorLipSinc::InitLipSinc( void )
@@ -259,7 +259,7 @@ bool CPhonemeExtractorLipSinc::InitLipSinc( void )
 	{
 		return false;
 	}
-	
+
 	pfnImsHelper factory = (pfnImsHelper)::GetProcAddress( m_hHelper, "GetImsHelper" );
 	if ( !factory )
 	{
@@ -308,7 +308,7 @@ bool CPhonemeExtractorLipSinc::InitLipSinc( void )
 	}
 
 	TALKBACK_ERR err;
-	
+
 	err = talkback->TalkBackStartupLibrary( coreDataDir );
 	if ( err != TALKBACK_NOERR )
 	{
@@ -320,10 +320,10 @@ bool CPhonemeExtractorLipSinc::InitLipSinc( void )
 	long verMajor = 0;
 	long verMinor = 0;
 	long verRevision = 0;
-	
+
 	err = talkback->TalkBackGetVersion(
-		&verMajor, 
-		&verMinor, 
+		&verMajor,
+		&verMinor,
 		&verRevision);
 	if ( err != TALKBACK_NOERR )
 	{
@@ -340,7 +340,7 @@ bool CPhonemeExtractorLipSinc::InitLipSinc( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPhonemeExtractorLipSinc::ShutdownLipSinc( void )
 {
@@ -358,8 +358,8 @@ void CPhonemeExtractorLipSinc::ShutdownLipSinc( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : inwords - 
+// Purpose:
+// Input  : inwords -
 // Output : char const
 //-----------------------------------------------------------------------------
 char const *CPhonemeExtractorLipSinc::ConstructInputSentence( CSentence& inwords )
@@ -381,7 +381,7 @@ char const *CPhonemeExtractorLipSinc::ConstructInputSentence( CSentence& inwords
 		}
 	}
 
-	if ( inwords.m_Words.Count() == 1 && 
+	if ( inwords.m_Words.Count() == 1 &&
 		!Q_strnicmp( inwords.GetText(), TEXTLESS_WORDNAME, Q_strlen( TEXTLESS_WORDNAME ) ) )
 	{
 		sentence[ 0 ] = 0;
@@ -400,7 +400,7 @@ bool CPhonemeExtractorLipSinc::AttemptAnalysis( TALKBACK_ANALYSIS **ppAnalysis, 
    // Set this field to sizeof(TALKBACK_ANALYSIS_SETTINGS) before using the
     // structure.
 	settings.fSize = sizeof( TALKBACK_ANALYSIS_SETTINGS );
-	
+
 
     // Default value: 30 (frames per second).
     settings.fFrameRate = 100;
@@ -425,7 +425,7 @@ bool CPhonemeExtractorLipSinc::AttemptAnalysis( TALKBACK_ANALYSIS **ppAnalysis, 
 
 	Printf( "Analyzing: \"%s\"\n", text[ 0 ] ? text : TEXTLESS_WORDNAME );
 
-	TALKBACK_ERR err = talkback->TalkBackGetAnalysis( 
+	TALKBACK_ERR err = talkback->TalkBackGetAnalysis(
 		ppAnalysis,
 		wavfile,
 		text,
@@ -506,10 +506,10 @@ char const *TBPhonemeToString( TALKBACK_PHONEME phoneme )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *analysis - 
-//			time - 
-//			start - 
+// Purpose:
+// Input  : *analysis -
+//			time -
+//			start -
 // Output : int
 //-----------------------------------------------------------------------------
 int CPhonemeExtractorLipSinc::GetPhonemeIndexAtWord( TALKBACK_ANALYSIS *analysis, double time, bool start )
@@ -567,9 +567,9 @@ int CPhonemeExtractorLipSinc::GetPhonemeIndexAtWord( TALKBACK_ANALYSIS *analysis
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *analysis - 
-//			starttime - 
+// Purpose:
+// Input  : *analysis -
+//			starttime -
 // Output : int
 //-----------------------------------------------------------------------------
 int CPhonemeExtractorLipSinc::GetPhonemeIndexAtWordStart( TALKBACK_ANALYSIS *analysis, double starttime )
@@ -578,9 +578,9 @@ int CPhonemeExtractorLipSinc::GetPhonemeIndexAtWordStart( TALKBACK_ANALYSIS *ana
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *analysis - 
-//			endtime - 
+// Purpose:
+// Input  : *analysis -
+//			endtime -
 // Output : int
 //-----------------------------------------------------------------------------
 int CPhonemeExtractorLipSinc::GetPhonemeIndexAtWordEnd( TALKBACK_ANALYSIS *analysis, double endtime )
@@ -653,9 +653,9 @@ CPhonemeExtractorLipSinc::CAnalyzedWord *CPhonemeExtractorLipSinc::GetAnalyzedWo
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *w1 - 
-//			*w2 - 
+// Purpose:
+// Input  : *w1 -
+//			*w2 -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool FuzzyWordMatch( char const *w1, char const *w2 )
@@ -663,7 +663,7 @@ bool FuzzyWordMatch( char const *w1, char const *w2 )
 	int len1 = strlen( w1 );
 	int len2 = strlen( w2 );
 
-	int minlen = min( len1, len2 );
+	int minlen = MIN( len1, len2 );
 
 	// Found a match
 	if ( !strnicmp( w1, w2, minlen ) )
@@ -748,8 +748,8 @@ bool FuzzyWordMatch( char const *w1, char const *w2 )
 
 //-----------------------------------------------------------------------------
 // Purpose: For foreign language stuff, if inwords is empty, process anyway...
-// Input  : *analysis - 
-//			outwords - 
+// Input  : *analysis -
+//			outwords -
 //-----------------------------------------------------------------------------
 void CPhonemeExtractorLipSinc::ProcessWordsTextless( TALKBACK_ANALYSIS *analysis, CSentence& outwords )
 {
@@ -813,10 +813,10 @@ void CPhonemeExtractorLipSinc::ProcessWordsTextless( TALKBACK_ANALYSIS *analysis
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *analysis - 
-//			inwords - 
-//			outwords - 
+// Purpose:
+// Input  : *analysis -
+//			inwords -
+//			outwords -
 //-----------------------------------------------------------------------------
 void CPhonemeExtractorLipSinc::ProcessWords( TALKBACK_ANALYSIS *analysis, CSentence& inwords, CSentence& outwords )
 {
@@ -831,7 +831,7 @@ void CPhonemeExtractorLipSinc::ProcessWords( TALKBACK_ANALYSIS *analysis, CSente
 
 	if ( count <= 0L )
 	{
-		if ( inwords.m_Words.Count() == 0 || 
+		if ( inwords.m_Words.Count() == 0 ||
 			!Q_strnicmp( inwords.GetText(), TEXTLESS_WORDNAME, Q_strlen( TEXTLESS_WORDNAME ) ) )
 		{
 			ProcessWordsTextless( analysis, outwords );
@@ -1018,11 +1018,11 @@ char const *CPhonemeExtractorLipSinc::ApplyTBWordRules( char const *word )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Given a wavfile and a list of inwords, determines the word/phonene 
+// Purpose: Given a wavfile and a list of inwords, determines the word/phonene
 //  sample counts for the sentce
 // Output : SR_RESULT
 //-----------------------------------------------------------------------------
-SR_RESULT CPhonemeExtractorLipSinc::Extract( 
+SR_RESULT CPhonemeExtractorLipSinc::Extract(
 	const char *wavfile,
 	int numsamples,
 	void (*pfnPrint)( const char *fmt, ... ),
@@ -1037,7 +1037,7 @@ SR_RESULT CPhonemeExtractorLipSinc::Extract(
 	{
 		return SR_RESULT_ERROR;
 	}
-	
+
 	m_flSampleCount = numsamples;
 
 	if ( !CheckSoundFile( wavfile ) )
@@ -1053,7 +1053,7 @@ SR_RESULT CPhonemeExtractorLipSinc::Extract(
 		FreeLibrary( m_hHelper );
 		return SR_RESULT_FAILED;
 	}
-	
+
 	if ( strlen( inwords.GetText() ) <= 0 )
 	{
 		inwords.SetTextFromWords();

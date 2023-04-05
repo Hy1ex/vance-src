@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -32,7 +32,7 @@ ConVar hud_reticle_maxalpha( "hud_reticle_maxalpha", "255" );
 ConVar hud_alpha_speed("hud_reticle_alpha_speed", "700" );
 ConVar hud_magnetism("hud_magnetism", "0.3" );
 
-enum 
+enum
 {
 	AUTOAIM_METHOD_RETICLE = 1,
 	AUTOAIM_METHOD_DRIFT,
@@ -57,7 +57,7 @@ public:
 private:
 	void ResetAlpha() { m_alpha = 0; }
 	void ResetScale() { m_scale = 1.0f; }
-	
+
 	void ResetPosition()
 	{
 		m_vecPos.x = ScreenWidth() / 2;
@@ -141,11 +141,11 @@ void CHUDAutoAim::VidInit( void )
 
 //-----------------------------------------------------------------------------
 // Purpose: Save CPU cycles by letting the HUD system early cull
-// costly traversal.  Called per frame, return true if thinking and 
+// costly traversal.  Called per frame, return true if thinking and
 // painting need to occur.
 //-----------------------------------------------------------------------------
 bool CHUDAutoAim::ShouldDraw( void )
-{	
+{
 #ifndef HL1_CLIENT_DLL
 	C_BaseHLPlayer *pLocalPlayer = (C_BaseHLPlayer *)C_BasePlayer::GetLocalPlayer();
 	if ( pLocalPlayer )
@@ -165,7 +165,7 @@ bool CHUDAutoAim::ShouldDraw( void )
 #define AUTOAIM_MAX_ALPHA			120
 #define AUTOAIM_MAX_SCALE			1.0f
 #define AUTOAIM_MIN_SCALE			0.5f
-#define AUTOAIM_SCALE_SPEED			10.0f		
+#define AUTOAIM_SCALE_SPEED			10.0f
 #define AUTOAIM_ONTARGET_CROSSHAIR_SPEED		(ScreenWidth() / 3) // Can cross the whole screen in 3 seconds.
 #define AUTOAIM_OFFTARGET_CROSSHAIR_SPEED		(ScreenWidth() / 4)
 
@@ -210,7 +210,7 @@ void CHUDAutoAim::OnThink()
 	}
 
 	m_alphaFixed = Approach( flFixedAlphaGoal, m_alphaFixed, (hud_alpha_speed.GetFloat() * gpGlobals->frametime) );
-	
+
 
 	switch( hud_autoaim_method.GetInt() )
 	{
@@ -254,7 +254,7 @@ void CHUDAutoAim::OnThink()
 #if 0
 			bool doScaling = hud_autoaim_scale_icon.GetBool();
 
-			// These are the X & Y coords of where the crosshair should be. Default to 
+			// These are the X & Y coords of where the crosshair should be. Default to
 			// returning to the center of the screen if there is no target.
 			int goalx = ScreenWidth() / 2;
 			int goaly = ScreenHeight() / 2;
@@ -318,7 +318,7 @@ void CHUDAutoAim::OnThink()
 			Vector vecGoal( goalx, goaly, 0 );
 			Vector vecDir = vecGoal - m_vecPos;
 			float flDistRemaining = VectorNormalize( vecDir );
-			m_vecPos += vecDir * min(flDistRemaining, (speed * gpGlobals->frametime) );
+			m_vecPos += vecDir * MIN(flDistRemaining, (speed * gpGlobals->frametime) );
 
 			// Lerp and Clamp scale
 			float scaleDelta = fabs( goalscale - m_scale );
@@ -369,7 +369,7 @@ void CHUDAutoAim::OnThink()
 				QAngle viewangles;
 
 				engine->GetViewAngles( viewangles );
-				
+
 				Vector vecDir = pLocalPlayer->m_HL2Local.m_vecAutoAimPoint - pLocalPlayer->EyePosition();
 				VectorNormalize(vecDir);
 
@@ -399,7 +399,7 @@ void CHUDAutoAim::Paint()
 
 		float uv1 = 0.5f / width, uv2 = 1.0f - uv1;
 
-		vgui::Vertex_t vert[4];	
+		vgui::Vertex_t vert[4];
 
 		Vector2D uv11( uv1, uv1 );
 		Vector2D uv12( uv1, uv2 );
@@ -433,7 +433,7 @@ void CHUDAutoAim::Paint()
 		int xCenter = ScreenWidth() / 2;
 		int yCenter = ScreenHeight() / 2;
 
-		vgui::Vertex_t vert[4];	
+		vgui::Vertex_t vert[4];
 
 		Vector2D uv11( 0, 0 );
 		Vector2D uv12( 0, 1 );
@@ -459,7 +459,7 @@ void CHUDAutoAim::Paint()
 		C_BaseHLPlayer *pLocalPlayer = (C_BaseHLPlayer *)C_BasePlayer::GetLocalPlayer();
 		if( pLocalPlayer && pLocalPlayer->m_HL2Local.m_hAutoAimTarget.Get() )
 		{
-			r = 250; 
+			r = 250;
 			g = 138;
 			b = 4;
 		}

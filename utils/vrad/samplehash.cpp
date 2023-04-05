@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -35,9 +35,9 @@ unsigned int SampleData_KeyFunc( SampleData_t const &src )
 }
 
 
-CUtlHash<SampleData_t> g_SampleHashTable( SAMPLEHASH_NUM_BUCKETS, 
-										  SAMPLEHASH_GROW_SIZE, 
-										  SAMPLEHASH_INIT_SIZE, 
+CUtlHash<SampleData_t> g_SampleHashTable( SAMPLEHASH_NUM_BUCKETS,
+										  SAMPLEHASH_GROW_SIZE,
+										  SAMPLEHASH_INIT_SIZE,
 										  SampleData_CompareFunc, SampleData_KeyFunc );
 
 
@@ -46,7 +46,7 @@ CUtlHash<SampleData_t> g_SampleHashTable( SAMPLEHASH_NUM_BUCKETS,
 //-----------------------------------------------------------------------------
 UtlHashHandle_t SampleData_Find( sample_t *pSample )
 {
-	SampleData_t sampleData;	
+	SampleData_t sampleData;
 	sampleData.x = ( int )( pSample->pos.x / SAMPLEHASH_VOXEL_SIZE ) * 100;
 	sampleData.y = ( int )( pSample->pos.y / SAMPLEHASH_VOXEL_SIZE ) * 10;
 	sampleData.z = ( int )( pSample->pos.z / SAMPLEHASH_VOXEL_SIZE );
@@ -182,13 +182,13 @@ void PatchSampleData_AddSample( CPatch *pPatch, int ndxPatch )
 	GetPatchSampleHashXYZ( pPatch->origin, patchSampleMins[0], patchSampleMins[1], patchSampleMins[2] );
 	memcpy( patchSampleMaxs, patchSampleMins, sizeof( patchSampleMaxs ) );
 #endif
-	
+
 	// Make sure mins are smaller than maxs so we don't iterate for 4 bil.
 	Assert( patchSampleMins[0] <= patchSampleMaxs[0] && patchSampleMins[1] <= patchSampleMaxs[1] && patchSampleMins[2] <= patchSampleMaxs[2] );
-	patchSampleMins[0] = min( patchSampleMins[0], patchSampleMaxs[0] );
-	patchSampleMins[1] = min( patchSampleMins[1], patchSampleMaxs[1] );
-	patchSampleMins[2] = min( patchSampleMins[2], patchSampleMaxs[2] );
-	
+	patchSampleMins[0] = MIN( patchSampleMins[0], patchSampleMaxs[0] );
+	patchSampleMins[1] = MIN( patchSampleMins[1], patchSampleMaxs[1] );
+	patchSampleMins[2] = MIN( patchSampleMins[2], patchSampleMaxs[2] );
+
 	int iterateCoords[3];
 	for ( iterateCoords[0]=patchSampleMins[0]; iterateCoords[0] <= patchSampleMaxs[0]; iterateCoords[0]++ )
 	{

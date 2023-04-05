@@ -1,6 +1,6 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -117,7 +117,7 @@ Class_T	CNPC_HAssassin::Classify(void)
 }
 
 //=========================================================
-// CheckMeleeAttack1 - jump like crazy if the enemy gets too close. 
+// CheckMeleeAttack1 - jump like crazy if the enemy gets too close.
 //=========================================================
 int CNPC_HAssassin::MeleeAttack1Conditions(float flDot, float flDist)
 {
@@ -179,7 +179,7 @@ int CNPC_HAssassin::RangeAttack1Conditions(float flDot, float flDist)
 }
 
 //=========================================================
-// CheckRangeAttack2 - toss grenade is enemy gets in the way and is too close. 
+// CheckRangeAttack2 - toss grenade is enemy gets in the way and is too close.
 //=========================================================
 int CNPC_HAssassin::RangeAttack2Conditions(float flDot, float flDist)
 {
@@ -245,7 +245,7 @@ void CNPC_HAssassin::StartTask(const Task_t* pTask)
 
 
 //=========================================================
-// RunTask 
+// RunTask
 //=========================================================
 void CNPC_HAssassin::RunTask(const Task_t* pTask)
 {
@@ -613,12 +613,12 @@ void CNPC_HAssassin::RunAI(void)
 			EmitSound(filter, entindex(), "HAssassin.Beamsound");
 		}
 
-		SetRenderColorA(max(GetRenderColor().a - 50, m_iTargetRanderamt));
+		SetRenderColorA(MAX(GetRenderColor().a - 50, m_iTargetRanderamt));
 		m_nRenderMode = kRenderTransTexture;
 	}
 	else if (GetRenderColor().a < m_iTargetRanderamt)
 	{
-		SetRenderColorA(min(GetRenderColor().a + 50, m_iTargetRanderamt));
+		SetRenderColorA(MIN(GetRenderColor().a + 50, m_iTargetRanderamt));
 		if (GetRenderColor().a == 255)
 			m_nRenderMode = kRenderNormal;
 	}

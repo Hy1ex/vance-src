@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -34,7 +34,7 @@ CVRADDispColl::CVRADDispColl()
 	m_aLuxelCoords.Purge();
 	m_aVertNormals.Purge();
 }
-	
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CVRADDispColl::~CVRADDispColl()
@@ -72,7 +72,7 @@ bool CVRADDispColl::Create( CCoreDispInfo *pDisp )
 	dface_t *pFace = &g_pFaces[m_iParent];
 	if( pFace )
 	{
-		CalcSampleRadius2AndBox( pFace );	
+		CalcSampleRadius2AndBox( pFace );
 	}
 
 	return true;
@@ -95,13 +95,13 @@ void CVRADDispColl::CalcSampleRadius2AndBox( dface_t *pFace )
 		pTexInfo->lightmapVecsLuxelsPerWorldUnits[0][2] );
 	float flWidth = 1.0f / VectorLength( vecTmp );
 	float flHeight = flWidth;
-	
+
 	// Save off the sample width and height.
 	m_flSampleWidth = flWidth;
 	m_flSampleHeight = flHeight;
 
 	// Calculate the sample radius squared.
-	float flSampleRadius = sqrt( ( ( flWidth * flWidth ) + ( flHeight * flHeight ) ) ) * 2.2f;//RADIALDIST2; 
+	float flSampleRadius = sqrt( ( ( flWidth * flWidth ) + ( flHeight * flHeight ) ) ) * 2.2f;//RADIALDIST2;
 	if ( flSampleRadius > g_flMaxDispSampleSize )
 	{
 		flSampleRadius = g_flMaxDispSampleSize;
@@ -109,7 +109,7 @@ void CVRADDispColl::CalcSampleRadius2AndBox( dface_t *pFace )
 	m_flSampleRadius2 = flSampleRadius * flSampleRadius;
 
 	// Calculate the patch radius - the max sample edge length * the number of luxels per edge "chop."
-	float flSampleSize = max( m_flSampleWidth, m_flSampleHeight );
+	float flSampleSize = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flPatchSampleRadius = flSampleSize * dispchop * 2.2f;
 	if ( flPatchSampleRadius > g_MaxDispPatchRadius )
 	{
@@ -211,8 +211,8 @@ void CVRADDispColl::DispUVToSurfPoint( Vector2D const &dispUV, Vector &vecPoint,
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CVRADDispColl::DispUVToSurf_TriTLToBR( Vector &vecPoint, float flPushEps, 
-											float flU, float flV, int nSnapU, int nSnapV, 
+void CVRADDispColl::DispUVToSurf_TriTLToBR( Vector &vecPoint, float flPushEps,
+											float flU, float flV, int nSnapU, int nSnapV,
 											int nWidth, int nHeight )
 {
 	int nNextU = nSnapU + 1;
@@ -227,7 +227,7 @@ void CVRADDispColl::DispUVToSurf_TriTLToBR( Vector &vecPoint, float flPushEps,
 	{
 		int nIndices[3];
 		nIndices[0] = nNextV * nWidth + nSnapU;
-		nIndices[1] = nNextV * nWidth + nNextU;	
+		nIndices[1] = nNextV * nWidth + nNextU;
 		nIndices[2] = nSnapV * nWidth + nNextU;
 
 		Vector edgeU = m_aVerts[nIndices[0]] - m_aVerts[nIndices[1]];
@@ -266,8 +266,8 @@ void CVRADDispColl::DispUVToSurf_TriTLToBR( Vector &vecPoint, float flPushEps,
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CVRADDispColl::DispUVToSurf_TriBLToTR( Vector &vecPoint, float flPushEps, 
-											float flU, float flV, int nSnapU, int nSnapV, 
+void CVRADDispColl::DispUVToSurf_TriBLToTR( Vector &vecPoint, float flPushEps,
+											float flU, float flV, int nSnapU, int nSnapV,
 											int nWidth, int nHeight )
 {
 	int nNextU = nSnapU + 1;
@@ -355,7 +355,7 @@ void CVRADDispColl::DispUVToSurfNormal( Vector2D const &dispUV, Vector &vecNorma
 
 	// Find the blended normal (bi-linear).
 	Vector vecTmpNormals[2], vecBlendedNormals[2], vecDispNormals[4];
-	
+
 	for ( int iVert = 0; iVert < VRAD_QUAD_SIZE; ++iVert )
 	{
 		GetVertNormal( iQuad[iVert], vecDispNormals[iVert] );
@@ -379,7 +379,7 @@ void CVRADDispColl::DispUVToSurfNormal( Vector2D const &dispUV, Vector &vecNorma
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : float
 //-----------------------------------------------------------------------------
 float CVRADDispColl::CreateParentPatches( void )
@@ -414,9 +414,9 @@ float CVRADDispColl::CreateParentPatches( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iParentPatch - 
-//			nLevel - 
+// Purpose:
+// Input  : iParentPatch -
+//			nLevel -
 //-----------------------------------------------------------------------------
 void CVRADDispColl::CreateChildPatchesFromRoot( int iParentPatch, int *pChildPatch )
 {
@@ -440,7 +440,7 @@ void CVRADDispColl::CreateChildPatchesFromRoot( int iParentPatch, int *pChildPat
 	vecEdges[3] = pParentPatch->winding->p[3] - pParentPatch->winding->p[0];
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Find the longest edge.
@@ -521,8 +521,8 @@ void CVRADDispColl::CreateChildPatchesFromRoot( int iParentPatch, int *pChildPat
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flMinArea - 
+// Purpose:
+// Input  : flMinArea -
 // Output : float
 //-----------------------------------------------------------------------------
 void CVRADDispColl::CreateChildPatches( int iParentPatch, int nLevel )
@@ -551,7 +551,7 @@ void CVRADDispColl::CreateChildPatches( int iParentPatch, int nLevel )
 		return;
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Split along the longest edge.
@@ -634,7 +634,7 @@ void CVRADDispColl::CreateChildPatches( int iParentPatch, int nLevel )
 			}
 		}
 	}
-	
+
 	// Continue creating children patches.
 	int nNewLevel = ++nLevel;
 	CreateChildPatches( iChildPatch[0], nNewLevel );
@@ -642,8 +642,8 @@ void CVRADDispColl::CreateChildPatches( int iParentPatch, int nLevel )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flMinArea - 
+// Purpose:
+// Input  : flMinArea -
 // Output : float
 //-----------------------------------------------------------------------------
 void CVRADDispColl::CreateChildPatchesSub( int iParentPatch )
@@ -659,7 +659,7 @@ void CVRADDispColl::CreateChildPatchesSub( int iParentPatch )
 		return;
 
 	// Should the patch be subdivided - check the area.
-	float flMaxLength  = max( m_flSampleWidth, m_flSampleHeight );
+	float flMaxLength  = MAX( m_flSampleWidth, m_flSampleHeight );
 	float flMinEdgeLength = flMaxLength * dispchop;
 
 	// Split along the longest edge.
@@ -757,7 +757,7 @@ void CVRADDispColl::CreateChildPatchesSub( int iParentPatch )
 			}
 		}
 	}
-	
+
 	// Continue creating children patches.
 	CreateChildPatchesSub( iChildPatch[0] );
 	CreateChildPatchesSub( iChildPatch[1] );
@@ -767,7 +767,7 @@ int	PlaneTypeForNormal (Vector& normal)
 {
 	vec_t	ax, ay, az;
 
-	// NOTE: should these have an epsilon around 1.0?		
+	// NOTE: should these have an epsilon around 1.0?
 	if (normal[0] == 1.0 || normal[0] == -1.0)
 		return PLANE_X;
 	if (normal[1] == 1.0 || normal[1] == -1.0)
@@ -787,13 +787,13 @@ int	PlaneTypeForNormal (Vector& normal)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : iPatch - 
-//			iParentPatch - 
-//			iChild - 
-//			*pPoints - 
-//			*pIndices - 
-//			&flArea - 
+// Purpose:
+// Input  : iPatch -
+//			iParentPatch -
+//			iChild -
+//			*pPoints -
+//			*pIndices -
+//			&flArea -
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CVRADDispColl::InitParentPatch( int iPatch, Vector *pPoints, float &flArea )
@@ -870,8 +870,8 @@ bool CVRADDispColl::InitParentPatch( int iPatch, Vector *pPoints, float &flArea 
 	{
 		for ( int iAxis = 0; iAxis < 3; ++iAxis )
 		{
-			vecMin[iAxis] = min( vecMin[iAxis], pPoints[iPoint][iAxis] );
-			vecMax[iAxis] = max( vecMax[iAxis], pPoints[iPoint][iAxis] );
+			vecMin[iAxis] = MIN( vecMin[iAxis], pPoints[iPoint][iAxis] );
+			vecMax[iAxis] = MAX( vecMax[iAxis], pPoints[iPoint][iAxis] );
 		}
 	}
 
@@ -895,11 +895,11 @@ bool CVRADDispColl::InitParentPatch( int iPatch, Vector *pPoints, float &flArea 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pPatch - 
-//			*pPoints - 
-//			&vecNormal - 
-//			flArea - 
+// Purpose:
+// Input  : *pPatch -
+//			*pPoints -
+//			&vecNormal -
+//			flArea -
 //-----------------------------------------------------------------------------
 bool CVRADDispColl::InitPatch( int iPatch, int iParentPatch, int iChild, Vector *pPoints, int *pIndices, float &flArea )
 {
@@ -1019,8 +1019,8 @@ bool CVRADDispColl::InitPatch( int iPatch, int iParentPatch, int iChild, Vector 
 	{
 		for ( int iAxis = 0; iAxis < 3; ++iAxis )
 		{
-			vecMin[iAxis] = min( vecMin[iAxis], pPoints[iPoint][iAxis] );
-			vecMax[iAxis] = max( vecMax[iAxis], pPoints[iPoint][iAxis] );
+			vecMin[iAxis] = MIN( vecMin[iAxis], pPoints[iPoint][iAxis] );
+			vecMax[iAxis] = MAX( vecMax[iAxis], pPoints[iPoint][iAxis] );
 		}
 	}
 

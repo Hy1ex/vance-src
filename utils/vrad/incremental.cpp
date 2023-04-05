@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -193,20 +193,20 @@ bool CIncremental::PrepareForLighting()
 	for( int iUnmatched=unmatched.Head(); iUnmatched != unmatched.InvalidIndex(); iUnmatched = unmatched.Next( iUnmatched ) )
 	{
 		CIncLight *pLight = m_Lights[ unmatched[iUnmatched] ];
-		
+
 		// First tag faces that it touched so they get recomposited.
 		for( unsigned short iFace=pLight->m_LightFaces.Head(); iFace != pLight->m_LightFaces.InvalidIndex(); iFace = pLight->m_LightFaces.Next( iFace ) )
 		{
 			m_FacesTouched[ pLight->m_LightFaces[iFace]->m_FaceIndex ] = 1;
 		}
-		
+
 		delete pLight;
 		m_Lights.Remove( unmatched[iUnmatched] );
 	}
 
 	// Now add a light structure for each new light.
 	AddLightsForActiveLights();
-	
+
 	return true;
 }
 
@@ -246,7 +246,7 @@ bool CIncremental::WriteIncrementalHeader( long fp )
 	}
 
 	FileWrite( fp, hdr.m_FaceLightmapSizes.Base(), sizeof(CIncrementalHeader::CLMSize) * nFaces );
-	
+
 	return !FileError();
 }
 
@@ -268,7 +268,7 @@ bool CIncremental::IsIncrementalFileValid()
 			int i;
 			for( i=0; i < numfaces; i++ )
 			{
-				if( hdr.m_FaceLightmapSizes[i].m_Width  != g_pFaces[i].m_LightmapTextureSizeInLuxels[0] ||							
+				if( hdr.m_FaceLightmapSizes[i].m_Width  != g_pFaces[i].m_LightmapTextureSizeInLuxels[0] ||
 					hdr.m_FaceLightmapSizes[i].m_Height != g_pFaces[i].m_LightmapTextureSizeInLuxels[1] )
 				{
 					break;
@@ -286,9 +286,9 @@ bool CIncremental::IsIncrementalFileValid()
 }
 
 
-void CIncremental::AddLightToFace( 
-	IncrementalLightID lightID, 
-	int iFace, 
+void CIncremental::AddLightToFace(
+	IncrementalLightID lightID,
+	int iFace,
 	int iSample,
 	int lmSize,
 	float dot,
@@ -302,7 +302,7 @@ void CIncremental::AddLightToFace(
 
 	// Check for the 99.99% case in which the face already exists.
 	CLightFace *pFace;
-	if( pLight->m_pCachedFaces[iThread] && 
+	if( pLight->m_pCachedFaces[iThread] &&
 		pLight->m_pCachedFaces[iThread]->m_FaceIndex == iFace )
 	{
 		pFace = pLight->m_pCachedFaces[iThread];
@@ -310,7 +310,7 @@ void CIncremental::AddLightToFace(
 	else
 	{
 		bool bNew;
-		
+
 		EnterCriticalSection( &pLight->m_CS );
 			pFace = pLight->FindOrCreateLightFace( iFace, lmSize, &bNew );
 		LeaveCriticalSection( &pLight->m_CS );
@@ -377,9 +377,9 @@ void DecompressLightData( CUtlBuffer *pIn, CUtlVector<CLightValue> *pOut )
 #pragma warning (disable:4701)
 #endif
 
-void CompressLightData( 
-	CLightValue const *pValues, 
-	int nValues, 
+void CompressLightData(
+	CLightValue const *pValues,
+	int nValues,
 	CUtlBuffer *pBuf )
 {
 	unsigned char runLength=0;
@@ -442,11 +442,11 @@ void CIncremental::FinishFace(
 
 		// Compress the data.
 		MultiplyValues( pFace->m_LightValues, pLight->m_flMaxIntensity );
-		
+
 		pFace->m_CompressedData.SeekPut( CUtlBuffer::SEEK_HEAD, 0 );
-		CompressLightData( 
-			pFace->m_LightValues.Base(), 
-			pFace->m_LightValues.Count(), 
+		CompressLightData(
+			pFace->m_LightValues.Base(),
+			pFace->m_LightValues.Count(),
 			&pFace->m_CompressedData );
 
 #if 0
@@ -483,7 +483,7 @@ bool CIncremental::Finalize()
 
 	CUtlVector<CFaceLightList> faceLights;
 	LinkLightsToFaces( faceLights );
-	
+
 	Vector faceLight[(MAX_LIGHTMAP_DIM_WITHOUT_BORDER+2) * (MAX_LIGHTMAP_DIM_WITHOUT_BORDER+2)];
 	CUtlVector<CLightValue> faceLightValues;
 	faceLightValues.SetSize( (MAX_LIGHTMAP_DIM_WITHOUT_BORDER+2) * (MAX_LIGHTMAP_DIM_WITHOUT_BORDER+2) );
@@ -506,7 +506,7 @@ bool CIncremental::Finalize()
 		for( int iFace=0; iFace < faceLights[facenum].Count(); iFace++ )
 		{
 			CLightFace *pFace = faceLights[facenum][iFace];
-		
+
 			pFace->m_CompressedData.SeekGet( CUtlBuffer::SEEK_HEAD, 0 );
 			DecompressLightData( &pFace->m_CompressedData, &faceLightValues );
 
@@ -515,10 +515,10 @@ bool CIncremental::Finalize()
 				float flDot = faceLightValues[iSample].m_Dot;
 				if( flDot )
 				{
-					VectorMA( 
-						faceLight[iSample], 
+					VectorMA(
+						faceLight[iSample],
 						flDot / pFace->m_pLight->m_flMaxIntensity,
-						pFace->m_pLight->m_Light.intensity, 
+						pFace->m_pLight->m_Light.intensity,
 						faceLight[iSample] );
 				}
 			}
@@ -535,7 +535,7 @@ bool CIncremental::Finalize()
 			pSrc++;
 		}
 	}
-	
+
 	m_bSuccessfulRun = true;
 	return true;
 }
@@ -574,7 +574,7 @@ void CIncremental::AddLightsForActiveLights()
 
 		// Copy the light information.
 		pLight->m_Light = dl->light;
-		pLight->m_flMaxIntensity = max( dl->light.intensity[0], max( dl->light.intensity[1], dl->light.intensity[2] ) );
+		pLight->m_flMaxIntensity = MAX( dl->light.intensity[0], MAX( dl->light.intensity[1], dl->light.intensity[2] ) );
 	}
 }
 
@@ -608,9 +608,9 @@ bool CIncremental::LoadIncrementalFile()
 		m_Lights.AddToTail( pLight );
 
 		FileRead( fp, pLight->m_Light );
-		pLight->m_flMaxIntensity = 
-			max( pLight->m_Light.intensity.x, 
-				max( pLight->m_Light.intensity.y, pLight->m_Light.intensity.z ) );
+		pLight->m_flMaxIntensity =
+			MAX( pLight->m_Light.intensity.x,
+				MAX( pLight->m_Light.intensity.y, pLight->m_Light.intensity.z ) );
 
 		int nFaces;
 		FileRead( fp, nFaces );
@@ -631,7 +631,7 @@ bool CIncremental::LoadIncrementalFile()
 			while( dataSize )
 			{
 				--dataSize;
-				
+
 				unsigned char ucData;
 				FileRead( fp, ucData );
 
@@ -640,7 +640,7 @@ bool CIncremental::LoadIncrementalFile()
 		}
 	}
 
-	
+
 	FileClose( fp );
 	return !FileError();
 }
@@ -664,7 +664,7 @@ bool CIncremental::SaveIncrementalFile()
 	for( int iLight=m_Lights.Head(); iLight != m_Lights.InvalidIndex(); iLight = m_Lights.Next( iLight ) )
 	{
 		CIncLight *pLight = m_Lights[iLight];
-		
+
 		FileWrite( fp, pLight->m_Light );
 
 		int nFaces = pLight->m_LightFaces.Count();
@@ -674,7 +674,7 @@ bool CIncremental::SaveIncrementalFile()
 			CLightFace *pFace = pLight->m_LightFaces[iFace];
 
 			FileWrite( fp, pFace->m_FaceIndex );
-			
+
 			int dataSize = pFace->m_CompressedData.TellPut();
 			FileWrite( fp, dataSize );
 
@@ -696,7 +696,7 @@ bool CIncremental::SaveIncrementalFile()
 void CIncremental::LinkLightsToFaces( CUtlVector<CFaceLightList> &faceLights )
 {
 	faceLights.SetSize( numfaces );
-	
+
 	for( int iLight=m_Lights.Head(); iLight != m_Lights.InvalidIndex(); iLight = m_Lights.Next( iLight ) )
 	{
 		CIncLight *pLight = m_Lights[iLight];
@@ -752,7 +752,7 @@ CLightFace* CIncLight::FindOrCreateLightFace( int iFace, int lmSize, bool *bNew 
 	CLightFace *pFace = new CLightFace;
 	pFace->m_LightFacesIndex = m_LightFaces.AddToTail( pFace );
 	pFace->m_pLight = this;
-	
+
 	pFace->m_FaceIndex = iFace;
 	pFace->m_LightValues.SetSize( lmSize );
 	memset( pFace->m_LightValues.Base(), 0, sizeof( CLightValue ) * lmSize );

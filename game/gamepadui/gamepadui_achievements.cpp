@@ -130,7 +130,7 @@ public:
             m_nCount = m_nGoal;
         }
         else
-            m_flProgress = min( float( nCount ) / float( nGoal ), 1.0f );
+            m_flProgress = MIN( float( nCount ) / float( nGoal ), 1.0f );
     }
 
 private:

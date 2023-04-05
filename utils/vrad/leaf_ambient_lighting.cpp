@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 
@@ -17,19 +17,19 @@
 #include "vmpi.h"
 #include "vmpi_distribute_work.h"
 
-static TableVector g_BoxDirections[6] = 
+static TableVector g_BoxDirections[6] =
 {
-	{  1,  0,  0 }, 
+	{  1,  0,  0 },
 	{ -1,  0,  0 },
-	{  0,  1,  0 }, 
-	{  0, -1,  0 }, 
-	{  0,  0,  1 }, 
-	{  0,  0, -1 }, 
+	{  0,  1,  0 },
+	{  0, -1,  0 },
+	{  0,  0,  1 },
+	{  0,  0, -1 },
 };
 
 
 
-static void ComputeAmbientFromSurface( dface_t *surfID, dworldlight_t* pSkylight, 
+static void ComputeAmbientFromSurface( dface_t *surfID, dworldlight_t* pSkylight,
 									   Vector& radcolor )
 {
 	if ( !surfID )
@@ -132,7 +132,7 @@ void AddEmitSurfaceLights( const Vector &vStart, Vector lightBoxColor[6] )
 				lightBoxColor[i] += wl->intensity * (t * ratio);
 			}
 		}
-	}	
+	}
 }
 
 
@@ -150,7 +150,7 @@ void ComputeAmbientFromSphericalSamples( int iThread, const Vector &vStart, Vect
 		Vector lightStyleColors[MAX_LIGHTSTYLES];
 		lightStyleColors[0].Init();	// We only care about light style 0 here.
 		CalcRayAmbientLighting( iThread, vStart, vEnd, tanTheta, lightStyleColors );
-	
+
 		radcolor[i] = lightStyleColors[0];
 	}
 
@@ -170,7 +170,7 @@ void ComputeAmbientFromSphericalSamples( int iThread, const Vector &vStart, Vect
 				lightBoxColor[j] += radcolor[i] * c;
 			}
 		}
-		
+
 		lightBoxColor[j] *= 1/t;
 	}
 
@@ -191,9 +191,9 @@ bool IsLeafAmbientSurfaceLight( dworldlight_t *wl )
 	if ( wl->style != 0 )
 		return false;
 
-	float intensity = max( wl->intensity[0], wl->intensity[1] );
-	intensity = max( intensity, wl->intensity[2] );
-	
+	float intensity = MAX( wl->intensity[0], wl->intensity[1] );
+	intensity = MAX( intensity, wl->intensity[2] );
+
 	return (intensity * g_flWorldLightMinEmitSurfaceDistanceRatio) < g_flWorldLightMinEmitSurface;
 }
 
@@ -205,7 +205,7 @@ public:
 
 	// Generate a random point in the leaf's bounding volume
 	// reject any points that aren't actually in the leaf
-	// do a couple of tracing heuristics to eliminate points that are inside detail brushes 
+	// do a couple of tracing heuristics to eliminate points that are inside detail brushes
 	// or underneath displacement surfaces in the leaf
 	// return once we have a valid point, use the center if one can't be computed quickly
 	void GenerateLeafSamplePosition( int leafIndex, const CUtlVector<dplane_t> &leafPlanes, Vector &samplePosition )
@@ -228,7 +228,7 @@ public:
 				float d = DotProduct(leafPlanes[j].normal, samplePosition) - leafPlanes[j].dist;
 				if ( d < DIST_EPSILON )
 				{
-					// not inside the leaf, try again 
+					// not inside the leaf, try again
 					bValid = false;
 					break;
 				}
@@ -345,7 +345,7 @@ void AddSampleToList( CUtlVector<ambientsample_t> &list, const Vector &samplePos
 				for (int s = 0; s < 3; s++ )
 				{
 					float dc = fabs(list[i].cube[k][s] - list[j].cube[k][s]);
-					maxDC = max(maxDC,dc);
+					maxDC = MAX(maxDC,dc);
 				}
 				totalDC += maxDC;
 			}
@@ -412,7 +412,7 @@ void Mod_LeafAmbientColorAtPos( Vector *pOut, const Vector &pos, const CUtlVecto
 	{
 		if ( i == skipIndex )
 			continue;
-		// do an inverse squared distance weighted average of the samples to reconstruct 
+		// do an inverse squared distance weighted average of the samples to reconstruct
 		// the original function
 		float dist = (list[i].pos - pos).LengthSqr();
 		float factor = 1.0f / (dist + 1.0f);
@@ -452,8 +452,8 @@ float AABBDistance( const Vector &mins0, const Vector &maxs0, const Vector &mins
 	Vector delta;
 	for ( int i = 0; i < 3; i++ )
 	{
-		float greatestMin = max(mins0[i], mins1[i]);
-		float leastMax = min(maxs0[i], maxs1[i]);
+		float greatestMin = MAX(mins0[i], mins1[i]);
+		float leastMax = MIN(maxs0[i], maxs1[i]);
 		delta[i] = (greatestMin < leastMax) ? 0 : (leastMax - greatestMin);
 	}
 	return delta.Length();
@@ -533,9 +533,9 @@ void ComputeAmbientForLeaf( int iThread, int leafID, CUtlVector<ambientsample_t>
 	int xSize = (dleafs[leafID].maxs[0] - dleafs[leafID].mins[0]) / 32;
 	int ySize = (dleafs[leafID].maxs[1] - dleafs[leafID].mins[1]) / 32;
 	int zSize = (dleafs[leafID].maxs[2] - dleafs[leafID].mins[2]) / 64;
-	xSize = max(xSize,1);
-	ySize = max(xSize,1);
-	zSize = max(xSize,1);
+	xSize = MAX(xSize,1);
+	ySize = MAX(xSize,1);
+	zSize = MAX(xSize,1);
 	// generate update 128 candidate samples, always at least one sample
 	int volumeCount = xSize * ySize * zSize;
 	if ( g_bFastAmbient )
@@ -625,12 +625,12 @@ void ComputePerLeafAmbientLighting()
 	for ( int i=0; i < *pNumworldlights; i++ )
 	{
 		dworldlight_t *wl = &dworldlights[i];
-		
+
 		if ( IsLeafAmbientSurfaceLight( wl ) )
 			wl->flags |= DWL_FLAGS_INAMBIENTCUBE;
 		else
 			wl->flags &= ~DWL_FLAGS_INAMBIENTCUBE;
-	
+
 		if ( wl->type == emit_surface )
 			++nSurfaceLights;
 

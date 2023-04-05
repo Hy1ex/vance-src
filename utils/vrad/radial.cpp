@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //
@@ -67,9 +67,9 @@ void LuxelSpaceToWorld( lightinfo_t const *l, fltx4 s, fltx4 t, FourVectors &wor
 
 
 
-void AddDirectToRadial( radial_t *rad, 
-						Vector const &pnt, 
-						Vector2D const &coordmins, Vector2D const &coordmaxs, 
+void AddDirectToRadial( radial_t *rad,
+						Vector const &pnt,
+						Vector2D const &coordmins, Vector2D const &coordmaxs,
 						LightingValue_t const light[NUM_BUMP_VECTS+1],
 						bool hasBumpmap, bool neighborHasBumpmap  )
 {
@@ -89,19 +89,19 @@ void AddDirectToRadial( radial_t *rad,
 	s_max = ( int )( coordmaxs[0] + 0.9999f ) + 1; // ????
 	t_max = ( int )( coordmaxs[1] + 0.9999f ) + 1;
 
-	s_min = max( s_min, 0 );
-	t_min = max( t_min, 0 );
-	s_max = min( s_max, rad->w );
-	t_max = min( t_max, rad->h );
+	s_min = MAX( s_min, 0 );
+	t_min = MAX( t_min, 0 );
+	s_max = MIN( s_max, rad->w );
+	t_max = MIN( t_max, rad->h );
 
 	for( s = s_min; s < s_max; s++ )
 	{
 		for( t = t_min; t < t_max; t++ )
 		{
-			float s0 = max( coordmins[0] - s, -1.0 );
-			float t0 = max( coordmins[1] - t, -1.0 );
-			float s1 = min( coordmaxs[0] - s, 1.0 );
-			float t1 = min( coordmaxs[1] - t, 1.0 );
+			float s0 = MAX( coordmins[0] - s, -1.0 );
+			float t0 = MAX( coordmins[1] - t, -1.0 );
+			float s1 = MIN( coordmaxs[0] - s, 1.0 );
+			float t1 = MIN( coordmaxs[1] - t, 1.0 );
 
 			area = (s1 - s0) * (t1 - t0);
 
@@ -110,7 +110,7 @@ void AddDirectToRadial( radial_t *rad,
 				ds = fabs( coord[0] - s );
 				dt = fabs( coord[1] - t );
 
-				r = max( ds, dt );
+				r = MAX( ds, dt );
 
 				if (r < 0.1)
 				{
@@ -145,7 +145,7 @@ void AddDirectToRadial( radial_t *rad,
 				{
 					rad->light[0][i].AddWeighted( light[0], r );
 				}
-				
+
 				rad->weight[i] += r;
 			}
 		}
@@ -154,9 +154,9 @@ void AddDirectToRadial( radial_t *rad,
 
 
 
-void AddBouncedToRadial( radial_t *rad, 
-						 Vector const &pnt, 
-						 Vector2D const &coordmins, Vector2D const &coordmaxs, 
+void AddBouncedToRadial( radial_t *rad,
+						 Vector const &pnt,
+						 Vector2D const &coordmins, Vector2D const &coordmaxs,
 						 Vector const light[NUM_BUMP_VECTS+1],
 						 bool hasBumpmap, bool neighborHasBumpmap  )
 {
@@ -176,8 +176,8 @@ void AddBouncedToRadial( radial_t *rad,
 	distt = (coordmaxs[1] - coordmins[1]);
 
 	// patches less than a luxel in size could be mistakeningly filtered, so clamp.
-	dists = max( 1.0, dists );
-	distt = max( 1.0, distt );
+	dists = MAX( 1.0, dists );
+	distt = MAX( 1.0, distt );
 
 	// find possible domain of patch influence
   	s_min = ( int )( coord[0] - dists * RADIALDIST );
@@ -186,10 +186,10 @@ void AddBouncedToRadial( radial_t *rad,
   	t_max = ( int )( coord[1] + distt * RADIALDIST + 1.0f );
 
 	// clamp to valid luxel
-	s_min = max( s_min, 0 );
-	t_min = max( t_min, 0 );
-	s_max = min( s_max, rad->w );
-	t_max = min( t_max, rad->h );
+	s_min = MAX( s_min, 0 );
+	t_min = MAX( t_min, 0 );
+	s_max = MIN( s_max, rad->w );
+	t_max = MIN( t_max, rad->h );
 
 	for( s = s_min; s < s_max; s++ )
 	{
@@ -198,11 +198,11 @@ void AddBouncedToRadial( radial_t *rad,
 			// patch influence is based on patch size
   			ds = ( coord[0] - s ) / dists;
   			dt = ( coord[1] - t ) / distt;
-  
+
   			r = RADIALDIST2 - (ds * ds + dt * dt);
 
 			int i = s+t*rad->w;
-   
+
   			if (r > 0)
 			{
 				if( hasBumpmap )
@@ -227,7 +227,7 @@ void AddBouncedToRadial( radial_t *rad,
 				{
 					rad->light[0][i].AddWeighted( light[0], r );
 				}
-				
+
 				rad->weight[i] += r;
 			}
 		}
@@ -249,10 +249,10 @@ void PatchLightmapCoordRange( radial_t *rad, int ndxPatch, Vector2D &mins, Vecto
 	for (i = 0; i < w->numpoints; i++)
 	{
 		WorldToLuxelSpace( &rad->l, w->p[i], coord );
-		mins[0] = min( mins[0], coord[0] );
-		maxs[0] = max( maxs[0], coord[0] );
-		mins[1] = min( mins[1], coord[1] );
-		maxs[1] = max( maxs[1], coord[1] );
+		mins[0] = MIN( mins[0], coord[0] );
+		maxs[0] = MAX( maxs[0], coord[0] );
+		mins[1] = MIN( mins[1], coord[1] );
+		maxs[1] = MAX( maxs[1], coord[1] );
 	}
 }
 
@@ -290,7 +290,7 @@ radial_t *BuildPatchRadial( int facenum )
 	needsBumpmap = texinfo[g_pFaces[facenum].texinfo].flags & SURF_BUMPLIGHT ? true : false;
 
 	rad = AllocateRadial( facenum );
-	
+
 	fn = &faceneighbor[ rad->facenum ];
 
 	CPatch *pNextPatch;
@@ -305,21 +305,21 @@ radial_t *BuildPatchRadial( int facenum )
 			{
 				pNextPatch = &g_Patches.Element( patch->ndxNext );
 			}
-			
+
 			// skip patches with children
 			if (patch->child1 != g_Patches.InvalidIndex() )
 				continue;
-			
+
 			// get the range of patch lightmap texture coords
 			int ndxPatch = patch - g_Patches.Base();
 			PatchLightmapCoordRange( rad, ndxPatch, mins, maxs );
-			
+
 			if (patch->numtransfers == 0)
 			{
 				// Error, using patch that was never evaluated or has no samples
 				// patch->totallight[1] = 255;
 			}
-			
+
 			//
 			// displacement surface patch origin position and normal vectors have been changed to
 			// represent the displacement surface position and normal -- for radial "blending"
@@ -329,12 +329,12 @@ radial_t *BuildPatchRadial( int facenum )
 			{
 				Vector patchOrigin;
 				WindingCenter (patch->winding, patchOrigin );
-				AddBouncedToRadial( rad, patchOrigin, mins, maxs, patch->totallight.light,  
-					needsBumpmap, needsBumpmap );			
+				AddBouncedToRadial( rad, patchOrigin, mins, maxs, patch->totallight.light,
+					needsBumpmap, needsBumpmap );
 			}
 			else
 			{
-				AddBouncedToRadial( rad, patch->origin, mins, maxs, patch->totallight.light, 
+				AddBouncedToRadial( rad, patch->origin, mins, maxs, patch->totallight.light,
 					needsBumpmap, needsBumpmap );
 			}
 		}
@@ -352,17 +352,17 @@ radial_t *BuildPatchRadial( int facenum )
 				{
 					pNextPatch = &g_Patches.Element( patch->ndxNext );
 				}
-				
+
 				// skip patches with children
 				if (patch->child1 != g_Patches.InvalidIndex() )
 					continue;
-				
+
 				// get the range of patch lightmap texture coords
 				int ndxPatch = patch - g_Patches.Base();
 				PatchLightmapCoordRange( rad, ndxPatch, mins, maxs  );
-				
+
 				neighborNeedsBumpmap = texinfo[g_pFaces[facenum].texinfo].flags & SURF_BUMPLIGHT ? true : false;
-				
+
 				//
 				// displacement surface patch origin position and normal vectors have been changed to
 				// represent the displacement surface position and normal -- for radial "blending"
@@ -372,8 +372,8 @@ radial_t *BuildPatchRadial( int facenum )
 				{
 					Vector patchOrigin;
 					WindingCenter (patch->winding, patchOrigin );
-					AddBouncedToRadial( rad, patchOrigin, mins, maxs, patch->totallight.light, 
-						needsBumpmap, needsBumpmap );			
+					AddBouncedToRadial( rad, patchOrigin, mins, maxs, patch->totallight.light,
+						needsBumpmap, needsBumpmap );
 				}
 				else
 				{
@@ -421,7 +421,7 @@ radial_t *BuildLuxelRadial( int facenum, int style )
 		fl = &facelight[fn->neighbor[j]];
 
 		bool neighborHasBumpmap = false;
-		
+
 		if( texinfo[g_pFaces[fn->neighbor[j]].texinfo].flags & SURF_BUMPLIGHT )
 		{
 			neighborHasBumpmap = true;
@@ -551,16 +551,16 @@ bool FloatLess( float const& src1, float const& src2 )
 void GetRandomColor( unsigned char *color )
 {
 	static bool firstTime = true;
-				
+
 	if( firstTime )
 	{
 		firstTime = false;
 		srand( 0 );
 	}
-	
-	color[0] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) ); 
-	color[1] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) ); 
-	color[2] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) ); 
+
+	color[0] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) );
+	color[1] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) );
+	color[2] = ( unsigned char )( rand() * ( 255.0f / VALVE_RAND_MAX ) );
 }
 
 
@@ -656,7 +656,7 @@ void FinalLightFace( int iThread, int facenum )
 
     // test for non-lit texture
     if ( texinfo[f->texinfo].flags & TEX_SPECIAL)
-        return;		
+        return;
 
 	fl = &facelight[facenum];
 
@@ -669,7 +669,7 @@ void FinalLightFace( int iThread, int facenum )
 	if ( !lightstyles )
 		return;
 
-	
+
 	//
 	// sample the triangulation
 	//
@@ -686,7 +686,7 @@ void FinalLightFace( int iThread, int facenum )
 	unsigned char randomColor[3];
 	GetRandomColor( randomColor );
 #endif
-	
+
 
 	// NOTE: I'm using these RB trees to sort all the illumination values
 	// to compute median colors. Turns out that this is a somewhat better
@@ -728,7 +728,7 @@ void FinalLightFace( int iThread, int facenum )
 			}
 		}
 
-		// pack the nonbump texture and the three bump texture for the given 
+		// pack the nonbump texture and the three bump texture for the given
 		// lightstyle right next to each other.
 		// NOTE: Even though it's building positions for all bump-mapped data,
 		// it isn't going to use those positions (see loop over bumpSample below)
@@ -736,7 +736,7 @@ void FinalLightFace( int iThread, int facenum )
 		// of light data if we don't have bumped lighting.
 		for( bumpSample = 0; bumpSample < bumpSampleCount; ++bumpSample )
 		{
-			pdata[bumpSample] = &(*pdlightdata)[f->lightofs + (k * bumpSampleCount + bumpSample) * fl->numluxels*4]; 
+			pdata[bumpSample] = &(*pdlightdata)[f->lightofs + (k * bumpSampleCount + bumpSample) * fl->numluxels*4];
 		}
 
 		// Compute the average luxel color, but not for the bump samples
@@ -810,14 +810,14 @@ void FinalLightFace( int iThread, int facenum )
 				// garymct: minlight is a per entity minimum light value?
 				for( i=0; i<3; i++ )
 				{
-					lb[bumpSample].m_vecLighting[i] = max( lb[bumpSample].m_vecLighting[i], minlight );
+					lb[bumpSample].m_vecLighting[i] = MAX( lb[bumpSample].m_vecLighting[i], minlight );
 				}
-				
+
 				// Do the average light computation, I'm assuming (perhaps incorrectly?)
-				// that all luxels in a particular lightmap have the same area here. 
-				// Also, don't bother doing averages for the bump samples. Doing it here 
-				// because of the minlight clamp above + the random color testy thingy. 
-				// Also have to do it before Vec3toColorRGBExp32 because it 
+				// that all luxels in a particular lightmap have the same area here.
+				// Also, don't bother doing averages for the bump samples. Doing it here
+				// because of the minlight clamp above + the random color testy thingy.
+				// Also have to do it before Vec3toColorRGBExp32 because it
 				// destructively modifies lb[bumpSample] (Feh!)
 				if ((bumpSample == 0) && baseSampleOk)
 				{

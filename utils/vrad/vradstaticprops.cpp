@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $Revision: $
 // $NoKeywords: $
@@ -64,7 +64,7 @@ public:
 	{
 		m_ColorVertsArrays.PurgeAndDeleteElements();
 	}
-	
+
 	CUtlVector< CUtlVector<colorVertex_t>* > m_ColorVertsArrays;
 };
 
@@ -73,7 +73,7 @@ public:
 //-----------------------------------------------------------------------------
 CUtlSymbolTable g_ForcedTextureShadowsModels;
 
-// DON'T USE THIS FROM WITHIN A THREAD.  THERE IS A THREAD CONTEXT CREATED 
+// DON'T USE THIS FROM WITHIN A THREAD.  THERE IS A THREAD CONTEXT CREATED
 // INSIDE PropTested_t.  USE THAT INSTEAD.
 IPhysicsCollision *s_pPhysCollision = NULL;
 
@@ -101,7 +101,7 @@ private:
 	static void VMPI_ReceiveStaticPropResults_Static( uint64 iStaticProp, MessageBuffer *pBuf, int iWorker );
 	void VMPI_ProcessStaticProp( int iThread, int iStaticProp, MessageBuffer *pBuf );
 	void VMPI_ReceiveStaticPropResults( int iStaticProp, MessageBuffer *pBuf, int iWorker );
-	
+
 	// local thread version
 	static void ThreadComputeStaticPropLighting( int iThread, void *pUserData );
 	void ComputeLightingForProp( int iThread, int iStaticProp );
@@ -288,7 +288,7 @@ CPhysCollide* ComputeConvexHull( studiohdr_t* pStudioHdr )
 
 bool LoadStudioModel( char const* pModelName, CUtlBuffer& buf )
 {
-	// No luck, gotta build it	
+	// No luck, gotta build it
 	// Construct the file name...
 	if (!LoadFile( pModelName, buf ))
 	{
@@ -333,7 +333,7 @@ bool LoadStudioCollisionModel( char const* pModelName, CUtlBuffer& buf )
 	char tmp[1024];
 	Q_strncpy( tmp, pModelName, sizeof( tmp ) );
 	Q_SetExtension( tmp, ".phy", sizeof( tmp ) );
-	// No luck, gotta build it	
+	// No luck, gotta build it
 	if (!LoadFile( tmp, buf ))
 	{
 		// this is not an error, the model simply has no PHY file
@@ -391,8 +391,8 @@ inline static Vector* PositionFromIndex( const mstudio_meshvertexdata_t *vertDat
 
 //-----------------------------------------------------------------------------
 // Purpose: Writes a glview text file containing the collision surface in question
-// Input  : *pCollide - 
-//			*pFilename - 
+// Input  : *pCollide -
+//			*pFilename -
 //-----------------------------------------------------------------------------
 void DumpCollideToGlView( vcollide_t *pCollide, const char *pFilename )
 {
@@ -420,13 +420,13 @@ void DumpCollideToGlView( vcollide_t *pCollide, const char *pFilename )
 		for ( int i = 0; i < triCount; i++ )
 		{
 			fprintf( fp, "3\n" );
-			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n", 
+			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n",
 				outVerts[vert].x, outVerts[vert].y, outVerts[vert].z, fr, fg, fb );
 			vert++;
-			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n", 
+			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n",
 				outVerts[vert].x, outVerts[vert].y, outVerts[vert].z, fr, fg, fb );
 			vert++;
-			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n", 
+			fprintf( fp, "%6.3f %6.3f %6.3f %.2f %.3f %.3f\n",
 				outVerts[vert].x, outVerts[vert].y, outVerts[vert].z, fr, fg, fb );
 			vert++;
 		}
@@ -496,7 +496,7 @@ public:
 		*pClampV = (pTex->Flags() & TEXTUREFLAGS_CLAMPT) ? true : false;
 		unsigned char *pDstImage = new unsigned char[ImageLoader::GetMemRequired( iWidth, iHeight, 1, dstFormat, false )];
 
-		if( !ImageLoader::ConvertImageFormat( pSrcImage, srcFormat, 
+		if( !ImageLoader::ConvertImageFormat( pSrcImage, srcFormat,
 			pDstImage, dstFormat, iWidth, iHeight, 0, 0 ) )
 		{
 			delete[] pDstImage;
@@ -592,7 +592,7 @@ public:
 			pTextureList[i] = textureIndex;
 		}
 	}
-	
+
 	int AddMaterialEntry( int shadowTextureIndex, const Vector2D &t0, const Vector2D &t1, const Vector2D &t2 )
 	{
 		int index = m_MaterialEntries.AddToTail();
@@ -606,15 +606,15 @@ public:
 	// HACKHACK: Compute the average coverage for this triangle by sampling the AABB of its texture space
 	float ComputeCoverageForTriangle( int shadowTextureIndex, const Vector2D &t0, const Vector2D &t1, const Vector2D &t2 )
 	{
-		float umin = min(t0.x, t1.x);
-		umin = min(umin, t2.x);
-		float umax = max(t0.x, t1.x);
-		umax = max(umax, t2.x);
+		float umin = MIN(t0.x, t1.x);
+		umin = MIN(umin, t2.x);
+		float umax = MAX(t0.x, t1.x);
+		umax = MAX(umax, t2.x);
 
-		float vmin = min(t0.y, t1.y);
-		vmin = min(vmin, t2.y);
-		float vmax = max(t0.y, t1.y);
-		vmax = max(vmax, t2.y);
+		float vmin = MIN(t0.y, t1.y);
+		vmin = MIN(vmin, t2.y);
+		float vmax = MAX(t0.y, t1.y);
+		vmax = MAX(vmax, t2.y);
 
 		// UNDONE: Do something about tiling
 		umin = clamp(umin, 0, 1);
@@ -647,7 +647,7 @@ public:
 		}
 		return 1.0f;
 	}
-	
+
 	int SampleMaterial( int materialIndex, const Vector &coords, bool bBackface )
 	{
 		const materialentry_t &mat = m_MaterialEntries[materialIndex];
@@ -657,7 +657,7 @@ public:
 		Vector2D uv = coords.x * mat.uv[0] + coords.y * mat.uv[1] + coords.z * mat.uv[2];
 		int u = RoundFloatToInt( uv[0] * tex.width );
 		int v = RoundFloatToInt( uv[1] * tex.height );
-		
+
 		// asume power of 2, clamp or wrap
 		// UNDONE: Support clamp?  This code should work
 #if 0
@@ -672,7 +672,7 @@ public:
 		return tex.pAlphaTexels[v * tex.width + u];
 	}
 
-	struct alphatexture_t 
+	struct alphatexture_t
 	{
 		short width;
 		short height;
@@ -845,7 +845,7 @@ void CVradStaticPropMgr::UnserializeModelDict( CUtlBuffer& buf )
 	{
 		StaticPropDictLump_t lump;
 		buf.Get( &lump, sizeof(StaticPropDictLump_t) );
-		
+
 		CreateCollisionModel( lump.m_Name );
 	}
 }
@@ -855,11 +855,11 @@ void CVradStaticPropMgr::UnserializeModels( CUtlBuffer& buf )
 	int count = buf.GetInt();
 
 	m_StaticProps.AddMultipleToTail(count);
-	for ( int i = 0; i < count; ++i )				  
+	for ( int i = 0; i < count; ++i )
 	{
 		StaticPropLump_t lump;
 		buf.Get( &lump, sizeof(StaticPropLump_t) );
-		
+
 		VectorCopy( lump.m_Origin, m_StaticProps[i].m_Origin );
 		VectorCopy( lump.m_Angles, m_StaticProps[i].m_Angles );
 		VectorCopy( lump.m_LightingOrigin, m_StaticProps[i].m_LightingOrigin );
@@ -909,7 +909,7 @@ void CVradStaticPropMgr::Init()
 	CreateInterfaceFn physicsFactory = GetPhysicsFactory();
 	if ( !physicsFactory )
 		Error( "Unable to load vphysics DLL." );
-		
+
 	s_pPhysCollision = (IPhysicsCollision *)physicsFactory( VPHYSICS_COLLISION_INTERFACE_VERSION, NULL );
 	if( !s_pPhysCollision )
 	{
@@ -1006,7 +1006,7 @@ void ComputeDirectLightingAtPoint( Vector &position, Vector &normal, Vector &out
 			fudge *= 4.0;
 			adjusted_pos += fudge;
 		}
-		else 
+		else
 		{
 			// push out along normal
 			adjusted_pos += 4.0 * normal;
@@ -1020,7 +1020,7 @@ void ComputeDirectLightingAtPoint( Vector &position, Vector &normal, Vector &out
 
 		GatherSampleLightSSE( sampleOutput, dl, -1, adjusted_pos4, &normal4, 1, iThread, nLFlags | GATHERLFLAGS_FORCE_FAST,
 		                      static_prop_id_to_skip, flEpsilon );
-		
+
 		VectorMA( outColor, sampleOutput.m_flFalloff.m128_f32[0] * sampleOutput.m_flDot[0].m128_f32[0], dl->light.intensity, outColor );
 	}
 }
@@ -1050,7 +1050,7 @@ void CVradStaticPropMgr::ApplyLightingToStaticProp( CStaticProp &prop, const CCo
 			mstudiomodel_t *pStudioModel = pBodyPart->pModel( modelID );
 
 			const CUtlVector<colorVertex_t> &colorVerts = *pResults->m_ColorVertsArrays[iCurColorVertsArray++];
-			
+
 			for ( int nLod = 0; nLod < pVtxHdr->numLODs; nLod++ )
 			{
 				OptimizedModel::ModelLODHeader_t *pVtxLOD = pVtxModel->pLOD( nLod );
@@ -1104,7 +1104,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 		return;
 
 	VMPI_SetCurrentStage( "ComputeLighting" );
-	
+
 	for ( int bodyID = 0; bodyID < pStudioHdr->numbodyparts; ++bodyID )
 	{
 		mstudiobodyparts_t *pBodyPart = pStudioHdr->pBodypart( bodyID );
@@ -1116,8 +1116,8 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 			// light all unique vertexes
 			CUtlVector<colorVertex_t> *pColorVertsArray = new CUtlVector<colorVertex_t>;
 			pResults->m_ColorVertsArrays.AddToTail( pColorVertsArray );
-			
-			CUtlVector<colorVertex_t> &colorVerts = *pColorVertsArray; 
+
+			CUtlVector<colorVertex_t> &colorVerts = *pColorVertsArray;
 			colorVerts.EnsureCount( pStudioModel->numvertices );
 			memset( colorVerts.Base(), 0, colorVerts.Count() * sizeof(colorVertex_t) );
 
@@ -1145,7 +1145,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 						badVertex.m_ColorVertex = numVertexes;
 						badVertex.m_Position = samplePosition;
 						badVertex.m_Normal = sampleNormal;
-						badVerts.AddToTail( badVertex );			
+						badVerts.AddToTail( badVertex );
 					}
 					else
 					{
@@ -1155,7 +1155,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 						{
 							skip_prop = prop_index;
 						}
-							
+
 						int nFlags = ( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS ) ? GATHERLFLAGS_IGNORE_NORMALS : 0;
 
 						Vector directColor(0,0,0);
@@ -1173,28 +1173,28 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 						else
 						{
 							if (numbounce >= 1)
-								ComputeIndirectLightingAtPoint( 
-									samplePosition, sampleNormal, 
+								ComputeIndirectLightingAtPoint(
+									samplePosition, sampleNormal,
 									indirectColor, iThread, true,
 									( prop.m_Flags & STATIC_PROP_IGNORE_NORMALS) != 0 );
 						}
-						
+
 						colorVerts[numVertexes].m_bValid = true;
 						colorVerts[numVertexes].m_Position = samplePosition;
 						VectorAdd( directColor, indirectColor, colorVerts[numVertexes].m_Color );
 					}
-					
+
 					numVertexes++;
 				}
 			}
-			
+
 			// color in the bad vertexes
 			// when entire model has no lighting origin and no valid neighbors
 			// must punt, leave black coloring
 			if ( badVerts.Count() && ( prop.m_bLightingOriginValid || badVerts.Count() != numVertexes ) )
 			{
 				for ( int nBadVertex = 0; nBadVertex < badVerts.Count(); nBadVertex++ )
-				{		
+				{
 					Vector bestPosition;
 					if ( prop.m_bLightingOriginValid )
 					{
@@ -1254,7 +1254,7 @@ void CVradStaticPropMgr::ComputeLighting( CStaticProp &prop, int iThread, int pr
 					VectorAdd( directColor, indirectColor, colorVerts[badVerts[nBadVertex].m_ColorVertex].m_Color );
 				}
 			}
-			
+
 			// discard bad verts
 			badVerts.Purge();
 		}
@@ -1284,7 +1284,7 @@ void CVradStaticPropMgr::SerializeLighting()
 	for (int i = 0; i < count; ++i)
 	{
 		// no need to write this file if we didn't compute the data
-		// props marked this way will not load the info anyway 
+		// props marked this way will not load the info anyway
 		if ( m_StaticProps[i].m_Flags & STATIC_PROP_NO_PER_VERTEX_LIGHTING )
 			continue;
 
@@ -1304,7 +1304,7 @@ void CVradStaticPropMgr::SerializeLighting()
 		}
 
 		// allocate a buffer with enough padding for alignment
-		size = sizeof( HardwareVerts::FileHeader_t ) + 
+		size = sizeof( HardwareVerts::FileHeader_t ) +
 				m_StaticProps[i].m_MeshData.Count()*sizeof(HardwareVerts::MeshHeader_t) +
 				totalVertexes*4 + 2*512;
 		utlBuf.EnsureCapacity( size );
@@ -1315,7 +1315,7 @@ void CVradStaticPropMgr::SerializeLighting()
 		// align to start of vertex data
 		unsigned char *pVertexData = (unsigned char *)(sizeof( HardwareVerts::FileHeader_t ) + m_StaticProps[i].m_MeshData.Count()*sizeof(HardwareVerts::MeshHeader_t));
 		pVertexData = (unsigned char*)pVhvHdr + ALIGN_TO_POW2( (unsigned int)pVertexData, 512 );
-		
+
 		// construct header
 		pVhvHdr->m_nVersion     = VHV_VERSION;
 		pVhvHdr->m_nChecksum    = m_StaticPropDict[m_StaticProps[i].m_ModelIdx].m_pStudioHdr->checksum;
@@ -1330,7 +1330,7 @@ void CVradStaticPropMgr::SerializeLighting()
 			HardwareVerts::MeshHeader_t *pMesh = pVhvHdr->pMesh( n );
 			pMesh->m_nLod      = m_StaticProps[i].m_MeshData[n].m_nLod;
 			pMesh->m_nVertexes = m_StaticProps[i].m_MeshData[n].m_Verts.Count();
-			pMesh->m_nOffset   = (unsigned int)pVertexData - (unsigned int)pVhvHdr; 
+			pMesh->m_nOffset   = (unsigned int)pVertexData - (unsigned int)pVhvHdr;
 
 			// construct vertexes
 			for (int k=0; k<pMesh->m_nVertexes; k++)
@@ -1368,7 +1368,7 @@ void CVradStaticPropMgr::VMPI_ReceiveStaticPropResults_Static( uint64 iStaticPro
 {
 	g_StaticPropMgr.VMPI_ReceiveStaticPropResults( iStaticProp, pBuf, iWorker );
 }
-	
+
 //-----------------------------------------------------------------------------
 // Called on workers to do the computation for a static prop and send
 // it to the master.
@@ -1380,11 +1380,11 @@ void CVradStaticPropMgr::VMPI_ProcessStaticProp( int iThread, int iStaticProp, M
 	ComputeLighting( m_StaticProps[iStaticProp], iThread, iStaticProp, &results );
 
 	VMPI_SetCurrentStage( "EncodeLightingResults" );
-	
+
 	// Encode the results.
 	int nLists = results.m_ColorVertsArrays.Count();
 	pBuf->write( &nLists, sizeof( nLists ) );
-	
+
 	for ( int i=0; i < nLists; i++ )
 	{
 		CUtlVector<colorVertex_t> &curList = *results.m_ColorVertsArrays[i];
@@ -1401,21 +1401,21 @@ void CVradStaticPropMgr::VMPI_ReceiveStaticPropResults( int iStaticProp, Message
 {
 	// Read in the results.
 	CComputeStaticPropLightingResults results;
-	
+
 	int nLists;
 	pBuf->read( &nLists, sizeof( nLists ) );
-	
+
 	for ( int i=0; i < nLists; i++ )
 	{
 		CUtlVector<colorVertex_t> *pList = new CUtlVector<colorVertex_t>;
 		results.m_ColorVertsArrays.AddToTail( pList );
-		
+
 		int count;
 		pBuf->read( &count, sizeof( count ) );
 		pList->SetSize( count );
 		pBuf->read( pList->Base(), count * sizeof( colorVertex_t ) );
 	}
-	
+
 	// Apply the results.
 	ApplyLightingToStaticProp( m_StaticProps[iStaticProp], &results );
 }
@@ -1464,11 +1464,11 @@ void CVradStaticPropMgr::ComputeLighting( int iThread )
 	{
 		// Distribute the work among the workers.
 		VMPI_SetCurrentStage( "CVradStaticPropMgr::ComputeLighting" );
-		
-		DistributeWork( 
-			count, 
+
+		DistributeWork(
+			count,
 			VMPI_DISTRIBUTEWORK_PACKETID,
-			&CVradStaticPropMgr::VMPI_ProcessStaticProp_Static, 
+			&CVradStaticPropMgr::VMPI_ProcessStaticProp_Static,
 			&CVradStaticPropMgr::VMPI_ReceiveStaticPropResults_Static );
 	}
 	else
@@ -1536,7 +1536,7 @@ void CVradStaticPropMgr::AddPolysForRayTrace( void )
 				VectorAdd ( dict.m_Maxs, prop.m_Origin, prop.m_maxs );
 				g_RtEnv.AddAxisAlignedRectangularSolid ( TRACE_ID_STATICPROP | nProp, prop.m_mins, prop.m_maxs, fullCoverage );
 			}
-			
+
 			continue;
 		}
 
@@ -1553,7 +1553,7 @@ void CVradStaticPropMgr::AddPolysForRayTrace( void )
 
 		// meshes are deeply hierarchial, divided between three stores, follow the white rabbit
 		// body parts -> models -> lod meshes -> strip groups -> strips
-		// the vertices and indices are pooled, the trick is knowing the offset to determine your indexed base 
+		// the vertices and indices are pooled, the trick is knowing the offset to determine your indexed base
 		for ( int bodyID = 0; bodyID < pStudioHdr->numbodyparts; ++bodyID )
 		{
 			OptimizedModel::BodyPartHeader_t* pVtxBodyPart = pVtxHdr->pBodyPart( bodyID );
@@ -1697,10 +1697,10 @@ struct tl_tri_t
 	Vector	n1;
 	Vector	n2;
 
-	bool operator == (const tl_tri_t &t) const 
-	{ 
-		return ( p0 == t.p0 && 
-				p1 == t.p1 && 
+	bool operator == (const tl_tri_t &t) const
+	{
+		return ( p0 == t.p0 &&
+				p1 == t.p1 &&
 				p2 == t.p2 &&
 				n0 == t.n0 &&
 				n1 == t.n1 &&
@@ -1757,7 +1757,7 @@ void CVradStaticPropMgr::BuildTriList( CStaticProp &prop )
 
 	// meshes are deeply hierarchial, divided between three stores, follow the white rabbit
 	// body parts -> models -> lod meshes -> strip groups -> strips
-	// the vertices and indices are pooled, the trick is knowing the offset to determine your indexed base 
+	// the vertices and indices are pooled, the trick is knowing the offset to determine your indexed base
 	for ( int bodyID = 0; bodyID < pStudioHdr->numbodyparts; ++bodyID )
 	{
 		OptimizedModel::BodyPartHeader_t* pVtxBodyPart = pVtxHdr->pBodyPart( bodyID );
@@ -1857,7 +1857,7 @@ const vertexFileHeader_t * mstudiomodel_t::CacheVertexData( void *pModelData )
 	// mandatory callback to make requested data resident
 	// load and persist the vertex file
 	char fileName[MAX_PATH];
-	strcpy( fileName, "models/" );	
+	strcpy( fileName, "models/" );
 	strcat( fileName, pActiveStudioHdr->pszName() );
 	Q_StripExtension( fileName, fileName, sizeof( fileName ) );
 	strcat( fileName, ".vvd" );

@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -39,9 +39,9 @@ flush privileges;
 -- SQL code to (re)create the tables.
 
 -- Master generates a unique job ID (in job_master_start) and sends it to workers.
--- Each worker (and the master) make a job_worker_start, link it to the primary job ID, 
+-- Each worker (and the master) make a job_worker_start, link it to the primary job ID,
 --     get their own unique ID, which represents that process in that job.
--- All JobWorkerID fields link to the JobWorkerID field in job_worker_start. 
+-- All JobWorkerID fields link to the JobWorkerID field in job_worker_start.
 
 -- NOTE: do a "use vrad" or "use vvis" first, depending on the DB you want to create.
 
@@ -50,7 +50,7 @@ use vrad;
 
 
 drop table job_master_start;
-create table job_master_start ( 
+create table job_master_start (
 	JobID					INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,	index id( JobID, MachineName(5) ),
 	BSPFilename				TINYTEXT NOT NULL,
 	StartTime				TIMESTAMP NOT NULL,
@@ -69,10 +69,10 @@ create table job_master_end (
 
 drop table job_worker_start;
 create table job_worker_start (
-	JobWorkerID				INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,	
+	JobWorkerID				INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 	index index_jobid( JobID ),
 	index index_jobworkerid( JobWorkerID ),
-	
+
 	JobID					INTEGER UNSIGNED NOT NULL,				-- links to job_master_start::JobID
 	IsMaster				BOOL NOT NULL,							-- Set to 1 if this "worker" is the master process.
 	RunningTimeMS			INTEGER UNSIGNED NOT NULL default 0,
@@ -165,7 +165,7 @@ void CMySQLQuery::Format( const char *pFormat, ... )
 {
 	#define QUERYTEXT_GROWSIZE	1024
 
-	// This keeps growing the buffer and calling _vsnprintf until the buffer is 
+	// This keeps growing the buffer and calling _vsnprintf until the buffer is
 	// large enough to hold all the data.
 	m_QueryText.SetSize( QUERYTEXT_GROWSIZE );
 	while ( 1 )
@@ -210,7 +210,7 @@ char* FormatStringForSQL( const char *pText )
 	{
 		if ( *pCur == '\"' || *pCur == '\\' )
 			++nChars;
-		
+
 		++pCur;
 		++nChars;
 	}
@@ -221,7 +221,7 @@ char* FormatStringForSQL( const char *pText )
 	{
 		if ( *pCur == '\"' || *pCur == '\\' )
 			pRetVal[i++] = '\\';
-		
+
 		pRetVal[i++] = *pCur;
 		++pCur;
 	}
@@ -263,7 +263,7 @@ public:
 			g_JobPrimaryID );
 		g_pSQL->Execute( query );
 
-		
+
 		// Update the job_master_worker_stats stuff.
 		for ( int i=1; i < nCurConnections; i++ )
 		{
@@ -273,10 +273,10 @@ public:
 			{
 				Q_snprintf( query, sizeof( query ), "update "
 					"job_worker_start set WorkerState=%d, NumWorkUnits=%d where JobWorkerID=%lu",
-					VMPI_IsProcConnected( i ), 
+					VMPI_IsProcConnected( i ),
 					(int) VMPI_GetNumWorkUnitsCompleted( i ),
 					VMPI_GetJobWorkerID( i )
-					); 
+					);
 				g_pSQL->Execute( query );
 			}
 		}
@@ -287,11 +287,11 @@ public:
 class CSQLDBCommand_JobMasterEnd : public CSQLDBCommandBase
 {
 public:
-	
+
 	virtual int RunCommand()
 	{
 		CMySQLQuery query;
-		query.Format( "insert into job_master_end values ( %lu, %d, %d, \"no errors\" )", g_JobPrimaryID, g_nWorkersConnected, g_nWorkersDisconnected ); 
+		query.Format( "insert into job_master_end values ( %lu, %d, %d, \"no errors\" )", g_JobPrimaryID, g_nWorkersConnected, g_nWorkersDisconnected );
 		query.Execute( g_pSQL  );
 
 		// Now set RunningTimeMS.
@@ -306,14 +306,14 @@ public:
 void UpdateJobWorkerRunningTime()
 {
 	unsigned long runningTimeMS = GetTickCount() - g_StatsStartTime;
-	
+
 	char curStage[256];
 	VMPI_GetCurrentStage( curStage, sizeof( curStage ) );
-	
+
 	CMySQLQuery query;
 	query.Format( "update job_worker_start set RunningTimeMS=%lu, CurrentStage=\"%s\", "
-		"Thread0WU=%d, Thread1WU=%d, Thread2WU=%d, Thread3WU=%d where JobWorkerID=%lu", 
-		runningTimeMS, 
+		"Thread0WU=%d, Thread1WU=%d, Thread2WU=%d, Thread3WU=%d where JobWorkerID=%lu",
+		runningTimeMS,
 		curStage,
 		(int) g_ThreadWUs[0],
 		(int) g_ThreadWUs[1],
@@ -327,7 +327,7 @@ void UpdateJobWorkerRunningTime()
 class CSQLDBCommand_GraphEntry : public CSQLDBCommandBase
 {
 public:
-	
+
 				CSQLDBCommand_GraphEntry( DWORD msTime, DWORD nBytesSent, DWORD nBytesReceived )
 				{
 					m_msTime = msTime;
@@ -339,12 +339,12 @@ public:
 	{
 		CMySQLQuery query;
 		query.Format(	"insert into graph_entry (JobWorkerID, MSSinceJobStart, BytesSent, BytesReceived) "
-						"values ( %lu, %lu, %lu, %lu )", 
-			g_JobWorkerID, 
-			m_msTime, 
-			m_nBytesSent, 
+						"values ( %lu, %lu, %lu, %lu )",
+			g_JobWorkerID,
+			m_msTime,
+			m_nBytesSent,
 			m_nBytesReceived );
-		
+
 		query.Execute( g_pSQL );
 
 		UpdateJobWorkerRunningTime();
@@ -363,7 +363,7 @@ public:
 class CSQLDBCommand_TextMessage : public CSQLDBCommandBase
 {
 public:
-	
+
 				CSQLDBCommand_TextMessage( const char *pText )
 				{
 					m_pText = FormatStringForSQL( pText );
@@ -412,11 +412,11 @@ void PerfThread_SendSpewText()
 	// Send the spew text to the database.
 	CCriticalSectionLock csLock( &g_SpewTextCS );
 	csLock.Lock();
-		
+
 		if ( g_SpewText.Count() > 0 )
 		{
 			g_SpewText.AddToTail( 0 );
-			
+
 			if ( g_bMPI_StatsTextOutput )
 			{
 				g_pDB->AddCommandToQueue( new CSQLDBCommand_TextMessage( g_SpewText.Base() ), NULL );
@@ -434,7 +434,7 @@ void PerfThread_SendSpewText()
 					g_pDB->AddCommandToQueue( new CSQLDBCommand_TextMessage( msg ), NULL );
 				}
 			}
-			
+
 			g_SpewText.RemoveAll();
 		}
 
@@ -448,11 +448,11 @@ void PerfThread_AddGraphEntry( DWORD startTicks, DWORD &lastSent, DWORD &lastRec
 	DWORD curSent = g_nBytesSent + g_nMulticastBytesSent;
 	DWORD curReceived = g_nBytesReceived + g_nMulticastBytesReceived;
 
-	g_pDB->AddCommandToQueue( 
-		new CSQLDBCommand_GraphEntry( 
+	g_pDB->AddCommandToQueue(
+		new CSQLDBCommand_GraphEntry(
 			GetTickCount() - startTicks,
-			curSent - lastSent, 
-			curReceived - lastReceived ), 
+			curSent - lastSent,
+			curReceived - lastReceived ),
 		NULL );
 
 	lastSent = curSent;
@@ -477,8 +477,8 @@ DWORD WINAPI PerfThreadFn( LPVOID pParameter )
 		// If we're the master, update all the worker stats.
 		if ( g_bMaster )
 		{
-			g_pDB->AddCommandToQueue( 
-				new CSQLDBCommand_WorkerStats, 
+			g_pDB->AddCommandToQueue(
+				new CSQLDBCommand_WorkerStats,
 				NULL );
 		}
 	}
@@ -511,7 +511,7 @@ void UnloadMySQLWrapper()
 			g_pSQL->Release();
 			g_pSQL = NULL;
 		}
-	
+
 		Sys_UnloadModule( g_hMySQLDLL );
 		g_hMySQLDLL = NULL;
 	}
@@ -519,8 +519,8 @@ void UnloadMySQLWrapper()
 
 
 bool LoadMySQLWrapper(
-	const char *pHostName, 
-	const char *pDBName, 
+	const char *pHostName,
+	const char *pDBName,
 	const char *pUserName
 	)
 {
@@ -541,17 +541,17 @@ bool LoadMySQLWrapper(
 }
 
 
-bool VMPI_Stats_Init_Master( 
-	const char *pHostName, 
-	const char *pDBName, 
+bool VMPI_Stats_Init_Master(
+	const char *pHostName,
+	const char *pDBName,
 	const char *pUserName,
-	const char *pBSPFilename, 
+	const char *pBSPFilename,
 	unsigned long *pDBJobID )
 {
 	Assert( !g_pDB );
 
 	g_bMaster = true;
-	
+
 	// Connect the database.
 	g_pDB = new CMySqlDatabase;
 	if ( !g_pDB || !g_pDB->Initialize() || !LoadMySQLWrapper( pHostName, pDBName, pUserName ) )
@@ -569,7 +569,7 @@ bool VMPI_Stats_Init_Master(
 
 	g_JobPrimaryID = 0;
 	CMySQLQuery query;
-	query.Format( "insert into job_master_start ( BSPFilename, StartTime, MachineName, RunningTimeMS ) values ( \"%s\", null, \"%s\", %lu )", g_BSPFilename, g_MachineName, RUNNINGTIME_MS_SENTINEL ); 
+	query.Format( "insert into job_master_start ( BSPFilename, StartTime, MachineName, RunningTimeMS ) values ( \"%s\", null, \"%s\", %lu )", g_BSPFilename, g_MachineName, RUNNINGTIME_MS_SENTINEL );
 	query.Execute( g_pSQL );
 
 	g_JobPrimaryID = g_pSQL->InsertID();
@@ -591,12 +591,12 @@ bool VMPI_Stats_Init_Master(
 bool VMPI_Stats_Init_Worker( const char *pHostName, const char *pDBName, const char *pUserName, unsigned long DBJobID )
 {
 	g_StatsStartTime = GetTickCount();
-	
+
 	// If pDBServerName is null, then we're the master and we just want to make the job_worker_start entry.
 	if ( pHostName )
 	{
 		Assert( !g_pDB );
-		
+
 		// Connect the database.
 		g_pDB = new CMySqlDatabase;
 		if ( !g_pDB || !g_pDB->Initialize() || !LoadMySQLWrapper( pHostName, pDBName, pUserName ) )
@@ -605,7 +605,7 @@ bool VMPI_Stats_Init_Worker( const char *pHostName, const char *pDBName, const c
 			g_pDB = NULL;
 			return false;
 		}
-		
+
 		// Get our machine name to store in the database.
 		DWORD size = sizeof( g_MachineName );
 		GetComputerName( g_MachineName, &size );
@@ -619,7 +619,7 @@ bool VMPI_Stats_Init_Worker( const char *pHostName, const char *pDBName, const c
 	query.Format( "insert into job_worker_start ( JobID, CurrentStage, IsMaster, MachineName ) values ( %lu, \"none\", %d, \"%s\" )",
 		g_JobPrimaryID, g_bMaster, g_MachineName );
 	query.Execute( g_pSQL );
-			
+
 	g_JobWorkerID = g_pSQL->InsertID();
 	if ( g_JobWorkerID == 0 )
 	{
@@ -638,7 +638,7 @@ bool VMPI_Stats_Init_Worker( const char *pHostName, const char *pDBName, const c
 		0,
 		&g_PerfThreadID );
 
-	return true;	
+	return true;
 }
 
 
@@ -650,7 +650,7 @@ void VMPI_Stats_Term()
 	// Stop the thread.
 	SetEvent( g_hPerfThreadExitEvent );
 	WaitForSingleObject( g_hPerfThread, INFINITE );
-	
+
 	CloseHandle( g_hPerfThreadExitEvent );
 	g_hPerfThreadExitEvent = NULL;
 
@@ -702,7 +702,7 @@ void GetDBInfo( const char *pDBInfoFilename, CDBInfo *pInfo )
 	char baseExeFilename[512];
 	if ( !GetModuleFileName( GetModuleHandle( NULL ), baseExeFilename, sizeof( baseExeFilename ) ) )
 		Error( "GetModuleFileName failed." );
-	
+
 	// Look for the info file in the same directory as the exe.
 	char dbInfoFilename[512];
 	Q_strncpy( dbInfoFilename, baseExeFilename, sizeof( dbInfoFilename ) );
@@ -721,8 +721,8 @@ void GetDBInfo( const char *pDBInfoFilename, CDBInfo *pInfo )
 	}
 
 	if ( !ReadStringFromFile( fp, pInfo->m_HostName, sizeof( pInfo->m_HostName ) ) ||
-		 !ReadStringFromFile( fp, pInfo->m_DBName, sizeof( pInfo->m_DBName ) ) || 
-		 !ReadStringFromFile( fp, pInfo->m_UserName, sizeof( pInfo->m_UserName ) ) 
+		 !ReadStringFromFile( fp, pInfo->m_DBName, sizeof( pInfo->m_DBName ) ) ||
+		 !ReadStringFromFile( fp, pInfo->m_UserName, sizeof( pInfo->m_UserName ) )
 		 )
 	{
 		Error( "%s is not a valid database info file.\n", dbInfoFilename );
@@ -750,12 +750,12 @@ void RunJobWatchApp( char *pCmdLine )
 		if ( s1 || s2 )
 		{
 			// Get rid of the last slash.
-			s1 = max( s1, s2 );
+			s1 = MAX( s1, s2 );
 			s1[0] = 0;
-		
-			if ( !CreateProcess( 
-				NULL, 
-				pCmdLine, 
+
+			if ( !CreateProcess(
+				NULL,
+				pCmdLine,
 				NULL,							// security
 				NULL,
 				TRUE,
@@ -772,9 +772,9 @@ void RunJobWatchApp( char *pCmdLine )
 }
 
 
-void StatsDB_InitStatsDatabase( 
-	int argc, 
-	char **argv, 
+void StatsDB_InitStatsDatabase(
+	int argc,
+	char **argv,
 	const char *pDBInfoFilename )
 {
 	// Did they disable the stats database?
@@ -794,14 +794,14 @@ void StatsDB_InitStatsDatabase(
 			Warning( "VMPI_Stats_Init_Master( %s, %s, %s ) failed.\n", dbInfo.m_HostName, dbInfo.m_DBName, dbInfo.m_UserName );
 
 			// Tell the workers not to use stats.
-			dbInfo.m_HostName[0] = 0; 
+			dbInfo.m_HostName[0] = 0;
 		}
 
 		char cmdLine[2048];
 		Q_snprintf( cmdLine, sizeof( cmdLine ), "vmpi_job_watch -JobID %d", jobPrimaryID );
-		
+
 		Msg( "\nTo watch this job, run this command line:\n%s\n\n", cmdLine );
-		
+
 		if ( VMPI_IsParamUsed( mpi_Job_Watch ) )
 		{
 			// Convenience thing to automatically launch the job watch for this job.
@@ -817,7 +817,7 @@ void StatsDB_InitStatsDatabase(
 		CDBInfo dbInfo;
 		unsigned long jobPrimaryID;
 		RecvDBInfo( &dbInfo, &jobPrimaryID );
-		
+
 		if ( dbInfo.m_HostName[0] != 0 )
 		{
 			if ( !VMPI_Stats_Init_Worker( dbInfo.m_HostName, dbInfo.m_DBName, dbInfo.m_UserName, jobPrimaryID ) )
