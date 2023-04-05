@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 // $NoKeywords: $
 //===========================================================================//
@@ -29,7 +29,7 @@
 #include "tier1/utlsymbol.h"
 #include "vgui_controls/BuildGroup.h"
 
-// undefine windows function macros that overlap 
+// undefine windows function macros that overlap
 #ifdef PostMessage
 #undef PostMessage
 #endif
@@ -223,7 +223,7 @@ public:
 	virtual void SetParent(Panel *newParent);
 	virtual void SetParent(VPANEL newParent);
 	virtual bool HasParent(VPANEL potentialParent);
-	
+
 	int GetChildCount();
 	Panel *GetChild(int index);
 	virtual CUtlVector< VPANEL > &GetChildren();
@@ -262,7 +262,7 @@ public:
 	virtual void   MoveToFront();
 
 	// pin positions for auto-layout
-	enum PinCorner_e 
+	enum PinCorner_e
 	{
 		PIN_TOPLEFT = 0,
 		PIN_TOPRIGHT,
@@ -387,7 +387,7 @@ public:
 	virtual void OnThink();							// called every frame before painting, but only if panel is visible
 	virtual void OnChildAdded(VPANEL child);		// called when a child has been added to this panel
 	virtual void OnSizeChanged(int newWide, int newTall);	// called after the size of a panel has been changed
-	
+
 	// called every frame if ivgui()->AddTickSignal() is called
 	virtual void OnTick();
 
@@ -446,7 +446,7 @@ public:
 
 	void			RevertKeyBindingsToDefault();
 	void			RemoveAllKeyBindings();
-	void			ReloadKeyBindings(); 
+	void			ReloadKeyBindings();
 	virtual void	EditKeyBindings();
 
 	// calls RevertKeyBindingsToDefault() and then LoadKeyBindingsForOnePanel( GetKeyBindingsContext(), this );
@@ -461,7 +461,7 @@ public:
 	bool			IsKeyBindingChainToParentAllowed() const;
 #endif // VGUI_USEKEYBINDINGMAPS
 
-	// base implementation forwards Key messages to the Panel's parent 
+	// base implementation forwards Key messages to the Panel's parent
 	// - override to 'swallow' the input
 	virtual void OnKeyCodePressed(KeyCode code);
 	virtual void OnKeyCodeTyped(KeyCode code);
@@ -512,7 +512,7 @@ public:
 	//=============================================================================
 	// HPE_BEGIN:
 	//=============================================================================
-	 
+
 	// [menglish] Draws a hollow box similar to the already existing draw hollow box function, but takes the indents as params
 	virtual void DrawHollowBox( int x, int y, int wide, int tall, Color color, float normalizedAlpha, int cornerWide, int cornerTall );
 
@@ -523,7 +523,7 @@ public:
 	bool ShouldDrawTopRightCornerRounded() { return ( m_roundedCorners & PANEL_ROUND_CORNER_TOP_RIGHT ) != 0; }
 	bool ShouldDrawBottomLeftCornerRounded() { return ( m_roundedCorners & PANEL_ROUND_CORNER_BOTTOM_LEFT ) != 0; }
 	bool ShouldDrawBottomRightCornerRounded() { return ( m_roundedCorners & PANEL_ROUND_CORNER_BOTTOM_RIGHT ) != 0; }
-	 
+
 	//=============================================================================
 	// HPE_END
 	//=============================================================================
@@ -695,7 +695,7 @@ public:
 	Will recursively look for the next visible panel in the navigation chain, parameters are for internal use.
 	It will stop looking if first == nextpanel (to prevent infinite looping).
 	*/
-	Panel* GetNavUp( Panel *first = NULL ); 
+	Panel* GetNavUp( Panel *first = NULL );
 	Panel* GetNavDown( Panel *first = NULL );
 	Panel* GetNavLeft( Panel *first = NULL );
 	Panel* GetNavRight( Panel *first = NULL );
@@ -785,7 +785,7 @@ private:
 	MESSAGE_FUNC_INT_INT( InternalCursorMoved, "CursorMoved", xpos, ypos );
 	MESSAGE_FUNC( InternalCursorEntered, "CursorEntered" );
 	MESSAGE_FUNC( InternalCursorExited, "CursorExited" );
-	
+
 	MESSAGE_FUNC_INT( InternalMousePressed, "MousePressed", code );
 	MESSAGE_FUNC_INT( InternalMouseDoublePressed, "MouseDoublePressed", code );
 	// Triple presses are synthesized
@@ -930,7 +930,7 @@ private:
 	unsigned char m_roundedCorners;
 	//=============================================================================
 	// HPE_END
-	//=============================================================================	
+	//=============================================================================
 	friend class BuildGroup;
 	friend class BuildModeDialog;
 	friend class PHandle;
@@ -1009,7 +1009,7 @@ public:
 
 
 void VguiPanelGetSortedChildPanelList( Panel *pParentPanel, void *pSortedPanels );
-void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, char *pchFilter = NULL, int nFilterType = 0 );
+void VguiPanelGetSortedChildButtonList( Panel *pParentPanel, void *pSortedPanels, const char *pchFilter = NULL, int nFilterType = 0 );
 int VguiPanelNavigateSortedChildButtonList( void *pSortedPanels, int nDir );
 
 
