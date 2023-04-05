@@ -7,6 +7,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef MAPBASE
+// Stupid hack for Mapbase
+bool g_bUsingCustomHudAnimations = false;
+#endif
+
 static CDllDemandLoader s_GameUI( "GameUI" );
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( GamepadUI, IGamepadUI, GAMEPADUI_INTERFACE_VERSION, GamepadUI::GetInstance() );
