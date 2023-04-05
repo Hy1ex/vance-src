@@ -2,9 +2,9 @@
 # Base makefile for Linux and OSX
 #
 # !!!!! Note to future editors !!!!!
-# 
+#
 # before you make changes, make sure you grok:
-# 1. the difference between =, :=, +=, and ?= 
+# 1. the difference between =, :=, +=, and ?=
 # 2. how and when this base makefile gets included in the generated makefile(s)
 #  ( see http://www.gnu.org/software/make/manual/make.html#Flavors )
 #
@@ -35,7 +35,7 @@ else
 endif
 
 # CPPFLAGS == "c/c++ *preprocessor* flags" - not "cee-plus-plus flags"
-ARCH_FLAGS = 
+ARCH_FLAGS =
 BUILDING_MULTI_ARCH = 0
 # Preserve cflags set in environment
 ENV_CFLAGS := $(CFLAGS)
@@ -53,10 +53,8 @@ else
 endif
 DEFINES += -DVPROF_LEVEL=1 -DGNUC -DNO_HOOK_MALLOC -DNO_MALLOC_OVERRIDE
 LDFLAGS = $(CFLAGS) $(GCC_ExtraLinkerFlags) $(OptimizerLevel)
-GENDEP_CXXFLAGS = -MD -MP -MF $(@:.o=.P) 
+GENDEP_CXXFLAGS = -MD -MP -MF $(@:.o=.P)
 MAP_FLAGS =
-Srv_GAMEOUTPUTFILE = 
-COPY_DLL_TO_SRV = 0
 
 
 ifeq ($(STEAM_BRANCH),1)
@@ -120,7 +118,7 @@ ifeq ($(OS),Linux)
 		AR = $(VALVE_BINDIR)ar crs
 	endif
 	ifeq ($(origin CC),default)
-		CC = $(CCACHE) $(VALVE_BINDIR)gcc$(GCC_VER)	
+		CC = $(CCACHE) $(VALVE_BINDIR)gcc$(GCC_VER)
 	endif
 	ifeq ($(origin CXX), default)
 		CXX = $(CCACHE) $(VALVE_BINDIR)g++$(GCC_VER)
@@ -161,11 +159,6 @@ ifeq ($(OS),Linux)
 	endif
 	VSIGN ?= true
 
-	ifeq ($(SOURCE_SDK), 1)
-		Srv_GAMEOUTPUTFILE := $(GAMEOUTPUTFILE:.so=_srv.so)
-		COPY_DLL_TO_SRV := 1
-	endif
-
 	LINK_MAP_FLAGS = -Wl,-Map,$(@:.so=).map
 
 	SHLIBLDFLAGS = -shared $(LDFLAGS) -Wl,--no-undefined
@@ -178,7 +171,7 @@ ifeq ($(OS),Linux)
 		   $(_WRAP)mount $(_WRAP)mkfifo  $(_WRAP)mkdir   $(_WRAP)rmdir    $(_WRAP)scandir $(_WRAP)realpath
 
 	LIB_START_EXE = $(PATHWRAP) -static-libgcc -Wl,--start-group
-	LIB_END_EXE = -Wl,--end-group -lm -ldl $(LIBSTDCXX) -lpthread 
+	LIB_END_EXE = -Wl,--end-group -lm -ldl $(LIBSTDCXX) -lpthread
 
 	LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
 	LIB_END_SHLIB = -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
@@ -250,15 +243,15 @@ ifeq ($(OS),Darwin)
 	CFLAGS += -isysroot $(SYSROOT) -mmacosx-version-min=10.5 -fasm-blocks
 
 	LIB_START_EXE = -lm -ldl -lpthread
-	LIB_END_EXE = 
+	LIB_END_EXE =
 
-	LIB_START_SHLIB = 
-	LIB_END_SHLIB = 
+	LIB_START_SHLIB =
+	LIB_END_SHLIB =
 
-	SHLIBLDFLAGS = $(LDFLAGS) -bundle -flat_namespace -undefined suppress -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
+	SHLIBLDFLAGS = $(LDFLAGS) -bundle -flat_namespace -undefined suppress -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms
 
 	ifeq (lib,$(findstring lib,$(GAMEOUTPUTFILE)))
-		SHLIBLDFLAGS = $(LDFLAGS) -dynamiclib -current_version 1.0 -compatibility_version 1.0 -install_name @rpath/$(basename $(notdir $(GAMEOUTPUTFILE))).dylib $(SystemLibraries) -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
+		SHLIBLDFLAGS = $(LDFLAGS) -dynamiclib -current_version 1.0 -compatibility_version 1.0 -install_name @rpath/$(basename $(notdir $(GAMEOUTPUTFILE))).dylib $(SystemLibraries) -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms
 	endif
 
 endif
@@ -288,8 +281,8 @@ C_TO_OBJ = $(MM_TO_OBJ:.c=.o)
 OBJS = $(addprefix $(OBJ_DIR)/, $(notdir $(C_TO_OBJ)))
 
 ifeq ($(MAKE_VERBOSE),1)
-	QUIET_PREFIX = 
-	QUIET_ECHO_POSTFIX = 
+	QUIET_PREFIX =
+	QUIET_ECHO_POSTFIX =
 else
 	QUIET_PREFIX = @
 	QUIET_ECHO_POSTFIX = > /dev/null
@@ -314,9 +307,9 @@ endif
 # we generate dependencies as a side-effect of compilation now
 GEN_DEP_FILE=
 
-PRE_COMPILE_FILE = 
+PRE_COMPILE_FILE =
 
-POST_COMPILE_FILE = 
+POST_COMPILE_FILE =
 
 ifeq ($(BUILDING_MULTI_ARCH),1)
 	SINGLE_ARCH_CXXFLAGS=$(subst -arch x86_64,,$(CXXFLAGS))
@@ -359,8 +352,8 @@ else
 
 	P4_EDIT_START := for f in
 	P4_EDIT_END := ; do if [ -n $$f ]; then if [ -d $$f ]; then find $$f -type f -print | p4 -x - edit -c $(P4_EDIT_CHANGELIST); else p4 edit -c $(P4_EDIT_CHANGELIST) $$f; fi; fi; done $(QUIET_ECHO_POSTFIX)
-	P4_REVERT_START := for f in  
-	P4_REVERT_END := ; do if [ -n $$f ]; then if [ -d $$f ]; then find $$f -type f -print | p4 -x - revert; else p4 revert $$f; fi; fi; done $(QUIET_ECHO_POSTFIX) 
+	P4_REVERT_START := for f in
+	P4_REVERT_END := ; do if [ -n $$f ]; then if [ -d $$f ]; then find $$f -type f -print | p4 -x - revert; else p4 revert $$f; fi; fi; done $(QUIET_ECHO_POSTFIX)
 endif
 
 ifeq ($(CONFTYPE),dll)
@@ -447,8 +440,8 @@ cleantargets:
 	$(QUIET_PREFIX) rm -f $(OUTPUTFILE) $(GAMEOUTPUTFILE)
 
 
-$(LIB_File): $(OTHER_DEPENDENCIES) $(OBJS) 
-	$(QUIET_PREFIX) -$(P4_EDIT_START) $(LIB_File) $(P4_EDIT_END); 
+$(LIB_File): $(OTHER_DEPENDENCIES) $(OBJS)
+	$(QUIET_PREFIX) -$(P4_EDIT_START) $(LIB_File) $(P4_EDIT_END);
 	$(QUIET_PREFIX) $(AR) $(LIB_File) $(OBJS) $(LIBFILES);
 
 SO_GameOutputFile = $(GAMEOUTPUTFILE)
@@ -466,16 +459,9 @@ $(SO_GameOutputFile): $(SO_File)
 	$(QUIET_PREFIX) rm -f $(GAMEOUTPUTFILE) $(QUIET_ECHO_POSTFIX);
 	$(QUIET_PREFIX) cp -v $(OUTPUTFILE) $(GAMEOUTPUTFILE) $(QUIET_ECHO_POSTFIX);
 	$(QUIET_PREFIX) -$(P4_EDIT_START) $(GAMEOUTPUTFILE)$(SYM_EXT) $(P4_EDIT_END);
-	$(QUIET_PREFIX) $(GEN_SYM) $(GAMEOUTPUTFILE); 
+	$(QUIET_PREFIX) $(GEN_SYM) $(GAMEOUTPUTFILE);
 	$(QUIET_PREFIX) -$(STRIP) $(GAMEOUTPUTFILE);
 	$(QUIET_PREFIX) $(VSIGN) -signvalve $(GAMEOUTPUTFILE);
-	$(QUIET_PREFIX) if [ "$(COPY_DLL_TO_SRV)" = "1" ]; then\
-		echo "----" $(QUIET_ECHO_POSTFIX);\
-		echo "---- COPYING TO $(Srv_GAMEOUTPUTFILE) ----";\
-		echo "----" $(QUIET_ECHO_POSTFIX);\
-		cp -v $(GAMEOUTPUTFILE) $(Srv_GAMEOUTPUTFILE) $(QUIET_ECHO_POSTFIX);\
-		cp -v $(GAMEOUTPUTFILE)$(SYM_EXT) $(Srv_GAMEOUTPUTFILE)$(SYM_EXT) $(QUIET_ECHO_POSTFIX);\
-	fi;
 	$(QUIET_PREFIX) if [ "$(IMPORTLIBRARY)" != "" ]; then\
 		echo "----" $(QUIET_ECHO_POSTFIX);\
 		echo "---- COPYING TO IMPORT LIBRARY $(IMPORTLIBRARY) ----";\
