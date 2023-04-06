@@ -37,6 +37,7 @@ ConVar	sk_combine_j_health("sk_combine_j_health", "0");
 ConVar	sk_combine_j_kick("sk_combine_j_kick", "0");
 ConVar	sk_combine_j_speed("sk_combine_j_speed", "130");
 
+
 ConVar sk_metropolice_e_health("sk_metropolice_e_health", "0");
 
 ConVar sk_combine_guard_health("sk_combine_guard_health", "0");
@@ -73,6 +74,7 @@ void CNPC_CombineS::Spawn(void)
 
 	if (m_bIsEliteCop)
 	{
+		SetModel("models/elite_cop_s.mdl");
 		SetHealth(sk_metropolice_e_health.GetFloat());
 		SetMaxHealth(sk_metropolice_e_health.GetFloat());
 	}
@@ -126,7 +128,7 @@ void CNPC_CombineS::Precache()
 
 	if (!m_bIsEliteCop)
 	{
-		if (!Q_stricmp(pModelName, "models/combine_super_soldier.mdl"))
+		if (!Q_stricmp(pModelName, "models/elite_cop_s.mdl"))
 		{
 			m_fIsElite = true;
 		}
@@ -143,6 +145,7 @@ void CNPC_CombineS::Precache()
 
 	PrecacheModel(STRING(GetModelName()));
 	PrecacheModel("models/Combine_Juggernaut.mdl");
+	PrecacheModel("models/elite_cop_s.mdl");
 
 	UTIL_PrecacheOther("item_healthvial");
 	UTIL_PrecacheOther("weapon_frag");
