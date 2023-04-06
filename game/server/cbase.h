@@ -150,6 +150,7 @@ class CSound;
 #include "entitylist.h"
 #include "basetempentity.h"
 #include "player.h"
+#include "vance_player.h"
 #include "te.h"
 #include "physics.h"
 #include "ndebugoverlay.h"

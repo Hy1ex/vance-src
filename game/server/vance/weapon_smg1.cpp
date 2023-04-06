@@ -309,7 +309,6 @@ void CWeaponSMG1::PrimaryAttack()
 
 	BaseClass::PrimaryAttack();
 	// Msg("%.3f\n", m_flNextPrimaryAttack.Get() );
-	SetWeaponIdleTime(gpGlobals->curtime + 3.0f);
 
 	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
 	if (pOwner)

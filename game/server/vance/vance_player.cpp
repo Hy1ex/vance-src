@@ -55,21 +55,22 @@ extern ConVar sk_battery;
 
 extern int gEvilImpulse101;
 
-ConVar sk_max_tourniquets("sk_max_tourniquets", "3", FCVAR_CHEAT);
-ConVar sk_max_stims( "sk_max_stims", "3", FCVAR_CHEAT );
+ConVar sk_max_tourniquets("sk_max_tourniquets", "3", FCVAR_NONE);
+ConVar sk_max_stims("sk_max_stims", "3", FCVAR_NONE);
 
-ConVar sk_bleed_chance("sk_bleed_chance", "5", FCVAR_CHEAT, "The chance (in percentage) that the Player will bleed upon taking damage.");
-ConVar sk_bleed_chance_increment("sk_bleed_chance_increment", "0.5", FCVAR_CHEAT, "The amount of chance the Player will bleed will increment by when shot.");
-ConVar sk_bleed_chance_decay_start_time("sk_bleed_chance_decay_start_time", "10", FCVAR_CHEAT, "How long after being shot the bleed chance will start to decay.");
-ConVar sk_bleed_chance_decay_rate("sk_bleed_chance_decay_rate", "0.5", FCVAR_CHEAT);
+ConVar sk_bleed_chance("sk_bleed_chance", "1", FCVAR_NONE, "The chance (in percentage) that the Player will bleed upon taking damage.");
+ConVar sk_bleed_chance_increment("sk_bleed_chance_increment", "0.2", FCVAR_NONE, "The amount of chance the Player will bleed will increment by when shot.");
+ConVar sk_bleed_chance_decay_start_time("sk_bleed_chance_decay_start_time", "4", FCVAR_NONE, "How long after being shot the bleed chance will start to decay.");
+ConVar sk_bleed_chance_decay_rate("sk_bleed_chance_decay_rate", "0.5", FCVAR_NONE);
 
-ConVar sk_bleed_lifetime("sk_stim_regen_lifetime", "5", FCVAR_CHEAT);
-ConVar sk_bleed_dmg_per_interval("sk_bleed_dmg_per_interval", "5", FCVAR_CHEAT);
-ConVar sk_bleed_dmg_interval("sk_bleed_dmg_interval", "1", FCVAR_CHEAT);
+ConVar sk_bleed_lifetime("sk_bleed_lifetime", "5", FCVAR_NONE);
+ConVar sk_bleed_dmg_per_interval("sk_bleed_dmg_per_interval", "2", FCVAR_NONE);
+ConVar sk_bleed_dmg_interval("sk_bleed_dmg_interval", "1.5", FCVAR_NONE);
 
-ConVar sk_stim_regen_lifetime("sk_stim_regen_lifetime", "5", FCVAR_CHEAT);
-ConVar sk_stim_health_per_interval("sk_stim_health_per_sec", "5", FCVAR_CHEAT);
-ConVar sk_stim_heal_interval("sk_stim_heal_interval", "1", FCVAR_CHEAT);
+ConVar sk_stim_regen_lifetime("sk_stim_regen_lifetime", "5", FCVAR_NONE);
+ConVar sk_stim_health_per_interval("sk_stim_health_per_interval", "5", FCVAR_NONE);
+ConVar sk_stim_heal_interval("sk_stim_heal_interval", "1", FCVAR_NONE);
+ConVar sk_nextsprint_delay("sk_nextsprint_delay", "1.0", FCVAR_NONE);
 
 #define	VANCE_WALK_SPEED hl2_normspeed.GetFloat()
 #define	VANCE_SPRINT_SPEED hl2_sprintspeed.GetFloat()
@@ -82,23 +83,23 @@ ConVar sk_stim_heal_interval("sk_stim_heal_interval", "1", FCVAR_CHEAT);
 ConVar vance_climb_speed("vance_climb_speed", "0.025", FCVAR_CHEAT);
 ConVar vance_climb_checkray_count("vance_climb_checkray_count", "5", FCVAR_CHEAT);
 ConVar vance_climb_checkray_dist("vance_climb_checkray_dist", "64", FCVAR_CHEAT);
-ConVar vance_climb_checkray_allowedheight( "dark_climb_checkray_allowedheight", "60", FCVAR_CHEAT );
+ConVar vance_climb_checkray_allowedheight( "vance_climb_checkray_allowedheight", "60", FCVAR_CHEAT );
 // 10 is just enough to jump on the 64 unit tall wall
-ConVar vance_climb_checkray_height( "dark_climb_checkray_height", "10", FCVAR_CHEAT );
+ConVar vance_climb_checkray_height( "vance_climb_checkray_height", "10", FCVAR_CHEAT );
 ConVar vance_climb_debug("vance_climb_debug", "0");
 #define CLIMB_TRACE_DIST		vance_climb_checkray_dist.GetFloat()
 #define CLIMB_LERPSPEED			vance_climb_speed.GetFloat();
 
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
-ConVar vance_kick_powerscale( "kick_powerscale", "1", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
+ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
 ConVar vance_kick_range("kick_range", "100", FCVAR_CHEAT);
 ConVar vance_kick_firerate("kick_firerate", "1", FCVAR_CHEAT);
 
-ConVar vance_kick_damage_mult_min("kick_damage_mult_min", "1", FCVAR_CHEAT);
-ConVar vance_kick_damage_mult_max("kick_damage_mult_max", "1", FCVAR_CHEAT);
+ConVar vance_kick_damage_mult_min("kick_damage_mult_min", "1.2", FCVAR_CHEAT);
+ConVar vance_kick_damage_mult_max("kick_damage_mult_max", "2", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_min("kick_force_mult_min", "1", FCVAR_CHEAT);
-ConVar vance_kick_force_mult_max("kick_force_mult_max", "1", FCVAR_CHEAT);
+ConVar vance_kick_force_mult_max("kick_force_mult_max", "2", FCVAR_CHEAT);
 
 LINK_ENTITY_TO_CLASS( vance_player, CVancePlayer );
 PRECACHE_REGISTER( vance_player );
@@ -184,12 +185,15 @@ void CVancePlayer::Precache()
 
 	PrecacheModel( P_PLAYER_ALYX );
 	PrecacheModel( P_PLAYER_HEV );
+	PrecacheModel( P_PLAYER_SYNTH );
 
 	PrecacheModel( C_ARMS_ALYX );
 	PrecacheModel( C_ARMS_HEV );
+	PrecacheModel( C_ARMS_SYNTH );
 
 	PrecacheModel( V_KICK_ALYX ); //SMOD KICK STUFF!
 	PrecacheModel( V_KICK_HEV );
+	PrecacheModel( V_KICK_SYNTH );
 
 	PrecacheModel( "models/weapons/v_stim.mdl" );
 
@@ -294,6 +298,38 @@ void CVancePlayer::EquipSuit(bool bPlayEffects)
 	}
 }
 
+void CVancePlayer::EquipSynth(bool bPlayEffects)
+{
+	MDLCACHE_CRITICAL_SECTION();
+	bool bHadSynth = IsSynthEquipped();
+
+	m_Local.m_bWearingSynth = true;
+
+	m_HL2Local.m_bDisplayReticle = true;
+
+	// Force redeploy weapon to update the arm model.
+	if (!bHadSynth && (GetActiveWeapon() && !IsInAVehicle()))
+	{
+		PhysCannonForceDrop(GetActiveWeapon(), NULL);
+		GetActiveWeapon()->Deploy();
+	}
+
+	// Update that bod.
+	if (IsSynthEquipped() != bHadSynth)
+	{
+		SetModel(GetPlayerWorldModel());
+
+		CBaseViewModel* pLeg = GetViewModel(VM_LEGS);
+		if (pLeg)
+			pLeg->SetWeaponModel(GetLegsViewModel(), NULL);
+	}
+
+	if (bPlayEffects)
+	{
+		StartAdmireGlovesAnimation();
+	}
+}
+
 void CVancePlayer::RemoveSuit()
 {
 	bool bHadSuit = IsSuitEquipped();
@@ -311,6 +347,32 @@ void CVancePlayer::RemoveSuit()
 
 	// Update that bod.
 	if (IsSuitEquipped() != bHadSuit)
+	{
+		SetModel(GetPlayerWorldModel());
+
+		CBaseViewModel* pLeg = GetViewModel(VM_LEGS);
+		if (pLeg)
+			pLeg->SetWeaponModel(GetLegsViewModel(), NULL);
+	}
+}
+
+void CVancePlayer::RemoveSynth()
+{
+	bool bHadSynth = IsSynthEquipped();
+
+	m_Local.m_bWearingSynth = false;
+
+	m_HL2Local.m_bDisplayReticle = false;
+
+	// Force redeploy weapon to update the arm model.
+	if (bHadSynth && (GetActiveWeapon() && !IsInAVehicle()))
+	{
+		PhysCannonForceDrop(GetActiveWeapon(), NULL);
+		GetActiveWeapon()->Deploy();
+	}
+
+	// Update that bod.
+	if (IsSynthEquipped() != bHadSynth)
 	{
 		SetModel(GetPlayerWorldModel());
 
@@ -1331,7 +1393,7 @@ void CVancePlayer::PostThink()
 		if (m_nButtons & (IN_ATTACK | IN_ATTACK2))
 		{
 			StopSprinting();
-			m_flNextSprint = gpGlobals->curtime + 1.0f;
+			m_flNextSprint = gpGlobals->curtime + sk_nextsprint_delay.GetFloat();
 		}
 	}
 

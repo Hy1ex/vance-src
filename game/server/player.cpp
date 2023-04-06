@@ -8634,6 +8634,7 @@ void CBasePlayer::RemoveSuit( void )
 	m_Local.m_bWearingSuit = false;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &tr - 

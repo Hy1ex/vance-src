@@ -6,12 +6,15 @@
 
 #define P_PLAYER_ALYX	"models/player/alyx.mdl"
 #define P_PLAYER_HEV	"models/player/hev.mdl"
+#define P_PLAYER_SYNTH	"models/player/synth.mdl"
 
 #define C_ARMS_ALYX		"models/weapons/v_arms_nosuit.mdl"
 #define C_ARMS_HEV		"models/weapons/v_arms_suit.mdl"
+#define C_ARMS_SYNTH		"models/weapons/v_arms_synth.mdl"
 
 #define V_KICK_ALYX		"models/weapons/v_kick_nosuit.mdl"
 #define V_KICK_HEV		"models/weapons/v_kick_suit.mdl"
+#define V_KICK_SYNTH		"models/weapons/v_kick_synth.mdl"
 
 enum class ParkourAction
 {
@@ -50,7 +53,13 @@ public:
 	bool					IsSpawning() { return m_bSpawning; }
 
 	virtual void			EquipSuit(bool bPlayEffects);
+	virtual void			EquipSynth(bool bPlayEffects);
 	virtual void			RemoveSuit();
+	virtual void			RemoveSynth();
+
+
+	bool	IsSynthEquipped() const	{ return m_Local.m_bWearingSynth; }
+	bool					bHasSynth;
 
 	virtual void			CreateViewModel(int iViewModel = 0);
 
@@ -97,12 +106,35 @@ public:
 
 	void					Think();
 
-	virtual bool			CanBreatheUnderwater() const { return IsSuitEquipped() && m_HL2Local.m_flSuitPower > 0.0f; }
+	inline bool CanBreathUnderwater() const { return (IsSuitEquipped() || IsSynthEquipped()) && m_HL2Local.m_flSuitPower > 0.0f ;}
 
-	inline const char		*GetPlayerWorldModel() const { return IsSuitEquipped() ? P_PLAYER_HEV : P_PLAYER_ALYX; }
-	inline const char		*GetLegsViewModel() const { return IsSuitEquipped() ? V_KICK_HEV : V_KICK_ALYX; }
-	inline const char		*GetArmsViewModel() const { return IsSuitEquipped() ? C_ARMS_HEV : C_ARMS_ALYX; }
-	
+	inline const char* GetPlayerWorldModel() const {
+		if (IsSynthEquipped())
+			return P_PLAYER_SYNTH;
+		else if (IsSuitEquipped())
+			return P_PLAYER_HEV;
+
+		return P_PLAYER_ALYX;
+	}
+
+	inline const char* GetLegsViewModel() const {
+		if (IsSynthEquipped())
+			return V_KICK_SYNTH;
+		else if (IsSuitEquipped())
+			return V_KICK_HEV;
+
+		return V_KICK_ALYX;
+	}
+
+	inline const char* GetArmsViewModel() const {
+		if (IsSynthEquipped())
+			return C_ARMS_SYNTH;
+		else if (IsSuitEquipped())
+			return C_ARMS_HEV;
+
+		return C_ARMS_ALYX;
+	}
+
 	inline bool				IsBleeding() const { return m_bBleeding; }
 
 	void					UseStimOrTourniquet();
