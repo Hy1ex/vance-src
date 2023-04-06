@@ -101,8 +101,8 @@ ConVar vance_kick_damage_mult_max("kick_damage_mult_max", "2", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_min("kick_force_mult_min", "1", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_max("kick_force_mult_max", "2", FCVAR_CHEAT);
 
-LINK_ENTITY_TO_CLASS( vance_player, CVancePlayer );
-PRECACHE_REGISTER( vance_player );
+LINK_ENTITY_TO_CLASS( player, CVancePlayer );
+PRECACHE_REGISTER( player );
 
 BEGIN_DATADESC( CVancePlayer )
 END_DATADESC()
@@ -176,7 +176,7 @@ CVancePlayer::~CVancePlayer()
 CVancePlayer *CVancePlayer::Create( edict_t *pEdict )
 {
 	CHL2_Player::s_PlayerEdict = pEdict;
-	return static_cast<CVancePlayer *>( CreateEntityByName( "vance_player" ) );
+	return static_cast<CVancePlayer *>( CreateEntityByName( "player" ) );
 }
 
 void CVancePlayer::Precache()
