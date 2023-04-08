@@ -1751,8 +1751,8 @@ void CVancePlayer::KickAttack()
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
-	Vector vecForward;
-	EyeVectors( &vecForward );
+	Vector vecForward; // , vecRight, vecUp;
+	EyeVectors(&vecForward );// , &vecRight, &vecUp);
 
 	Vector swingStart = Weapon_ShootPosition();
 	Vector swingEnd = swingStart + vecForward * vance_kick_range.GetFloat();
@@ -1797,7 +1797,7 @@ void CVancePlayer::KickAttack()
 		EmitSound("HL2Player.KickHit");
 		UTIL_ScreenShake( GetAbsOrigin(), 4.0f, 10.0f, 0.25f, 1000, SHAKE_START, false );
 	}
-	else
+	else //this can probably be removed since the normal cloth foley sounds are handled in the model as an anim event
 	{
 		EmitSound("HL2Player.KickMiss");
 	}
