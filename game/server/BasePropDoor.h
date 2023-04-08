@@ -58,6 +58,12 @@ public:
 			// Play door unlock sounds.
 		//	PlayLockSounds(this, &m_ls, false, false);
 			m_bKickedOpen = true;
+			if (m_bLocked) {
+				EmitSound("AlyxPlayer.KickDoorLocked");
+			}
+			else {
+				EmitSound("AlyxPlayer.KickDoor");
+			}
 			Unlock();
 			DoorOpen(info.GetAttacker());
 			return 0;

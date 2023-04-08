@@ -246,6 +246,10 @@ void CBaseProp::Precache( void )
 	PrecacheScriptSound( "Metal.SawbladeStick" );
 	PrecacheScriptSound( "PropaneTank.Burst" );
 
+	//vance door kick
+	PrecacheScriptSound("AlyxPlayer.KickDoor");
+	PrecacheScriptSound("AlyxPlayer.KickDoorLocked");
+
 #ifdef HL2_EPISODIC
 	UTIL_PrecacheOther( "env_flare" );
 #endif
@@ -5290,7 +5294,7 @@ void CPropDoorRotating::BeginOpening(CBaseEntity *pOpenAwayFrom)
 	}
 
 #ifdef VANCE
-	AngularMove(angOpen, m_bKickedOpen ? m_flSpeed * 3.0f : m_flSpeed);
+	AngularMove(angOpen, m_bKickedOpen ? m_flSpeed * 10.0f : m_flSpeed);
 	m_bKickedOpen = false;
 #else
 	AngularMove(angOpen, m_flSpeed);
@@ -5318,7 +5322,7 @@ void CPropDoorRotating::BeginClosing( void )
 	}
 	
 #ifdef VANCE
-	AngularMove(m_angRotationClosed, m_bKickedOpen ? m_flSpeed * 3.0f : m_flSpeed);
+	AngularMove(m_angRotationClosed, m_bKickedOpen ? m_flSpeed * 10.0f : m_flSpeed);
 #else
 	AngularMove(m_angRotationClosed, m_flSpeed);
 #endif
