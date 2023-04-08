@@ -1751,14 +1751,29 @@ void CVancePlayer::KickAttack()
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
-	Vector vecForward; // , vecRight, vecUp;
-	EyeVectors(&vecForward );// , &vecRight, &vecUp);
+	Vector vecForward, vecRight, vecUp;
+	EyeVectors(&vecForward, &vecRight, &vecUp);
 
 	Vector swingStart = Weapon_ShootPosition();
 	Vector swingEnd = swingStart + vecForward * vance_kick_range.GetFloat();
 
 	trace_t tr;
 	UTIL_TraceLine( swingStart, swingEnd, MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr );
+
+	//if the first trace for the crosshair didnt connect, do a second trace for the general area of the actual foot, its low on the screen so people (me) tend to aim high when kicking to have the foot visually connect
+	if (!tr.DidHitNonWorldEntity())
+	{
+		Vector swingStart2 = Weapon_ShootPosition() + vecUp * -10 + vecRight * 7;
+		Vector swingEnd2 = swingStart + vecForward * vance_kick_range.GetFloat() + vecUp * -30 + vecRight * 10;
+
+		trace_t tr2;
+		UTIL_TraceLine(swingStart2, swingEnd2, MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr2);
+
+		if (tr2.DidHitNonWorldEntity())
+		{
+			tr = tr2; //overwrite the first line trace with the cooler one
+		}
+	}
 
 	// Like bullets, bludgeon traces have to trace against triggers.
 	CTakeDamageInfo triggerInfo(this, this, 20 * vance_kick_powerscale.GetFloat() * flDamageMult, DMG_KICK);

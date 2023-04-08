@@ -1037,10 +1037,10 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
 	CTakeDamageInfo info = inputInfo;
 
-	//vance kick damage handling
+	//vance kicking things shouldnt blow them up
 	if (info.GetDamageType() == DMG_KICK && m_explodeDamage > 0)
 	{
-		info.SetDamage(0);
+		info.SetDamage(0.0f);
 	}
 
 	// If attacker can't do at least the min required damage to us, don't take any damage from them
