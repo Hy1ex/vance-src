@@ -95,11 +95,12 @@ ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The defaul
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
 ConVar vance_kick_range("kick_range", "100", FCVAR_CHEAT);
 ConVar vance_kick_firerate("kick_firerate", "1", FCVAR_CHEAT);
-
 ConVar vance_kick_damage_mult_min("kick_damage_mult_min", "1.2", FCVAR_CHEAT);
 ConVar vance_kick_damage_mult_max("kick_damage_mult_max", "2", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_min("kick_force_mult_min", "1", FCVAR_CHEAT);
 ConVar vance_kick_force_mult_max("kick_force_mult_max", "2", FCVAR_CHEAT);
+ConVar vance_kick_bounce_scale("kick_bounce_scale", "1", FCVAR_CHEAT);
+ConVar vance_kick_knockback_scale("kick_knockback_scale", "1", FCVAR_CHEAT);
 
 LINK_ENTITY_TO_CLASS( player, CVancePlayer );
 PRECACHE_REGISTER( player );
@@ -1423,7 +1424,12 @@ void CVancePlayer::PostThink()
 
 	CBaseViewModel *pLegsViewModel = GetViewModel( VM_LEGS );
 
-	if (m_afButtonReleased & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime)
+	if (m_afButtonPressed & IN_THROWGRENADE)
+	{
+		CreateGrenade();
+	}
+
+	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime)
 	{
 		// Play a kick animation for the legs
 		if ( pLegsViewModel )
@@ -1817,11 +1823,11 @@ void CVancePlayer::KickAttack()
 		//kick off walls
 		if (!(GetFlags() & FL_ONGROUND) && bDropKick)
 		{
-			SetAbsVelocity(GetAbsVelocity() + vecForward * -100 + Vector(0,0,30) + tr.plane.normal * 150);
+			SetAbsVelocity(GetAbsVelocity() + vecForward * -100 * vance_kick_bounce_scale.GetFloat() + Vector(0, 0, 30) * vance_kick_bounce_scale.GetFloat() + tr.plane.normal * 150 * vance_kick_bounce_scale.GetFloat());
 			bDropKick = false;
 		}
 		else if (tr.DidHitWorld()) {
-			SetAbsVelocity(GetAbsVelocity() + vecForward * -75);
+			SetAbsVelocity(GetAbsVelocity() + vecForward * -75 * vance_kick_knockback_scale.GetFloat());
 		}
 	}
 	else //this can probably be removed since the normal cloth foley sounds are handled in the model as an anim event

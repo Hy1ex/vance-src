@@ -143,8 +143,8 @@ static	kbutton_t	in_zoom;
 static  kbutton_t   in_grenade1;
 static  kbutton_t   in_grenade2;
 static	kbutton_t	in_attack3;
+static  kbutton_t   in_throwgrenade;
 kbutton_t	in_ducktoggle;
-kbutton_t in_throwgrenade;
 
 /*
 ===========
