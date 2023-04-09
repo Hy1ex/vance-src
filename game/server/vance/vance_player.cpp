@@ -1823,10 +1823,24 @@ void CVancePlayer::KickAttack()
 		//kick off walls
 		if (!(GetFlags() & FL_ONGROUND) && bDropKick)
 		{
-			SetAbsVelocity(GetAbsVelocity() + vecForward * -100 * vance_kick_bounce_scale.GetFloat() + Vector(0, 0, 30) * vance_kick_bounce_scale.GetFloat() + tr.plane.normal * 150 * vance_kick_bounce_scale.GetFloat());
+			if (tr.DidHitWorld())
+			{
+				SetAbsVelocity((GetAbsVelocity() 
+					+ vecForward * -100 * vance_kick_bounce_scale.GetFloat() //boost backwards away from look direction
+					+ tr.plane.normal * 150 * vance_kick_bounce_scale.GetFloat() //boost in direction of impact normal
+					- GetAbsVelocity() * tr.plane.normal //nullify existing velocity that is aligned to impact normal
+					)* Vector(1, 1, 1 - abs(tr.plane.normal.z)) //remove z velocity as impact normal z aproaches horizontal
+					+ GetAbsVelocity() * Vector(0, 0, abs(tr.plane.normal.z)) //add back original z velocity to replace the modified z velocity we just removed
+					+ Vector(0, 0, 30) * vance_kick_bounce_scale.GetFloat()); //boost upwards
+			}
+			else {
+				Vector newVelocity = GetAbsVelocity() + vecForward * -120 * vance_kick_bounce_scale.GetFloat() + tr.plane.normal * 50 * vance_kick_bounce_scale.GetFloat();
+				SetAbsVelocity(Vector(newVelocity.x,newVelocity.y,GetAbsVelocity().z));
+			}
 			bDropKick = false;
 		}
-		else if (tr.DidHitWorld()) {
+		else if (tr.DidHitWorld())
+		{
 			SetAbsVelocity(GetAbsVelocity() + vecForward * -75 * vance_kick_knockback_scale.GetFloat());
 		}
 	}
