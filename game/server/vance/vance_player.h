@@ -165,6 +165,9 @@ private:
 	bool		m_bSpawning;
 	float		m_flNextPainSound;
 
+	// kick
+	bool		bDropKick;
+
 	// Gestures
 	GestureAction m_PerformingGesture;
 	float		m_fGestureFinishTime;

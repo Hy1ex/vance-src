@@ -1432,10 +1432,12 @@ void CVancePlayer::PostThink()
 			if ( GetGroundEntity() == nullptr )
 			{
 				idealSequence = pLegsViewModel->SelectWeightedSequence( ACT_VM_SECONDARYATTACK );
+				bDropKick = true;
 			}
 			else
 			{
 				idealSequence = pLegsViewModel->SelectWeightedSequence( ACT_VM_PRIMARYATTACK );
+				bDropKick = false;
 			}
 
 			if ( idealSequence >= 0 )
@@ -1811,6 +1813,16 @@ void CVancePlayer::KickAttack()
 	{
 		EmitSound("HL2Player.KickHit");
 		UTIL_ScreenShake( GetAbsOrigin(), 4.0f, 10.0f, 0.25f, 1000, SHAKE_START, false );
+
+		//kick off walls
+		if (!(GetFlags() & FL_ONGROUND) && bDropKick)
+		{
+			SetAbsVelocity(GetAbsVelocity() + vecForward * -100 + Vector(0,0,30) + tr.plane.normal * 150);
+			bDropKick = false;
+		}
+		else if (tr.DidHitWorld()) {
+			SetAbsVelocity(GetAbsVelocity() + vecForward * -75);
+		}
 	}
 	else //this can probably be removed since the normal cloth foley sounds are handled in the model as an anim event
 	{
