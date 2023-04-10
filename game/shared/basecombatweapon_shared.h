@@ -355,6 +355,7 @@ public:
 
 	virtual int				GetSkinOverride() const { return -1; }
 
+
 public:
 
 	// Weapon info accessors for data in the weapon's data file
@@ -588,6 +589,8 @@ public:
 	bool					SetIdealActivity( Activity ideal );
 	void					MaintainIdealActivity( void );
 
+	bool					m_DoNotDisturb;
+
 protected:
 	float					m_flHolsterTime;
 	bool					m_bHolstering;
@@ -600,7 +603,6 @@ private:
 
 	int						m_iPrimaryAmmoCount;
 	int						m_iSecondaryAmmoCount;
-
 
 public:
 

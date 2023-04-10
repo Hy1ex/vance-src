@@ -1242,6 +1242,8 @@ void CVancePlayer::UseTourniquet()
 		m_PerformingGesture = GestureAction::EquippingTourniquet;
 	}
 
+	GetActiveWeapon()->m_DoNotDisturb = true;
+
 	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
 	if ( pViewModel )
 	{
@@ -1265,6 +1267,8 @@ void CVancePlayer::UseStim()
 	{
 		m_PerformingGesture = GestureAction::InjectingStim;
 	}
+
+	GetActiveWeapon()->m_DoNotDisturb = true;
 
 	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
 	if ( pViewModel )
@@ -1333,6 +1337,9 @@ void CVancePlayer::PostThink()
 		switch ( m_PerformingGesture )
 		{
 			case GestureAction::InjectingStim:
+				GetActiveWeapon()->m_DoNotDisturb = false;
+				GetActiveWeapon()->Deploy();
+
 				m_bStimRegeneration = true;
 				m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
 				m_fStimRegenerationEndTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat() +
@@ -1340,6 +1347,9 @@ void CVancePlayer::PostThink()
 				m_iNumStims--;
 				break;
 			case GestureAction::EquippingTourniquet:
+				GetActiveWeapon()->m_DoNotDisturb = false;
+				GetActiveWeapon()->SetIdealActivity(GetActiveWeapon()->GetDrawActivity());
+
 				m_bBleeding = false;
 				m_iNumTourniquets--;
 				break;
