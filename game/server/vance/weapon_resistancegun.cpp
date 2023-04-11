@@ -292,27 +292,17 @@ void CWeaponResistanceGun::ItemPostFrame()
 
 	CheckReload();
 
+	BaseClass::ItemPostFrame();
+
 	if ((((pPlayer->m_afButtonPressed & IN_RELOAD) && (m_iClip1 < GetMaxClip1())) || (m_iClip1 == 0)) && !m_bInReload && !m_bInBurst)
-	{
-		Reload();
 		return;
-	}
 
 	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime) && m_bSemiAutoMode) // shoot as fast as the player can click
-	{
-		PrimaryAttack();
 		return;
-	}
 	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) && !m_bSemiAutoMode) // if we're holding shoot at a slower speed
-	{
-		PrimaryAttack();
 		return;
-	}
 	else if ((pPlayer->m_afButtonPressed & IN_ATTACK2) && (m_flNextSecondaryAttack <= gpGlobals->curtime)) // switch modes
-	{
-		SecondaryAttack();
 		return;
-	}
 
 	// We always return if we're doing something,
 	// so here we're idling

@@ -565,6 +565,11 @@ void CVancePlayer::CreateGrenade( void )
 //-----------------------------------------------------------------------------
 void CVancePlayer::PreThink()
 {
+	if (m_PerformingGesture != GestureAction::None)
+	{
+		m_nButtons &= ~(IN_ATTACK | IN_ALT1 | IN_ALT2 | IN_GRENADE1 | IN_GRENADE2 | IN_ATTACK2 | IN_RELOAD);
+	}
+
 	if (player_showpredictedposition.GetBool())
 	{
 		Vector	predPos;
@@ -1241,8 +1246,9 @@ void CVancePlayer::UseTourniquet()
 	{
 		m_PerformingGesture = GestureAction::EquippingTourniquet;
 	}
-
-	GetActiveWeapon()->m_DoNotDisturb = true;
+	else {
+		return;
+	}
 
 	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
 	if ( pViewModel )
@@ -1256,6 +1262,9 @@ void CVancePlayer::UseTourniquet()
 			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
 		}
 	}
+
+	GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+	GetActiveWeapon()->AbortReload();
 }
 
 void CVancePlayer::UseStim()
@@ -1267,8 +1276,9 @@ void CVancePlayer::UseStim()
 	{
 		m_PerformingGesture = GestureAction::InjectingStim;
 	}
-
-	GetActiveWeapon()->m_DoNotDisturb = true;
+	else {
+		return;
+	}
 
 	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>( GetViewModel() );
 	if ( pViewModel )
@@ -1282,6 +1292,9 @@ void CVancePlayer::UseStim()
 			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
 		}
 	}
+
+	GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+	GetActiveWeapon()->AbortReload();
 }
 
 bool CVancePlayer::GiveTourniquet( int count )
@@ -1337,7 +1350,7 @@ void CVancePlayer::PostThink()
 		switch ( m_PerformingGesture )
 		{
 			case GestureAction::InjectingStim:
-				GetActiveWeapon()->m_DoNotDisturb = false;
+				GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
 				GetActiveWeapon()->Deploy();
 
 				m_bStimRegeneration = true;
@@ -1347,8 +1360,8 @@ void CVancePlayer::PostThink()
 				m_iNumStims--;
 				break;
 			case GestureAction::EquippingTourniquet:
-				GetActiveWeapon()->m_DoNotDisturb = false;
-				GetActiveWeapon()->SetIdealActivity(GetActiveWeapon()->GetDrawActivity());
+				GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
+				GetActiveWeapon()->Deploy();
 
 				m_bBleeding = false;
 				m_iNumTourniquets--;
@@ -1422,7 +1435,7 @@ void CVancePlayer::PostThink()
 		{
 			pWeaponViewModel->SetPlaybackRate( playbackSpeed );
 		}
-		else if ( activity == pWeapon->GetSprintActivity() )
+		else if ( activity == pWeapon->GetSprintActivity() && m_PerformingGesture == GestureAction::None)
 		{
 			pWeaponViewModel->SetPlaybackRate( GetFlags() & FL_ONGROUND ? playbackSpeed : 0.1f );
 		}

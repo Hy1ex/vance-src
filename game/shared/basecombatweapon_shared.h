@@ -589,7 +589,7 @@ public:
 	bool					SetIdealActivity( Activity ideal );
 	void					MaintainIdealActivity( void );
 
-	bool					m_DoNotDisturb;
+	float					m_fDoNotDisturb = 0.0f;
 
 protected:
 	float					m_flHolsterTime;

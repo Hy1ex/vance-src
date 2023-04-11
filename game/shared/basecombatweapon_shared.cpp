@@ -1205,7 +1205,7 @@ void CBaseCombatWeapon::SetViewModel()
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SendWeaponAnim( int iActivity )
 {
-	if(m_DoNotDisturb)
+	if (m_fDoNotDisturb > gpGlobals->curtime)
 	{
 		return false;
 	}
@@ -1503,6 +1503,10 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 	if ( GetActivity() == ACT_VM_HOLSTER )
 	{
 		flSequenceDuration = SequenceDuration();
+	}
+
+	if (m_fDoNotDisturb - gpGlobals->curtime && (!flSequenceDuration || flSequenceDuration < m_fDoNotDisturb - gpGlobals->curtime)){
+		flSequenceDuration = m_fDoNotDisturb - gpGlobals->curtime;
 	}
 
 	CBaseCombatCharacter *pOwner = GetOwner();
