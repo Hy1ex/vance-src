@@ -28,7 +28,8 @@ enum class GestureAction
 {
 	None,
 	InjectingStim,
-	EquippingTourniquet
+	EquippingTourniquet,
+	ThrowingGrenade
 };
 
 class CVancePlayer : public CHL2_Player
@@ -64,8 +65,8 @@ public:
 	virtual void			CreateViewModel(int iViewModel = 0);
 
 	void					HandleSpeedChanges();
-	void					HandleThrowGrenade( void );
 	void					ThrowGrenade( void );
+	void					ThrowingGrenade( void );
 	void					CreateGrenade( void );
 
 	void					Heal(int health); // move these to CBasePlayer at some point
@@ -192,10 +193,12 @@ private:
 	float		m_fStimRegenerationEndTime;
 
 	//QUick Grenade
-	float		timeholster;
-	float		timethrow;
-	float		timedeploy;
-	bool		WantThrow;
+	float		m_fTimeToReady = 0.0f;
+	bool		m_bWantsToThrow = false;
+	float		m_fNadeDetTime;
+	float		m_fNextBlipTime;
+	float		m_fWarnAITime;
+	bool		m_bWarnedAI;
 
 	// Parkour
 	ParkourAction m_ParkourAction;

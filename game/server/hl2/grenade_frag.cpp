@@ -48,7 +48,7 @@ public:
 	void	SetTimer( float detonateDelay, float warnDelay );
 	void	SetVelocity( const Vector &velocity, const AngularImpulse &angVelocity );
 	int		OnTakeDamage( const CTakeDamageInfo &inputInfo );
-	void	BlipSound() { EmitSound( "Grenade.Blip" ); }
+	void	BlipSound(){ EmitSound("Grenade.Blip"); };
 	void	DelayThink();
 	void	VPhysicsUpdate( IPhysicsObject *pPhysics );
 	void	OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
@@ -56,6 +56,8 @@ public:
 	bool	IsCombineSpawned( void ) const { return m_combineSpawned; }
 	void	SetPunted( bool punt ) { m_punted = punt; }
 	bool	WasPunted( void ) const { return m_punted; }
+
+	void	SetupOverrideBlips(bool useOverrideBlips, float	NextBlipTime);
 
 	// this function only used in episodic.
 #if defined(HL2_EPISODIC) && 0 // FIXME: HandleInteraction() is no longer called now that base grenade derives from CBaseAnimating
@@ -72,6 +74,8 @@ protected:
 	bool	m_inSolid;
 	bool	m_combineSpawned;
 	bool	m_punted;
+
+	bool	m_bUseOverrideBlips = false;
 };
 
 LINK_ENTITY_TO_CLASS( npc_grenade_frag, CGrenadeFrag );
@@ -126,7 +130,6 @@ void CGrenadeFrag::Spawn( void )
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 	CreateVPhysics();
 
-	BlipSound();
 	m_flNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FREQUENCY;
 
 	AddSolidFlags( FSOLID_NOT_STANDABLE );
@@ -416,8 +419,10 @@ void CGrenadeFrag::InputSetTimer( inputdata_t &inputdata )
 	SetTimer( inputdata.value.Float(), inputdata.value.Float() - FRAG_GRENADE_WARN_TIME );
 }
 
-CBaseGrenade *Fraggrenade_Create( const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, CBaseEntity *pOwner, float timer, bool combineSpawned )
+CBaseGrenade *Fraggrenade_Create(const Vector &position, const QAngle &angles, const Vector &velocity, const AngularImpulse &angVelocity, CBaseEntity *pOwner, float timer, bool combineSpawned, bool blipOverrideTiming, float NextBlipTime)
 {
+	
+
 	// Don't set the owner here, or the player can't interact with grenades he's thrown
 	CGrenadeFrag *pGrenade = (CGrenadeFrag *)CBaseEntity::Create( "npc_grenade_frag", position, angles, pOwner );
 	
@@ -427,7 +432,22 @@ CBaseGrenade *Fraggrenade_Create( const Vector &position, const QAngle &angles, 
 	pGrenade->m_takedamage = DAMAGE_EVENTS_ONLY;
 	pGrenade->SetCombineSpawned( combineSpawned );
 
+	pGrenade->SetupOverrideBlips(blipOverrideTiming, NextBlipTime);
+
 	return pGrenade;
+}
+
+void CGrenadeFrag::SetupOverrideBlips(bool useOverrideBlips, float NextBlipTime)
+{
+	m_bUseOverrideBlips = useOverrideBlips;
+	if (!useOverrideBlips)
+	{
+		BlipSound();
+	}
+	else
+	{
+		m_flNextBlipTime = NextBlipTime;
+	}
 }
 
 bool Fraggrenade_WasPunted( const CBaseEntity *pEntity )

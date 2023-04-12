@@ -444,7 +444,7 @@ void CNPC_HAssassin::HandleAnimEvent(animevent_t* pEvent)
 
 		GetAttachment("RightHand", vTossPos, vAngles);
 
-		CBaseGrenade* pGrenade = Fraggrenade_Create(vTossPos, vAngles, vec3_origin, AngularImpulse(Vector(random->RandomFloat(-30.0f,30.0f), random->RandomFloat(-30.0f, 30.0f), random->RandomFloat(-30.0f, 30.0f))), this, 3.0f, true);
+		CBaseGrenade* pGrenade = Fraggrenade_Create(vTossPos, vAngles, vec3_origin, AngularImpulse(Vector(random->RandomFloat(-30.0f, 30.0f), random->RandomFloat(-30.0f, 30.0f), random->RandomFloat(-30.0f, 30.0f))), this, 3.0f, true, false, 0.0f);
 
 		if (pGrenade)
 		{

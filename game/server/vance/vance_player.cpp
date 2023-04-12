@@ -40,6 +40,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+//stuff for emulating frag blips
+#define FRAG_GRENADE_BLIP_FREQUENCY			1.0f
+#define FRAG_GRENADE_BLIP_FAST_FREQUENCY	0.3f
+#define FRAG_GRENADE_WARN_TIME 1.5f
+
 extern ConVar player_showpredictedposition;
 extern ConVar player_showpredictedposition_timestep;
 
@@ -200,6 +205,8 @@ void CVancePlayer::Precache()
 
 	PrecacheScriptSound( "HL2Player.KickHit" );
 	PrecacheScriptSound( "HL2Player.KickMiss" );
+	
+	PrecacheScriptSound("Grenade.Blip");
 
 	PrecacheScriptSound( "AlyxPlayer.PainHeavy" );
 
@@ -461,103 +468,6 @@ void CVancePlayer::HandleSpeedChanges()
 			StopWalking();
 		}
 	}
-}
-
-void CVancePlayer::HandleThrowGrenade( void )
-{
-	if ( ( m_afButtonPressed & IN_THROWGRENADE ) && !WantThrow && HasAnyAmmoOfType( 12 ) && HasWeapons() )
-	{
-		timeholster = NULL;
-		timethrow = NULL;
-		timedeploy = NULL;
-		WantThrow = true;
-	}
-
-	ThrowGrenade();
-}
-
-void CVancePlayer::ThrowGrenade( void )
-{
-	if ( WantThrow )
-	{
-		CBaseViewModel *vm = GetViewModel( 0 );
-		CBaseViewModel *vm2 = GetViewModel( 1 );
-
-		//2nd viewmodel creation
-		if ( !vm2 )
-		{
-			CreateViewModel( 1 );
-			vm2 = GetViewModel( 1 );
-		}
-
-		//HOLSTER SEQUENCING
-		int sequence1 = vm->SelectWeightedSequence( ACT_VM_HOLSTER );
-		if ( ( timeholster == NULL ) && ( sequence1 >= 0 ) )
-		{
-			vm->SendViewModelMatchingSequence( sequence1 );
-			timeholster = ( gpGlobals->curtime + vm->SequenceDuration( sequence1 ) + 0.5f );
-		}
-
-		//THROW SEQUENCING
-		if ( ( timeholster < gpGlobals->curtime ) && ( timeholster != NULL ) )
-		{
-			vm->AddEffects( EF_NODRAW );
-			vm2->SetWeaponModel( "models/weapons/v_grenade.mdl", NULL );
-
-			int sequence2 = vm2->SelectWeightedSequence( ACT_VM_THROW );
-			if ( ( timethrow == NULL ) && ( sequence2 >= 0 ) )
-			{
-				vm2->SendViewModelMatchingSequence( sequence2 );
-				timethrow = ( gpGlobals->curtime + vm2->SequenceDuration( sequence2 ) );
-				CreateGrenade();
-			}
-		}
-
-		if ( ( timethrow < gpGlobals->curtime ) && ( timethrow != NULL ) )
-		{
-			vm2->SetWeaponModel( NULL, NULL );
-			UTIL_RemoveImmediate( vm2 );
-			vm->RemoveEffects( EF_NODRAW );
-			int sequence3 = vm->SelectWeightedSequence( ACT_VM_DRAW );
-			if ( ( timedeploy == NULL ) && ( sequence3 >= 0 ) )
-			{
-				vm->SendViewModelMatchingSequence( sequence3 );
-				timedeploy = ( gpGlobals->curtime + vm->SequenceDuration( sequence3 ) );
-			}
-		}
-
-		if ( ( timedeploy < gpGlobals->curtime ) && ( timedeploy != NULL ) )
-		{
-			//Successfully Thrown A Grenade! Decrement ammo
-			RemoveAmmo( 1, 12 );
-			WantThrow = false;
-		}
-	}
-}
-
-void CVancePlayer::CreateGrenade( void )
-{
-	Vector vecEye = EyePosition();
-	Vector vForward, vRight;
-
-	EyeVectors( &vForward, &vRight, NULL );
-	Vector vecSrc = vecEye + vForward * 18.0f + vRight * 8.0f;
-	trace_t tr;
-
-	UTIL_TraceHull( vecEye, vecSrc, -Vector( 4.0f + 2, 4.0f + 2, 4.0f + 2 ), Vector( 4.0f + 2, 4.0f + 2, 4.0f + 2 ), PhysicsSolidMaskForEntity(), this, GetCollisionGroup(), &tr );
-
-	if ( tr.DidHit() )
-	{
-		vecSrc = tr.endpos;
-	}
-	vForward[2] += 0.1f;
-
-	Vector vecThrow;
-	GetVelocity( &vecThrow, NULL );
-	vecThrow += vForward * 1200;
-	Fraggrenade_Create( vecSrc, vec3_angle, vecThrow, AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ), this, 3.0f, false );
-
-	gamestats->Event_WeaponFired( this, true, GetClassname() );
 }
 
 //-----------------------------------------------------------------------------
@@ -904,6 +814,12 @@ bool CVancePlayer::Weapon_CanUse(CBaseCombatWeapon* pWeapon)
 	if (pWeapon->ClassMatches("weapon_pistol"))
 	{
 		if (GiveAmmo(50, GetAmmoDef()->Index("Pistol"), false))
+			UTIL_Remove(pWeapon);
+		return false;
+	}
+	if (pWeapon->ClassMatches("weapon_frag"))
+	{
+		if (GiveAmmo(1, GetAmmoDef()->Index("Grenade"), false))
 			UTIL_Remove(pWeapon);
 		return false;
 	}
@@ -1255,16 +1171,18 @@ void CVancePlayer::UseTourniquet()
 	{
 		pViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", nullptr );
 
-		int idealSequence = pViewModel->LookupSequence( "tourniquet" );
+		int idealSequence = pViewModel->SelectWeightedSequence(ACT_VM_SPRINT);
 		if ( idealSequence >= 0 )
 		{
 			pViewModel->SendViewModelMatchingSequence( idealSequence );
 			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
 		}
 	}
-
-	GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
-	GetActiveWeapon()->AbortReload();
+	if (GetActiveWeapon())
+	{
+		GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		GetActiveWeapon()->AbortReload();
+	}
 }
 
 void CVancePlayer::UseStim()
@@ -1285,16 +1203,154 @@ void CVancePlayer::UseStim()
 	{
 		pViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", nullptr );
 
-		int idealSequence = pViewModel->LookupSequence( "inject" );
+		int idealSequence = pViewModel->SelectWeightedSequence(ACT_VM_IDLE);
 		if ( idealSequence >= 0 )
 		{
 			pViewModel->SendViewModelMatchingSequence( idealSequence );
 			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
 		}
 	}
+	if (GetActiveWeapon())
+	{
+		GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		GetActiveWeapon()->AbortReload();
+	}
+}
 
-	GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
-	GetActiveWeapon()->AbortReload();
+void CVancePlayer::ThrowGrenade()
+{
+	// Player must not be performing an action
+	if (m_PerformingGesture == GestureAction::None)
+	{
+		m_PerformingGesture = GestureAction::ThrowingGrenade;
+	}
+	else {
+		return;
+	}
+
+	CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>(GetViewModel());
+	if (pViewModel)
+	{
+		pViewModel->SetWeaponModel("models/weapons/v_grenade.mdl", nullptr);
+
+		int idealSequence = pViewModel->SelectWeightedSequence(ACT_VM_DRAW);
+		if (idealSequence >= 0)
+		{
+			pViewModel->SendViewModelMatchingSequence(idealSequence);
+			m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
+		}
+	}
+
+	m_fTimeToReady = m_fGestureFinishTime;
+	m_fGestureFinishTime += 0.5;
+	if (GetActiveWeapon())
+	{
+		GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		GetActiveWeapon()->AbortReload();
+	}
+	m_fNextBlipTime = gpGlobals->curtime;
+	m_fWarnAITime = gpGlobals->curtime + 3.0f - FRAG_GRENADE_WARN_TIME + FRAG_GRENADE_BLIP_FREQUENCY;
+	m_fNadeDetTime = gpGlobals->curtime + 3.0f + FRAG_GRENADE_BLIP_FREQUENCY;
+	m_bWarnedAI = false;
+}
+
+void CVancePlayer::ThrowingGrenade()
+{
+	//if the player switched weapons cancel
+
+	//release the grenade if they held it too long
+	if (m_fNadeDetTime - gpGlobals->curtime <= 0)
+	{
+		Fraggrenade_Create(GetAbsOrigin() + Vector(0,0,15), vec3_angle, Vector(0, 0, 0), Vector(0, 0, 0), static_cast<CBaseEntity *>(this), 0.0f, false, true, gpGlobals->curtime + 10.0f);
+
+		SetAmmoCount(Clamp(GetAmmoCount(GetAmmoDef()->Index("Grenade")) - 1, 0, 1000), GetAmmoDef()->Index("Grenade"));
+
+		m_fGestureFinishTime = gpGlobals->curtime;
+		if (GetActiveWeapon())
+		{
+			GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		}
+		m_fTimeToReady = gpGlobals->curtime + 10.0f; //dont want this think function running again
+		return; 
+	}
+
+	//update blips
+	if (!m_bWarnedAI && gpGlobals->curtime >= m_fWarnAITime)
+	{
+		CSoundEnt::InsertSound(SOUND_DANGER, GetAbsOrigin(), 400, 1.5, this);
+		m_bWarnedAI = true;
+	}
+
+	if (m_fNextBlipTime <= gpGlobals->curtime)
+	{
+		EmitSound("Grenade.Blip");
+
+		if (m_bWarnedAI)
+		{
+			m_fNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FAST_FREQUENCY;
+		}
+		else
+		{
+			m_fNextBlipTime = gpGlobals->curtime + FRAG_GRENADE_BLIP_FREQUENCY;
+		}
+	}
+
+	//if they want to throw set the sequence, otherwise keep reseting the weapons donotdisturb
+	if (m_bWantsToThrow)
+	{
+		CVanceViewModel *pViewModel = static_cast<CVanceViewModel *>(GetViewModel());
+		if (pViewModel)
+		{
+			int idealSequence = pViewModel->SelectWeightedSequence(ACT_VM_THROW);
+			if (idealSequence >= 0)
+			{
+				pViewModel->SendViewModelMatchingSequence(idealSequence);
+				m_fGestureFinishTime = gpGlobals->curtime + pViewModel->SequenceDuration();
+			}
+		}
+
+		CreateGrenade();
+		SetAmmoCount(Clamp(GetAmmoCount(GetAmmoDef()->Index("Grenade")) - 1, 0, 1000), GetAmmoDef()->Index("Grenade"));
+
+		if (GetActiveWeapon())
+		{
+			GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		}
+		m_fTimeToReady = m_fGestureFinishTime + 10.0f;
+	}
+	else {
+		m_fGestureFinishTime = gpGlobals->curtime + 0.5;
+		if (GetActiveWeapon())
+		{
+			GetActiveWeapon()->m_fDoNotDisturb = m_fGestureFinishTime;
+		}
+	}
+}
+
+void CVancePlayer::CreateGrenade(void)
+{
+	Vector vecEye = EyePosition();
+	Vector vForward, vRight;
+
+	EyeVectors(&vForward, &vRight, NULL);
+	Vector vecSrc = vecEye + vForward * 18.0f + vRight * 8.0f;
+	trace_t tr;
+
+	UTIL_TraceHull(vecEye, vecSrc, -Vector(4.0f + 2, 4.0f + 2, 4.0f + 2), Vector(4.0f + 2, 4.0f + 2, 4.0f + 2), PhysicsSolidMaskForEntity(), this, GetCollisionGroup(), &tr);
+
+	if (tr.DidHit())
+	{
+		vecSrc = tr.endpos;
+	}
+	vForward[2] += 0.1f;
+
+	Vector vecThrow;
+	GetVelocity(&vecThrow, NULL);
+	vecThrow += vForward * 1200;
+
+	gamestats->Event_WeaponFired(this, true, GetClassname());
+
+	Fraggrenade_Create(vecSrc, vec3_angle, vecThrow, AngularImpulse(600, random->RandomInt(-1200, 1200), 0), static_cast<CBaseEntity *>(this), Clamp(m_fNadeDetTime - gpGlobals->curtime, 0.0f, 100.0f), false, true, m_fNextBlipTime);
 }
 
 bool CVancePlayer::GiveTourniquet( int count )
@@ -1345,13 +1401,16 @@ void CVancePlayer::PostThink()
 	}
 	
 	// Gestures
-	if ( m_PerformingGesture != GestureAction::None && gpGlobals->curtime >= m_fGestureFinishTime )
+	if (m_PerformingGesture != GestureAction::None && gpGlobals->curtime >= m_fGestureFinishTime && IsAlive())
 	{
 		switch ( m_PerformingGesture )
 		{
 			case GestureAction::InjectingStim:
-				GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
-				GetActiveWeapon()->Deploy();
+				if (GetActiveWeapon())
+				{
+					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
+					GetActiveWeapon()->Deploy();
+				}
 
 				m_bStimRegeneration = true;
 				m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
@@ -1360,11 +1419,22 @@ void CVancePlayer::PostThink()
 				m_iNumStims--;
 				break;
 			case GestureAction::EquippingTourniquet:
-				GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
-				GetActiveWeapon()->Deploy();
+				if (GetActiveWeapon())
+				{
+					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
+					GetActiveWeapon()->Deploy();
+				}
 
 				m_bBleeding = false;
 				m_iNumTourniquets--;
+				break;
+			case GestureAction::ThrowingGrenade:
+				if (GetActiveWeapon())
+				{
+					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
+					GetActiveWeapon()->Deploy();
+				}
+
 				break;
 		}
 
@@ -1447,9 +1517,19 @@ void CVancePlayer::PostThink()
 
 	CBaseViewModel *pLegsViewModel = GetViewModel( VM_LEGS );
 
-	if (m_afButtonPressed & IN_THROWGRENADE)
+
+	//grenade
+	if (m_afButtonPressed & IN_THROWGRENADE && GetAmmoCount(GetAmmoDef()->Index("Grenade")) != 0)
 	{
-		CreateGrenade();
+		m_bWantsToThrow = false;
+		ThrowGrenade();
+	}
+	if (m_afButtonReleased & IN_THROWGRENADE && GetAmmoCount(GetAmmoDef()->Index("Grenade")) != 0)
+	{
+		m_bWantsToThrow = true;
+	}
+	if (m_fTimeToReady <= gpGlobals->curtime && m_PerformingGesture == GestureAction::ThrowingGrenade){
+		ThrowingGrenade();
 	}
 
 	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime)

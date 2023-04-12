@@ -2624,7 +2624,7 @@ void CNPC_Combine::HandleAnimEvent(animevent_t *pEvent)
 			Vector vecStart;
 			GetAttachment("lefthand", vecStart);
 
-			Fraggrenade_Create(vecStart, vec3_angle, m_vecTossVelocity, vec3_origin, this, COMBINE_GRENADE_TIMER, true);
+			Fraggrenade_Create(vecStart, vec3_angle, m_vecTossVelocity, vec3_origin, this, COMBINE_GRENADE_TIMER, true, false, 0.0f);
 			m_iNumGrenades--;
 		}
 		handledEvent = true;
@@ -2700,12 +2700,12 @@ void CNPC_Combine::OnAnimEventTossGrenade(void)
 
 		GetVectors(&forward, NULL, &up);
 		vecThrow = forward * 750 + up * 175;
-		Fraggrenade_Create(vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER, true);
+		Fraggrenade_Create(vecStart, vec3_angle, vecThrow, vecSpin, this, COMBINE_GRENADE_TIMER, true, false, 0.0f);
 	}
 	else
 	{
 		// Use the Velocity that AI gave us.
-		Fraggrenade_Create(vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER, true);
+		Fraggrenade_Create(vecStart, vec3_angle, m_vecTossVelocity, vecSpin, this, COMBINE_GRENADE_TIMER, true, false, 0.0f);
 		m_iNumGrenades--;
 	}
 

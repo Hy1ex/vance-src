@@ -537,7 +537,7 @@ void CNPC_Zombine::HandleAnimEvent( animevent_t *pEvent )
 		QAngle angles;
 		GetAttachment( "grenade_attachment", vecStart, angles );
 
-		CBaseGrenade *pGrenade = Fraggrenade_Create( vecStart, vec3_angle, vec3_origin, AngularImpulse( 0, 0, 0 ), this, 3.5f, true );
+		CBaseGrenade *pGrenade = Fraggrenade_Create(vecStart, vec3_angle, vec3_origin, AngularImpulse(0, 0, 0), this, 3.5f, true, false, 0.0f);
 
 		if ( pGrenade )
 		{
