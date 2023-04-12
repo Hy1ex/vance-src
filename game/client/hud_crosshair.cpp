@@ -183,7 +183,11 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 			Vector vecAimDirection = pPlayer->GetAutoaimVector( 1.0f );
 			// ...so in some aim modes, they get zapped by something completely up-to-date.
 			g_ClientVirtualReality.OverrideWeaponHudAimVectors ( &vecStart, &vecAimDirection );
+#ifdef VANCE
+			vecEnd = vecStart + vecAimDirection;
+#else
 			vecEnd = vecStart + vecAimDirection * MAX_TRACE_LENGTH;
+#endif
 
 			bUseOffset = true;
 		}
