@@ -118,6 +118,9 @@ LINK_ENTITY_TO_CLASS( player, CVancePlayer );
 PRECACHE_REGISTER( player );
 
 BEGIN_DATADESC( CVancePlayer )
+DEFINE_FIELD(m_ParkourAction, FIELD_INTEGER),
+DEFINE_FIELD(m_flSlideEndTime, FIELD_TIME),
+DEFINE_FIELD(m_flSlideFrictionScale, FIELD_FLOAT),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
