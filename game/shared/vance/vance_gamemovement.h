@@ -27,11 +27,14 @@ class CVanceGameMovement : public CHL2GameMovement
 public:
 	CVanceGameMovement();
 
+protected:
+
 	// Overrides
 	void			HandleSpeedCrop();
 	virtual void	FullWalkMove();
 	virtual bool	CheckJumpButton(void);
 	virtual void	Duck(void);
+	virtual bool	CanUnduck();
 
 private:
 

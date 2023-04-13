@@ -141,6 +141,11 @@ public:
 
 	bool					GiveTourniquet( int count = 1 );
 	bool					GiveStim( int count = 1 );
+
+	bool IsSliding()
+	{
+		return m_ParkourAction.Get() == ParkourAction::Slide;
+	}
 	
 private:
 

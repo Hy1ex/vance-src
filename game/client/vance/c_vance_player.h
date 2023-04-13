@@ -41,6 +41,12 @@ public:
 
 	virtual Vector		GetAutoaimVector(float flScale);
 
+
+	bool IsSliding()
+	{
+		return m_ParkourAction == ParkourAction::Slide;
+	}
+
 protected:
 
 	void				AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate = false);
