@@ -10,4 +10,11 @@
 #define DMG_KICK            (DMG_LASTGENERICFLAG<<1)        // filter kick damage so we can kick doors open
 #define DMG_BLEED			(DMG_KICK<<1)
 
+enum class ParkourAction
+{
+	None,
+	Slide,
+	Climb
+};
+
 #endif // VANCE_SHAREDDEFS_H

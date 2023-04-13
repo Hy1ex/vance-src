@@ -65,6 +65,8 @@ $Project "Client (Vance)"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.h"
 			$File	"$SRCDIR\game\shared\vance\vance_shareddefs.h"
+			$File	"$SRCDIR\game\shared\vance\vance_gamemovement.cpp"
+			$File	"$SRCDIR\game\shared\vance\vance_gamemovement.h"
 			
 			$File	"$SRCDIR\game\shared\vance\weapon_akms.cpp"
 			$File	"$SRCDIR\game\shared\vance\weapon_melee.cpp"

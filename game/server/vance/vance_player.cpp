@@ -96,6 +96,10 @@ ConVar vance_climb_debug("vance_climb_debug", "0");
 #define CLIMB_TRACE_DIST		vance_climb_checkray_dist.GetFloat()
 #define CLIMB_LERPSPEED			vance_climb_speed.GetFloat();
 
+extern ConVar vance_slide_time;
+ConVar vance_slide_addvelocity( "vance_slide_addvelocity", "200.0", FCVAR_CHEAT );
+ConVar vance_slide_frictionscale( "vance_slide_frictionscale", "0.1", FCVAR_CHEAT );
+
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
 ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
@@ -118,6 +122,9 @@ END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
 	SendPropFloat(SENDINFO(m_flKickAnimLength)),
+	SendPropInt(SENDINFO(m_ParkourAction)),
+	SendPropFloat(SENDINFO(m_flSlideEndTime)),
+	SendPropFloat(SENDINFO(m_flSlideFrictionScale)),
 END_SEND_TABLE()
 
 static void Cmd_UseStimOrTourniquet()
@@ -170,6 +177,8 @@ CVancePlayer::CVancePlayer()
 	m_flNextSprint = 0.0f;
 
 	m_fBleedChance = sk_bleed_chance.GetFloat();
+
+	m_flSlideFrictionScale = 1.0f;
 }
 
 CVancePlayer::~CVancePlayer()
@@ -2287,6 +2296,17 @@ void CVancePlayer::ItemPostFrame()
 	}
 }
 
+void CVancePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity )
+{
+	if( m_ParkourAction.Get() == ParkourAction::Slide )
+	{
+		// TODO: slide sounds go here
+		return;
+	}
+
+	BaseClass::UpdateStepSound( psurface, vecOrigin, vecVelocity );
+}
+
 // Set the activity based on an event or current state
 void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 {
@@ -2455,11 +2475,27 @@ void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 
 void CVancePlayer::SlideTick()
 {
+	if (m_flSlideEndTime > gpGlobals->curtime)
+	{
+		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat();
+	}
+	else
+	{
+		m_flSlideFrictionScale = 1.0f;
+		m_ParkourAction = ParkourAction::None;
+	}
 }
 
 void CVancePlayer::TrySlide()
 {
-	m_ParkourAction = ParkourAction::None;
+	// dont slide in air
+	if (GetGroundEntity() == NULL)
+		return;
+
+	Vector direction = EyeDirection2D();
+	SetAbsVelocity(GetAbsVelocity() + direction * vance_slide_addvelocity.GetFloat());
+	m_flSlideEndTime = gpGlobals->curtime + vance_slide_time.GetFloat();
+	m_ParkourAction = ParkourAction::Slide;
 }
 
 void CVancePlayer::LedgeClimbTick()
@@ -2596,10 +2632,10 @@ void CVancePlayer::TryLedgeClimb()
 
 void CVancePlayer::Think()
 {
-	if (m_ParkourAction == ParkourAction::None)
+	if (m_ParkourAction.Get() == ParkourAction::None)
 	{
 		// If we're on the ground, sprinting, holding the duck key and not sliding already
-		if (GetGroundEntity() && IsSprinting() && (m_nButtons & IN_DUCK))
+		if ( GetGroundEntity() && ( m_nButtons & IN_SPEED ) && !m_Local.m_bDucked && ( m_nButtons & IN_DUCK ) )
 		{
 			TrySlide();
 		}

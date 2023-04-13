@@ -10,6 +10,7 @@
 #include "c_basehlplayer.h"
 #include "flashlighteffect.h"
 #include "c_bobmodel.h"
+#include "vance_shareddefs.h"
 
 class C_VancePlayer : public C_BaseHLPlayer
 {
@@ -59,6 +60,13 @@ private:
 	float m_flKickAnimLength;
 	QAngle m_vecLagAngles;
 	CInterpolatedVar<QAngle> m_LagAnglesHistory;
+
+	ParkourAction m_ParkourAction;
+
+	float m_flSlideEndTime;
+	float m_flSlideFrictionScale;
+
+	friend class CVanceGameMovement;
 };
 
 #endif // C_VANCE_PLAYER_H

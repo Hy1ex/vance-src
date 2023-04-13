@@ -33,6 +33,9 @@ inline C_VancePlayer *ToVancePlayer(C_BaseEntity *pPlayer)
 
 IMPLEMENT_CLIENTCLASS_DT(C_VancePlayer, DT_Vance_Player, CVancePlayer)
 RecvPropFloat(RECVINFO(m_flKickAnimLength)),
+RecvPropInt(RECVINFO(m_ParkourAction)),
+RecvPropFloat(RECVINFO(m_flSlideEndTime)),
+RecvPropFloat(RECVINFO(m_flSlideFrictionScale)),
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA(C_VancePlayer)

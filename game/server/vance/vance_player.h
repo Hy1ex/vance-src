@@ -1,6 +1,7 @@
 #ifndef VANCE_PLAYER_H
 #define VANCE_PLAYER_H
 
+#include "vance_shareddefs.h"
 #include "hl2_player.h"
 #include "singleplayer_animstate.h"
 
@@ -15,13 +16,6 @@
 #define V_KICK_ALYX		"models/weapons/v_kick_nosuit.mdl"
 #define V_KICK_HEV		"models/weapons/v_kick_suit.mdl"
 #define V_KICK_SYNTH		"models/weapons/v_kick_synth.mdl"
-
-enum class ParkourAction
-{
-	None,
-	Slide,
-	Climb
-};
 
 // Needs better name
 enum class GestureAction
@@ -96,6 +90,8 @@ public:
 	virtual void			PlayerUse();
 	virtual void			UpdateClientData();
 	virtual void			ItemPostFrame();
+	virtual void			UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity );
+
 	void					SetAnimation(PLAYER_ANIM playerAnim);
 
 	// Parkour abilities
@@ -203,15 +199,17 @@ private:
 	CBaseCombatWeapon* m_CurrentWeapon;
 
 	// Parkour
-	ParkourAction m_ParkourAction;
+	CNetworkVar( ParkourAction, m_ParkourAction );
 	Vector		m_vecClimbDesiredOrigin;
 	Vector		m_vecClimbCurrentOrigin;
 	Vector		m_vecClimbStartOrigin;
 	Vector		m_vecClimbOutVelocity;
 	float		m_flClimbFraction;
 
-	Vector		m_vecSlideStartPos;
-	Vector		m_vecSlideEndPos;
+	CNetworkVar(float, m_flSlideEndTime);
+	CNetworkVar(float, m_flSlideFrictionScale);
+
+	friend class CVanceGameMovement;
 };
 
 #endif // VANCE_PLAYER_H

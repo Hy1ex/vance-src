@@ -30,6 +30,9 @@ enum
 	SPEED_CROPPED_RESET = 0,
 	SPEED_CROPPED_DUCK = 1,
 	SPEED_CROPPED_WEAPON = 2,
+	#ifdef VANCE
+	SPEED_CROPPED_PARKOUR = 3,
+	#endif
 };
 
 struct surfacedata_t;
@@ -277,6 +280,8 @@ protected:
 	int				m_iSpeedCropped;
 
 	float			m_flStuckCheckTime[MAX_PLAYERS+1][2]; // Last time we did a full test
+
+	float			m_flFrictionScale;
 
 	// special function for teleport-with-duck for episodic
 #ifdef HL2_EPISODIC
