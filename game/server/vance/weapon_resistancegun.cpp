@@ -14,7 +14,7 @@
 #include "tier0/memdbgon.h"
 
 ConVar sk_alyxgun_burst_rate( "sk_alyxgun_burst_rate", "0.05", FCVAR_CHEAT );
-ConVar sk_alyxgun_burst_damage( "sk_alyxgun_burst_damage", "5.0", FCVAR_CHEAT );
+ConVar sk_alyxgun_burst_damage( "sk_alyxgun_burst_damage", "8.0", FCVAR_CHEAT );
 
 ConVar sk_alyxgun_semiauto_damage( "sk_alyxgun_semiauto_damage", "15.0", FCVAR_CHEAT );
 

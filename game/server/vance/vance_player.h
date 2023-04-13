@@ -67,7 +67,7 @@ public:
 	void					HandleSpeedChanges();
 	void					ThrowGrenade( void );
 	void					ThrowingGrenade( void );
-	void					CreateGrenade( void );
+	void					CreateGrenade( bool rollMe );
 
 	void					Heal(int health); // move these to CBasePlayer at some point
 	void					Damage(int damage);
@@ -199,6 +199,8 @@ private:
 	float		m_fNextBlipTime;
 	float		m_fWarnAITime;
 	bool		m_bWarnedAI;
+	bool		m_bRoll;
+	CBaseCombatWeapon* m_CurrentWeapon;
 
 	// Parkour
 	ParkourAction m_ParkourAction;
