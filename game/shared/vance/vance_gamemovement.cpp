@@ -7,7 +7,6 @@
 
 ConVar vance_slide_time( "vance_slide_time", "2.0", FCVAR_CHEAT );
 ConVar vance_slide_movescale( "vance_slide_movescale", "0.05", FCVAR_CHEAT );
-ConVar vance_slide_eyeoffsetspeed( "vance_slide_eyeoffsetspeed", "0.1", FCVAR_CHEAT );
 
 CVanceGameMovement::CVanceGameMovement()
 {
