@@ -99,6 +99,7 @@ ConVar vance_climb_debug("vance_climb_debug", "0");
 extern ConVar vance_slide_time;
 ConVar vance_slide_addvelocity( "vance_slide_addvelocity", "200.0", FCVAR_CHEAT );
 ConVar vance_slide_frictionscale( "vance_slide_frictionscale", "0.1", FCVAR_CHEAT );
+ConVar vance_slide_midair_window("vance_slide_midair_window", "0.1", FCVAR_CHEAT);
 
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
 ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
@@ -112,7 +113,8 @@ ConVar vance_kick_force_mult_max("kick_force_mult_max", "2", FCVAR_CHEAT);
 ConVar vance_kick_bounce_scale("kick_bounce_scale", "1", FCVAR_CHEAT);
 ConVar vance_kick_knockback_scale("kick_knockback_scale", "1", FCVAR_CHEAT);
 
-ConVar vance_frag_roll_angle("frag_roll_angle", "30", FCVAR_CHEAT);
+ConVar vance_frag_roll_angle("frag_roll_angle", "30", FCVAR_NONE);
+ConVar vance_frag_redraw_time("frag_redraw_time", "1", FCVAR_NONE);
 
 LINK_ENTITY_TO_CLASS( player, CVancePlayer );
 PRECACHE_REGISTER( player );
@@ -1234,6 +1236,10 @@ void CVancePlayer::UseStim()
 
 void CVancePlayer::ThrowGrenade()
 {
+	//is it time..
+	if (m_fNextThrowTime >= gpGlobals->curtime)
+		return;
+
 	// Player must not be performing an action
 	if (m_PerformingGesture == GestureAction::None)
 	{
@@ -1522,8 +1528,11 @@ void CVancePlayer::PostThink()
 	if ( gpGlobals->eLoadType != MapLoad_Background
 		&& IsSuitEquipped() )
 	{
-		// Place-holder HUD for stims, tourniquets and bleeding notification
-		debugoverlay->AddScreenTextOverlay(0.02f, 0.72f, 0.0f, 255, 255, 255, 255, CFmtStr( "Gernades; %i", GetAmmoCount(GetAmmoDef()->Index("Grenade"))));
+		// Place-holder HUD for stims, tourniquets and bleeding notification 
+		debugoverlay->AddScreenTextOverlay(0.02f, 0.60f, 0.0f, 0, 255, 255, 255, CFmtStr("%i", m_fMidairSlideWindowTime >= gpGlobals->curtime));
+
+		debugoverlay->AddScreenTextOverlay(0.02f, 0.65f, 0.0f, 0, 255, 255, 255, CFmtStr("sliding; %i", m_ParkourAction));
+		debugoverlay->AddScreenTextOverlay(0.02f, 0.71f, 0.0f, 255, 255, 255, 255, CFmtStr( "Gernades; %i", GetAmmoCount(GetAmmoDef()->Index("Grenade"))));
 		debugoverlay->AddScreenTextOverlay( 0.02f, 0.75f, 0.0f, 255, 255, 255, 255, CFmtStr( "Stims: %i", m_iNumStims ) );
 		debugoverlay->AddScreenTextOverlay( 0.02f, 0.79f, 0.0f, 255, 255, 255, 255, CFmtStr( "Tourniquets: %i", m_iNumTourniquets ) );
 		if ( m_bStimRegeneration )
@@ -1570,6 +1579,7 @@ void CVancePlayer::PostThink()
 					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
 					GetActiveWeapon()->Deploy();
 				}
+				m_fNextThrowTime = gpGlobals->curtime + vance_frag_redraw_time.GetFloat();
 
 				break;
 		}
@@ -2478,7 +2488,21 @@ void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 
 void CVancePlayer::SlideTick()
 {
-	if (m_flSlideEndTime > gpGlobals->curtime)
+	//trace down
+	trace_t tr;
+	UTIL_TraceLine(GetAbsOrigin() + Vector(0, 0, 10), GetAbsOrigin() - Vector(0, 0, 64), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr);
+
+	//should we keep sliding
+	bool ContinueSlide = true;
+
+	if (gpGlobals->curtime >= m_flSlideEndTime) //out of time
+		ContinueSlide = false;
+	else if (GetLocalVelocity().Length2D() < 300) //too slow
+		ContinueSlide = false;
+	else if (!tr.DidHitWorld()) //nothing under us
+		ContinueSlide = false;
+
+	if (ContinueSlide)
 	{
 		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat();
 	}
@@ -2492,11 +2516,18 @@ void CVancePlayer::SlideTick()
 void CVancePlayer::TrySlide()
 {
 	// dont slide in air
-	if (GetGroundEntity() == NULL)
+	if (!(GetFlags() & FL_ONGROUND))
+	{
+		m_fMidairSlideWindowTime = gpGlobals->curtime + vance_slide_midair_window.GetFloat();
+		return;
+	}
+
+	//gotta be going quick enough
+	if (GetLocalVelocity().Length2D() < 310)
 		return;
 
-	Vector direction = EyeDirection2D();
-	SetAbsVelocity(GetAbsVelocity() + direction * vance_slide_addvelocity.GetFloat());
+	m_vecSlideDirection = EyeDirection2D();
+	SetAbsVelocity(GetAbsVelocity() + m_vecSlideDirection * vance_slide_addvelocity.GetFloat());
 	m_flSlideEndTime = gpGlobals->curtime + vance_slide_time.GetFloat();
 	m_ParkourAction = ParkourAction::Slide;
 }
@@ -2638,7 +2669,11 @@ void CVancePlayer::Think()
 	if (m_ParkourAction.Get() == ParkourAction::None)
 	{
 		// If we're on the ground, sprinting, holding the duck key and not sliding already
-		if ( GetGroundEntity() && ( m_nButtons & IN_SPEED ) && !m_Local.m_bDucked && ( m_nButtons & IN_DUCK ) )
+		if ((m_nButtons & IN_SPEED) && (!m_Local.m_bDucked || !(GetFlags() & FL_ONGROUND)) && (m_nButtons & IN_DUCK))
+		{
+			TrySlide();
+		}
+		if ((m_nButtons & IN_SPEED) && m_fMidairSlideWindowTime >= gpGlobals->curtime)
 		{
 			TrySlide();
 		}

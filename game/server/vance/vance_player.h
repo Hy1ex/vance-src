@@ -202,6 +202,7 @@ private:
 	bool		m_bWarnedAI;
 	bool		m_bRoll;
 	CBaseCombatWeapon* m_CurrentWeapon;
+	float		m_fNextThrowTime = 0.0f;
 
 	// Parkour
 	CNetworkVar( ParkourAction, m_ParkourAction );
@@ -213,6 +214,8 @@ private:
 
 	CNetworkVar(float, m_flSlideEndTime);
 	CNetworkVar(float, m_flSlideFrictionScale);
+	Vector		m_vecSlideDirection;
+	float		m_fMidairSlideWindowTime = 0.0f;
 
 	friend class CVanceGameMovement;
 };
