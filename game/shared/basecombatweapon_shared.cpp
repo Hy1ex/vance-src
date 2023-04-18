@@ -1500,7 +1500,7 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	// Some weapon's don't have holster anims yet, so detect that
 	float flSequenceDuration = 0;
-	if ( GetActivity() == ACT_VM_HOLSTER )
+	if (GetActivity() == ACT_VM_HOLSTER || GetActivity() == ACT_VM_HOLSTER_EXTENDED )
 	{
 		flSequenceDuration = SequenceDuration();
 	}

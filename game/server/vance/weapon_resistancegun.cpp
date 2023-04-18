@@ -296,7 +296,6 @@ void CWeaponResistanceGun::ItemPostFrame()
 
 	if ((((pPlayer->m_afButtonPressed & IN_RELOAD) && (m_iClip1 < GetMaxClip1())) || (m_iClip1 == 0)) && !m_bInReload && !m_bInBurst)
 		return;
-
 	if ((pPlayer->m_afButtonPressed & IN_ATTACK) && (m_flSoonestPrimaryAttack <= gpGlobals->curtime) && m_bSemiAutoMode) // shoot as fast as the player can click
 		return;
 	else if ((pPlayer->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) && !m_bSemiAutoMode) // if we're holding shoot at a slower speed

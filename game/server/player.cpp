@@ -4543,7 +4543,7 @@ void CBasePlayer::PostThink()
 				// if they've moved too far from the gun, or deployed another weapon, unuse the gun
 				if ( m_hUseEntity->OnControls( this ) && 
 					( !GetActiveWeapon() || GetActiveWeapon()->IsEffectActive( EF_NODRAW ) ||
-					( GetActiveWeapon()->GetActivity() == ACT_VM_HOLSTER ) 
+					(GetActiveWeapon()->GetActivity() == ACT_VM_HOLSTER) || (GetActiveWeapon()->GetActivity() == ACT_VM_HOLSTER_EXTENDED)
 	#ifdef PORTAL // Portalgun view model stays up when holding an object -Jeep
 					|| FClassnameIs( GetActiveWeapon(), "weapon_portalgun" ) 
 	#endif //#ifdef PORTAL			
