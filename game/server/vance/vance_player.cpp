@@ -1529,9 +1529,6 @@ void CVancePlayer::PostThink()
 		&& IsSuitEquipped() )
 	{
 		// Place-holder HUD for stims, tourniquets and bleeding notification 
-		debugoverlay->AddScreenTextOverlay(0.02f, 0.60f, 0.0f, 0, 255, 255, 255, CFmtStr("%i", m_fMidairSlideWindowTime >= gpGlobals->curtime));
-
-		debugoverlay->AddScreenTextOverlay(0.02f, 0.65f, 0.0f, 0, 255, 255, 255, CFmtStr("sliding; %i", m_ParkourAction));
 		debugoverlay->AddScreenTextOverlay(0.02f, 0.71f, 0.0f, 255, 255, 255, 255, CFmtStr( "Gernades; %i", GetAmmoCount(GetAmmoDef()->Index("Grenade"))));
 		debugoverlay->AddScreenTextOverlay( 0.02f, 0.75f, 0.0f, 255, 255, 255, 255, CFmtStr( "Stims: %i", m_iNumStims ) );
 		debugoverlay->AddScreenTextOverlay( 0.02f, 0.79f, 0.0f, 255, 255, 255, 255, CFmtStr( "Tourniquets: %i", m_iNumTourniquets ) );
