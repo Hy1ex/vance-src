@@ -29,6 +29,11 @@
 #define FOR_EACH_VEC_BACK( vecName, iteratorName ) \
 	for ( int iteratorName = (vecName).Count()-1; iteratorName >= 0; iteratorName-- )
 
+#define FOR_EACH_VEC_FAST( vecType, vecName, keyName ) { vecType *keyName##_p = vecName.Base();\
+	for ( int keyName##_size = vecName.Count(); keyName##_size > 0; keyName##_size--, keyName##_p++ )\
+	{ vecType keyName = *keyName##_p;
+#define FOR_EACH_VEC_FAST_END }}
+
 //-----------------------------------------------------------------------------
 // The CUtlVector class:
 // A growable array class which doubles in size by default.

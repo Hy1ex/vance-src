@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 
-pushd "$(dirname "${BASH_SOURCE-$0}")" || exit
+pushd()
+{
+    command pushd "$@" > /dev/null || exit
+}
+
+popd()
+{
+    command popd > /dev/null || exit
+}
+
+source()
+{
+	command source "$@" > /dev/null
+}
+
+pushd "$(dirname "${BASH_SOURCE-$0}")" > /dev/null || exit
 
 export MOD="vance"
 

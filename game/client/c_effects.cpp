@@ -64,13 +64,6 @@ ConVar r_RainSimulate( "r_RainSimulate", "1", FCVAR_CHEAT, "Enable/disable rain 
 ConVar r_DrawRain( "r_DrawRain", "1", FCVAR_CHEAT, "Enable/disable rain rendering." );
 ConVar r_RainProfile( "r_RainProfile", "0", FCVAR_CHEAT, "Enable/disable rain profiling." );
 
-
-//Precahce the effects
-CLIENTEFFECT_REGISTER_BEGIN( PrecachePrecipitation )
-CLIENTEFFECT_MATERIAL( "particle/rain" )
-CLIENTEFFECT_MATERIAL( "particle/snow" )
-CLIENTEFFECT_REGISTER_END()
-
 CUtlVector< RayTracingEnvironment* > g_RayTraceEnvironments;
 
 // Just receive the normal data table stuff
@@ -551,6 +544,7 @@ void CClient_Precipitation::Precache( )
 		switch( m_nPrecipType )
 		{
 		case PRECIPITATION_TYPE_SNOW:
+			PrecacheMaterial( "particle/snow" );
 			m_Speed	= SNOW_SPEED;
 			m_MatHandle = materials->FindMaterial( "particle/snow", TEXTURE_GROUP_CLIENT_EFFECTS );
 			m_InitialRamp = 0.6f;
@@ -559,6 +553,7 @@ void CClient_Precipitation::Precache( )
 
 		case PRECIPITATION_TYPE_RAIN:
 			Assert( m_nPrecipType == PRECIPITATION_TYPE_RAIN );
+			PrecacheMaterial( "particle/rain" );
 			m_Speed	= RAIN_SPEED;
 			m_MatHandle = materials->FindMaterial( "particle/rain", TEXTURE_GROUP_CLIENT_EFFECTS );
 			m_InitialRamp = 1.0f;

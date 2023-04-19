@@ -30,6 +30,8 @@ extern ConVarRef mat_depthbias_shadowmap;
 
 float C_EnvProjectedTexture::m_flVisibleBBoxMinHeight = -FLT_MAX;
 
+static ConVar r_projtex_filtersize( "r_projtex_filtersize", "1.0", 0 );
+static ConVar r_volumetrics_enabled("r_volumetrics_enabled", "1", FCVAR_ARCHIVE);
 
 IMPLEMENT_CLIENTCLASS_DT( C_EnvProjectedTexture, DT_EnvProjectedTexture, CEnvProjectedTexture )
 	RecvPropEHandle( RECVINFO( m_hTargetEntity )	),
@@ -162,6 +164,13 @@ void C_EnvProjectedTexture::OnDataChanged( DataUpdateType_t updateType )
 	m_bForceUpdate = true;
 	UpdateLight();
 	BaseClass::OnDataChanged( updateType );
+}
+
+void C_EnvProjectedTexture::UpdateOnRemove()
+{
+	RemoveVolumetrics();
+
+	BaseClass::UpdateOnRemove();
 }
 
 static ConVar asw_perf_wtf("asw_perf_wtf", "0", FCVAR_DEVELOPMENTONLY, "Disable updating of projected shadow textures from UpdateLight" );
@@ -465,6 +474,47 @@ void C_EnvProjectedTexture::UpdateLight( void )
 	{
 		g_pClientShadowMgr->UpdateProjectedTexture( m_LightHandle, true );
 	}
+
+	if (m_bEnableVolumetrics && m_bEnableShadows)
+	{
+		CViewSetup setup;
+		GetShadowViewSetup(setup);
+
+		VMatrix world2View, view2Proj, world2Proj, world2Pixels;
+		render->GetMatricesForView(setup, &world2View, &view2Proj, &world2Proj, &world2Pixels);
+		VMatrix proj2world;
+		MatrixInverseGeneral(world2Proj, proj2world);
+
+		Vector fwd, right, up;
+		AngleVectors(setup.angles, &fwd, &right, &up);
+
+		Vector nearFarPlane[8];
+		Vector3DMultiplyPositionProjective(proj2world, Vector(-1, -1, 1), nearFarPlane[0]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(1, -1, 1), nearFarPlane[1]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(1, 1, 1), nearFarPlane[2]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(-1, 1, 1), nearFarPlane[3]);
+
+		Vector3DMultiplyPositionProjective(proj2world, Vector(-1, -1, 0), nearFarPlane[4]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(1, -1, 0), nearFarPlane[5]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(1, 1, 0), nearFarPlane[6]);
+		Vector3DMultiplyPositionProjective(proj2world, Vector(-1, 1, 0), nearFarPlane[7]);
+
+		m_vecRenderBoundsMin.Init(MAX_COORD_FLOAT, MAX_COORD_FLOAT, MAX_COORD_FLOAT);
+		m_vecRenderBoundsMax.Init(MIN_COORD_FLOAT, MIN_COORD_FLOAT, MIN_COORD_FLOAT);
+
+		for (int i = 0; i < 8; i++)
+		{
+			m_vecRenderBoundsMin.x = Min(m_vecRenderBoundsMin.x, nearFarPlane[i].x);
+			m_vecRenderBoundsMin.y = Min(m_vecRenderBoundsMin.y, nearFarPlane[i].y);
+			m_vecRenderBoundsMin.z = Min(m_vecRenderBoundsMin.z, nearFarPlane[i].z);
+			m_vecRenderBoundsMax.x = Max(m_vecRenderBoundsMax.x, nearFarPlane[i].x);
+			m_vecRenderBoundsMax.y = Max(m_vecRenderBoundsMax.y, nearFarPlane[i].y);
+			m_vecRenderBoundsMax.z = Max(m_vecRenderBoundsMax.z, nearFarPlane[i].z);
+		}
+
+		UpdateVolumetricsState();
+	}
+
 }
 
 void C_EnvProjectedTexture::Simulate( void )
@@ -790,4 +840,81 @@ void C_EnvProjectedTexture::Simulate( void )
 }
 
 #endif
+
+void C_EnvProjectedTexture::UpdateVolumetricsState()
+{
+#if 0
+	if (!m_bState ||
+		!m_bEnableVolumetrics ||
+		!r_volumetrics_enabled.GetBool() ||
+		m_LightHandle == CLIENTSHADOW_INVALID_HANDLE)
+	{
+		return;
+	}
+
+	ITexture* pDepthTexture = NULL;
+	const ShadowHandle_t shadowHandle = g_pClientShadowMgr->GetShadowHandle(m_LightHandle);
+	const int iNumActiveDepthTextures = g_pClientShadowMgr->GetNumShadowDepthtextures();
+	for (int i = 0; i < iNumActiveDepthTextures; i++)
+	{
+		if (g_pClientShadowMgr->GetShadowDepthHandle(i) == shadowHandle)
+		{
+			pDepthTexture = g_pClientShadowMgr->GetShadowDepthTex(i);
+			break;
+		}
+	}
+
+	if (pDepthTexture == NULL)
+	{
+		return;
+	}
+
+	CViewSetup setup;
+	GetShadowViewSetup(setup);
+
+	VMatrix world2View, view2Proj, world2Proj, world2Pixels;
+	render->GetMatricesForView(setup, &world2View, &view2Proj, &world2Proj, &world2Pixels);
+
+	VMatrix tmp, shadowToUnit;
+	MatrixBuildScale(tmp, 1.0f / 2, 1.0f / -2, 1.0f);
+	tmp[0][3] = tmp[1][3] = 0.5f;
+	MatrixMultiply(tmp, world2Proj, shadowToUnit);
+
+	m_volumelight.angles = setup.angles;
+	m_volumelight.origin = setup.origin;
+	m_volumelight.depth = pDepthTexture;
+	m_volumelight.spotWorldToTex = shadowToUnit;
+	m_volumelight.state = &m_FlashlightState;
+	m_volumelight.intensity = m_flVolumetricsMultiplier;
+	m_volumelight.handle = &m_LightHandle;
+
+	if (GetLightingManager()->GetLightNumber(&m_volumelight) == -1)
+	{
+		GetLightingManager()->AddLight(&m_volumelight);
+	}
+
+	return;
+#endif
+}
+
+void C_EnvProjectedTexture::RemoveVolumetrics()
+{
+	GetLightingManager()->RemoveLight(&m_volumelight);
+}
+
+void C_EnvProjectedTexture::GetShadowViewSetup( CViewSetup &setup )
+{
+#if 0
+	setup.origin = m_FlashlightState.m_vecLightOrigin;
+	QuaternionAngles(m_FlashlightState.m_quatOrientation, setup.angles);
+	setup.fov = m_flLightFOV;
+	setup.zFar = m_flFarZ;
+	setup.zNear = m_flNearZ;
+	setup.m_bOrtho = false;
+	setup.m_flAspectRatio = 1.0f;
+	setup.x = setup.y = 0;
+	setup.width = m_SpotlightTexture->GetActualWidth(); //m_FlashlightState.m_pSpotlightTexture ? m_FlashlightState.m_pSpotlightTexture->GetActualWidth() : 512;
+	setup.height = m_SpotlightTexture->GetActualHeight(); //m_FlashlightState.m_pSpotlightTexture ? m_FlashlightState.m_pSpotlightTexture->GetActualHeight() : 512;
+#endif
+}
 

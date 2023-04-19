@@ -289,6 +289,11 @@ public:
 
 	void		SetRollerSkin( void );
 
+#ifdef VANCE
+	bool IsHackable() const override { return true; }
+	void Hack( CBaseEntity *pActivator, CBaseEntity *pCaller ) override;
+#endif
+
 	COutputEvent m_OnPhysGunDrop;
 	COutputEvent m_OnPhysGunPickup;
 
@@ -497,6 +502,14 @@ CNPC_RollerMine::~CNPC_RollerMine( void )
 
 	UnstickFromVehicle();
 }
+
+#ifdef VANCE
+void CNPC_RollerMine::Hack( CBaseEntity *pActivator, CBaseEntity *pCaller )
+{
+	m_bHackedByAlyx = true;
+	BaseClass::Hack( pActivator, pCaller );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:

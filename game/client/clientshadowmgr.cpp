@@ -1018,6 +1018,11 @@ private:
 	void	UpdateDirtyShadow( ClientShadowHandle_t handle );
 #endif
 
+#ifdef VANCE
+	ShadowHandle_t GetShadowHandle( ClientShadowHandle_t clienthandle ) { return m_Shadows[clienthandle].m_ShadowHandle; }
+	int GetNumShadowDepthtextures()	{ return m_DepthTextureCache.Count(); }
+#endif
+
 private:
 	Vector	m_SimpleShadowDir;
 	color32	m_AmbientLightColor;

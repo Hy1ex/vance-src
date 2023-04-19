@@ -441,6 +441,9 @@ private:
 	float				m_flTimeNextLadderHint;	// Next time we're eligible to display a HUD hint about a ladder.
 	
 	friend class CHL2GameMovement;
+#ifdef VANCE
+	friend class CVancePlayer;
+#endif
 
 #ifdef SP_ANIM_STATE
 	CSinglePlayerAnimState* m_pPlayerAnimState;

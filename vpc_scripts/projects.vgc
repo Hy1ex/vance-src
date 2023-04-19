@@ -27,13 +27,14 @@ $Project "fgdlib"
 	"fgdlib\fgdlib.vpc" [$WIN32]
 }
 
-$Project "game_shader_dx9"
+// Echoes; Yes, I deliberately renamed this to game_shader.
+// It's a part of my shader override trick.
+$Project "game_shader"
 {
 	"materialsystem\stdshaders\game_shader_dx9_hl2.vpc" [$HL2]
 	"materialsystem\stdshaders\game_shader_dx9_episodic.vpc"  [$EPISODIC]
 	"materialsystem\stdshaders\game_shader_dx9_vance.vpc"  [$VANCE]
 	"materialsystem\stdshaders\game_shader_dx9_hl2mp.vpc" [$HL2MP]
-
 }
 
 $Project "glview"

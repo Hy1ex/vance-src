@@ -151,6 +151,10 @@
 #include "vscript_client.h"
 #endif
 
+#ifdef VANCE
+#include "IDeferredExt.h"
+#endif
+
 extern vgui::IInputInternal *g_InputInternal;
 
 //=============================================================================
@@ -218,7 +222,7 @@ IEngineReplay *g_pEngineReplay = NULL;
 IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
-#ifdef MAPBASE
+#if defined( MAPBASE ) && defined( STEAM_RPC )
 IVEngineServer	*serverengine = NULL;
 #endif
 
@@ -955,7 +959,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 		return false;
 #endif
 
-#ifdef MAPBASE
+#if defined( MAPBASE ) && defined( STEAM_RPC )
 	// Implements the server engine interface on the client.
 	// I'm extremely confused as to how this is even possible, but Saul Rennison's worldlight did it.
 	// If it's really this possible, why wasn't it available before?
@@ -1062,6 +1066,13 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 #if defined( CLIENT_DLL ) && defined( COPY_CHECK_STRESSTEST )
 	IGameSystem::Add( GetPredictionCopyTester() );
+#endif
+
+#ifdef VANCE
+	// Echoes; I deliberately moved this call to the start of
+	// this function, as ConnectDeferredExt() now handles
+	// overriding shaders as well.
+	ConnectDeferredExt();
 #endif
 
 	modemanager->Init( );

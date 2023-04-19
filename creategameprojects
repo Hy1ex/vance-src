@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-pushd `dirname $0`
-devtools/bin/vpc /hl2 /episodic +game /mksln games
-popd
+cd "$(dirname "${BASH_SOURCE-$0}")" || exit
+devtools/bin/vpc /vance +game +shaders /mksln games
+
+make -Bnwk -no-silent -j"$(nproc)" -fgames.mak | compiledb
+#bear -- make -Bnwk -no-silent -j"$(nproc)" -fgames.mak

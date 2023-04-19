@@ -81,6 +81,9 @@ public:
 	bool SwitchToNextBestWeapon(C_BaseCombatWeapon *pCurrent);
 
 	virtual C_BaseCombatWeapon	*GetActiveWeapon( void ) const;
+#ifdef VANCE
+	virtual C_BaseCombatWeapon	*GetDeployingWeapon( void ) const;
+#endif
 	int					WeaponCount() const;
 	C_BaseCombatWeapon	*GetWeapon( int i ) const;
 
@@ -128,6 +131,11 @@ private:
 
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
+
+#ifdef VANCE
+	CHandle<C_BaseCombatWeapon> m_hDeployingWeapon;
+	friend class C_BasePlayer;
+#endif
 
 #ifdef GLOWS_ENABLE
 	bool				m_bGlowEnabled;

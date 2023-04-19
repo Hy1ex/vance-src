@@ -13,6 +13,7 @@
 
 #include "c_baseentity.h"
 #include "basetypes.h"
+#include "c_light_manager.h"
 
 #ifdef ASW_PROJECTED_TEXTURES
 
@@ -48,12 +49,53 @@ public:
 	static float GetVisibleBBoxMinHeight( void ) { return m_flVisibleBBoxMinHeight; }
 	static C_EnvProjectedTexture *Create( );
 
+	virtual bool					IsTransparent() { return false; }
+	virtual bool					IsTwoPass() { return false; }
+
+	virtual void UpdateOnRemove();
+
+	virtual void GetRenderBoundsWorldspace(Vector& mins, Vector& maxs)
+	{
+		if (m_bEnableVolumetrics)
+		{
+			mins = m_vecRenderBoundsMin;
+			maxs = m_vecRenderBoundsMax;
+		}
+		else
+		{
+			BaseClass::GetRenderBoundsWorldspace(mins, maxs);
+		}
+	}
+
+	virtual void GetRenderBounds(Vector& mins, Vector& maxs)
+	{
+		if (m_bEnableVolumetrics)
+		{
+			mins = m_vecRenderBoundsMin - GetAbsOrigin();
+			maxs = m_vecRenderBoundsMax - GetAbsOrigin();
+		}
+		else
+		{
+			BaseClass::GetRenderBounds(mins, maxs);
+		}
+	}
+
+	virtual bool ShouldDraw(void) { return false; }
+
+	virtual bool ShouldReceiveProjectedTextures(int flags) { return false; }
+
+
 private:
 
 	inline bool IsBBoxVisible( void );
 	bool IsBBoxVisible( Vector vecExtentsMin,
 						Vector vecExtentsMax );
 
+	void GetShadowViewSetup( CViewSetup &setup );
+	void UpdateVolumetricsState();
+	void RemoveVolumetrics();
+
+	Vector m_vecRenderBoundsMin, m_vecRenderBoundsMax;
 	ClientShadowHandle_t m_LightHandle;
 	bool m_bForceUpdate;
 
@@ -102,6 +144,16 @@ private:
 	Vector	m_vecExtentsMax;
 
 	static float m_flVisibleBBoxMinHeight;
+
+	bool m_bEnableVolumetrics;
+	bool m_bEnableVolumetricsLOD;
+	float m_flVolumetricsFadeDistance;
+	int m_iVolumetricsQuality;
+	float m_flVolumetricsMultiplier;
+	float m_flVolumetricsQualityBias;
+	int m_iCurrentVolumetricsSubDiv;
+	volume_light_t m_volumelight;
+
 };
 
 

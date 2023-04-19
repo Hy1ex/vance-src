@@ -27,6 +27,11 @@ $Project "Client (Vance)"
 		$File	"c_team_objectiveresource.h"
 		$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+		-$File	"c_env_global_light.cpp"
+		-$File	"c_env_global_light.h"
+		
+		$File	"vance\shader_override.cpp"
+		$File	"vance\shader_override.h"
 
 		$Folder	"VANCE"
 		{
@@ -49,6 +54,8 @@ $Project "Client (Vance)"
 			$File	"vance\c_env_skydome.h"
 			$File	"vance\c_env_global_light.cpp"
 			$File	"vance\c_env_global_light.h"
+			
+			$File	"hl2\c_weapon__stubs_hl2.cpp"
 
 			$File	"vance\deferred_material_passthru.h"
 			$File	"vance\deferred_material_replace.cpp"
@@ -60,8 +67,8 @@ $Project "Client (Vance)"
 			$File	"$SRCDIR\game\shared\vance\vance_weapon_parse.h"
 			$File	"$SRCDIR\game\shared\vance\vance_viewmodel.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_viewmodel.h"
-			$File	"$SRCDIR\game\shared\vance\singleplayer_animstate.cpp"
-			$File	"$SRCDIR\game\shared\vance\singleplayer_animstate.h"
+			//$File	"$SRCDIR\game\shared\vance\singleplayer_animstate.cpp"
+			//$File	"$SRCDIR\game\shared\vance\singleplayer_animstate.h"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.cpp"
 			$File	"$SRCDIR\game\shared\vance\vance_gamerules.h"
 			$File	"$SRCDIR\game\shared\vance\vance_shareddefs.h"
@@ -119,7 +126,6 @@ $Project "Client (Vance)"
 			$File	"episodic\c_vehicle_jeep_episodic.cpp"
 			$File	"hl2\c_vehicle_prisoner_pod.cpp"
 			$File	"episodic\c_vort_charge_token.cpp"
-			$File	"hl2\c_weapon__stubs_hl2.cpp"
 			$File	"hl2\c_weapon_crossbow.cpp"
 			$File	"episodic\c_weapon_hopwire.cpp"
 			$File	"hl2\c_weapon_physcannon.cpp"
@@ -170,10 +176,5 @@ $Project "Client (Vance)"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
 		}
-	}
-
-	$Folder "Link Libraries"
-	{
-		$Lib	"$LIBCOMMON/discord-rpc"
 	}
 }

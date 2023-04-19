@@ -8,6 +8,10 @@
 #include "cbase.h"
 #include "ammodef.h"
 
+#if defined( VANCE ) && defined( GAME_DLL )
+#include "vance_player.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -80,6 +84,15 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 #endif
 		if (pVehicle && !pPlayer->UsingStandardWeaponsInVehicle())
 			return false;
+
+#ifdef VANCE
+		if ( m_hDeployingWeapon || m_hDeployingWeapon.Get() == pWeapon )
+			return false;
+#ifndef CLIENT_DLL
+		if ( ( static_cast<CVancePlayer *>( pPlayer ) )->IsSpawning() )
+			return false;
+#endif
+#endif
 	}
 
 #ifdef MAPBASE
@@ -109,6 +122,17 @@ CBaseCombatWeapon *CBaseCombatCharacter::GetActiveWeapon() const
 {
 	return m_hActiveWeapon;
 }
+
+#ifdef VANCE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output : CBaseCombatWeapon
+//-----------------------------------------------------------------------------
+CBaseCombatWeapon *CBaseCombatCharacter::GetDeployingWeapon() const
+{
+	return m_hDeployingWeapon;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

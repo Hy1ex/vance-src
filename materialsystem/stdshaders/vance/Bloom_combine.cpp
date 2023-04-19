@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -70,14 +70,11 @@ BEGIN_VS_SHADER_FLAGS( Bloom_Combine, "Help for Bloom", SHADER_NOT_EDITABLE )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
-			SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			DECLARE_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+			SET_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
 
-			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER(vance_bloom_combine_ps30);
-				SET_STATIC_PIXEL_SHADER(vance_bloom_combine_ps30);
-			}
+			DECLARE_STATIC_PIXEL_SHADER( vance_bloom_combine_ps30 );
+			SET_STATIC_PIXEL_SHADER( vance_bloom_combine_ps30 );
 		}
 
 		DYNAMIC_STATE
@@ -93,14 +90,11 @@ BEGIN_VS_SHADER_FLAGS( Bloom_Combine, "Help for Bloom", SHADER_NOT_EDITABLE )
 			fBlurSize[1] = fBlurSize[2] = fBlurSize[3] = fBlurSize[0];
 			pShaderAPI->SetPixelShaderConstant(0, fBlurSize);
 
-			DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
-			SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
 
-			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER(vance_bloom_combine_ps30);
-				SET_DYNAMIC_PIXEL_SHADER(vance_bloom_combine_ps30);
-			}
+			DECLARE_DYNAMIC_PIXEL_SHADER( vance_bloom_combine_ps30 );
+			SET_DYNAMIC_PIXEL_SHADER( vance_bloom_combine_ps30 );
 		}
 		Draw();
 	}

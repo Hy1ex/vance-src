@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-pushd `dirname $0`
-devtools/bin/vpc /hl2 /episodic +shaders /mksln shaders
-popd
+cd "$(dirname "${BASH_SOURCE-$0}")" || exit
+devtools/bin/vpc /vance +shaders /mksln shaders
+
+make -Bnwk -no-silent -j"$(nproc)" -fshaders.mak | compiledb
+#bear -- make -Bnwk -no-silent -j"$(nproc)" -fshaders.mak
+

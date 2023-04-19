@@ -16,7 +16,6 @@
 #include "tier0/memdbgon.h"
 
 #include "SDK_sprite_vs20.inc"
-#include "SDK_sprite_ps20.inc"
 #include "SDK_sprite_ps20b.inc"
 
 // WARNING!  Change these in engine/SpriteGn.h if you change them here!
@@ -29,8 +28,7 @@
 
 DEFINE_FALLBACK_SHADER( SDK_Sprite, SDK_Sprite_DX9 )
 
-BEGIN_VS_SHADER( SDK_Sprite_DX9, 
-			  "Help for Sprite_DX9" )
+BEGIN_VS_SHADER( SDK_Sprite_DX9,  "Help for Sprite_DX9" )
 			  
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( SPRITEORIGIN, SHADER_PARAM_TYPE_VEC3, "[0 0 0]", "sprite origin" )
@@ -119,6 +117,8 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 	void SetSpriteCommonShadowState( unsigned int shaderFlags )
 	{
 		IShaderShadow *pShaderShadow = s_pShaderShadow;
+		IMaterialVar **params = s_ppParams;
+
 		s_pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
 		bool bSRGB = s_ppParams[NOSRGB]->GetIntValue() == 0;
 		pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, bSRGB );
@@ -134,30 +134,18 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 		int numTexCoords = 1;
 		s_pShaderShadow->VertexShaderVertexFormat( flags, numTexCoords, 0, 0 );
 
-		DECLARE_STATIC_VERTEX_SHADER( sdk_sprite_vs20 );
+		DECLARE_STATIC_VERTEX_SHADER( SDK_sprite_vs20 );
 		SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags & SHADER_USE_VERTEX_COLOR ) ? true : false );
 		SET_STATIC_VERTEX_SHADER_COMBO( SRGB,  bSRGB );
-		SET_STATIC_VERTEX_SHADER( sdk_sprite_vs20 );
+		SET_STATIC_VERTEX_SHADER( SDK_sprite_vs20 );
 
-		if( g_pHardwareConfig->SupportsPixelShaders_2_b() || g_pHardwareConfig->ShouldAlwaysUseShaderModel2bShaders() ) // Always send GL down this path
-		{
-			DECLARE_STATIC_PIXEL_SHADER( sdk_sprite_ps20b );
-			SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags &  SHADER_USE_VERTEX_COLOR ) ? true : false );
-			SET_STATIC_PIXEL_SHADER_COMBO( CONSTANTCOLOR,  ( shaderFlags & SHADER_USE_CONSTANT_COLOR ) ? true : false );
-			SET_STATIC_PIXEL_SHADER_COMBO( HDRTYPE,  g_pHardwareConfig->GetHDRType() );
-			SET_STATIC_PIXEL_SHADER_COMBO( SRGB, bSRGB );
-			SET_STATIC_PIXEL_SHADER_COMBO( SRGB_OUTPUT_ADAPTER, bSRGBOutputAdapter );
-			SET_STATIC_PIXEL_SHADER( sdk_sprite_ps20b );
-		}
-		else
-		{
-			DECLARE_STATIC_PIXEL_SHADER( sdk_sprite_ps20 );
-			SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags &  SHADER_USE_VERTEX_COLOR ) ? true : false );
-			SET_STATIC_PIXEL_SHADER_COMBO( CONSTANTCOLOR,  ( shaderFlags & SHADER_USE_CONSTANT_COLOR ) ? true : false );
-			SET_STATIC_PIXEL_SHADER_COMBO( HDRTYPE,  g_pHardwareConfig->GetHDRType() );
-			SET_STATIC_PIXEL_SHADER_COMBO( SRGB, bSRGB );
-			SET_STATIC_PIXEL_SHADER( sdk_sprite_ps20 );
-		}
+		DECLARE_STATIC_PIXEL_SHADER( SDK_sprite_ps20b );
+		SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags &  SHADER_USE_VERTEX_COLOR ) ? true : false );
+		SET_STATIC_PIXEL_SHADER_COMBO( CONSTANTCOLOR,  ( shaderFlags & SHADER_USE_CONSTANT_COLOR ) ? true : false );
+		SET_STATIC_PIXEL_SHADER_COMBO( HDRTYPE,  g_pHardwareConfig->GetHDRType() );
+		SET_STATIC_PIXEL_SHADER_COMBO( SRGB, bSRGB );
+		SET_STATIC_PIXEL_SHADER_COMBO( SRGB_OUTPUT_ADAPTER, bSRGBOutputAdapter );
+		SET_STATIC_PIXEL_SHADER( SDK_sprite_ps20b );
 
 		// OSX always has to sRGB write (don't do this on Linux/Win GL - it causes glow sprites to be way too dark)
 		s_pShaderShadow->EnableSRGBWrite( bSRGB || ( IsOSX() && !g_pHardwareConfig->FakeSRGBWrite() ) );
@@ -172,24 +160,14 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 
 		MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 		int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG,  fogIndex );
-		SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+		SET_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 
-		if( g_pHardwareConfig->SupportsPixelShaders_2_b() || g_pHardwareConfig->ShouldAlwaysUseShaderModel2bShaders() ) // Always send GL down this path
-		{
-			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-			SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-		}
-		else
-		{
-			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-			SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-		}
+		DECLARE_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+		SET_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
 
 		pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
 
@@ -380,24 +358,14 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 
 					MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 					int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG,  fogIndex );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 
-					if( g_pHardwareConfig->SupportsPixelShaders_2_b() || g_pHardwareConfig->ShouldAlwaysUseShaderModel2bShaders() ) // Always send GL down this path
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-					}
-					else
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-					}
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
 
 					pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
 
@@ -437,24 +405,14 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 
 					MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 					int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG,  fogIndex );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs20 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_sprite_vs20 );
 
-					if( g_pHardwareConfig->SupportsPixelShaders_2_b() || g_pHardwareConfig->ShouldAlwaysUseShaderModel2bShaders() ) // Always send GL down this path
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20b );
-					}
-					else
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps20 );
-					}
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_sprite_ps20b );
 
 					pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
 
@@ -483,7 +441,6 @@ BEGIN_VS_SHADER( SDK_Sprite_DX9,
 
 			break;
 		default:
-			ShaderWarning( "shader Sprite: Unknown sprite render mode\n" );
 			break;
 		}
 	}

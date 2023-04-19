@@ -7,12 +7,14 @@
 
 #include "cbase.h"
 #include "game.h"
-#include "AI_Default.h"
-#include "AI_Schedule.h"
-#include "AI_Hull.h"
-#include "AI_Navigator.h"
-#include "AI_Motor.h"
+#include "ai_default.h"
+#include "ai_schedule.h"
+#include "ai_hull.h"
+#include "ai_navigator.h"
+#include "ai_motor.h"
 #include "ai_squad.h"
+#include "ai_hint.h"
+#include "ai_senses.h"
 #include "npc_bullsquid.h"
 #include "npcevent.h"
 #include "soundent.h"
@@ -29,9 +31,6 @@
 #include "vstdlib/random.h"
 #include "engine/IEngineSound.h"
 #include "movevars_shared.h"
-
-#include "AI_Hint.h"
-#include "AI_Senses.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

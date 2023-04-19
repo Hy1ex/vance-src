@@ -469,8 +469,6 @@ void CNPC_Citizen::Precache()
 	if ( NameMatches( "matt" ) )
 		PrecacheModel( "models/props_canal/mattpipe.mdl" );
 
-	PrecacheModel( INSIGNIA_MODEL );
-
 	PrecacheScriptSound( "NPC_Citizen.FootstepLeft" );
 	PrecacheScriptSound( "NPC_Citizen.FootstepRight" );
 	PrecacheScriptSound( "NPC_Citizen.Die" );
@@ -4792,6 +4790,12 @@ void CSquadInsignia::Spawn()
 
 	SetModel( INSIGNIA_MODEL );
 	SetSolid( SOLID_NONE );	
+}
+
+void CSquadInsignia::Precache()
+{
+	BaseClass::Precache();
+	PrecacheModel( INSIGNIA_MODEL );
 }
 
 //-----------------------------------------------------------------------------

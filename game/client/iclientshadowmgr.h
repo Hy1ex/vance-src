@@ -110,6 +110,10 @@ public:
 
 	virtual void ComputeShadowDepthTextures( const CViewSetup &pView ) = 0;
 
+#ifdef VANCE
+	virtual ShadowHandle_t GetShadowHandle( ClientShadowHandle_t clienthandle ) = 0;
+	virtual int GetNumShadowDepthtextures() = 0;
+#endif
 };
 
 

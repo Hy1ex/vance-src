@@ -21,8 +21,10 @@ $Project
 	$Folder	"Source Files"
 	{
 		$File	"c_env_global_light.cpp"
-		$File	"worldlight.cpp"
-		$File	"worldlight.h"
+		$File	"vance\worldlight.cpp"
+		$File	"vance\worldlight.h"
+		$File	"vance\vis.cpp"
+		$File	"vance\vis.h"
 		$File	"c_baselesson.cpp"
 		$File	"c_baselesson.h"
 		$File	"c_gameinstructor.cpp"

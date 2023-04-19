@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,10 +8,7 @@
 #include "cpp_shader_constant_register_map.h"
 
 #include "SDK_windowimposter_vs20.inc"
-#include "SDK_windowimposter_ps20.inc"
 #include "SDK_windowimposter_ps20b.inc"
-
-
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -85,22 +82,13 @@ BEGIN_VS_SHADER( sdk_windowimposter_DX90,
 
 			pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
 
-			DECLARE_STATIC_VERTEX_SHADER( sdk_windowimposter_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER( SDK_windowimposter_vs20 );
 				SET_STATIC_VERTEX_SHADER_COMBO( PARALLAXCORRECT, hasParallaxCorrection ); // Parallax cubemaps enabled for 2_0b and onwards
-			SET_STATIC_VERTEX_SHADER( sdk_windowimposter_vs20 );
+			SET_STATIC_VERTEX_SHADER( SDK_windowimposter_vs20 );
 
-			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER( sdk_windowimposter_ps20b );
-					SET_STATIC_PIXEL_SHADER_COMBO( PARALLAXCORRECT, hasParallaxCorrection ); // Parallax cubemaps enabled for 2_0b and onwards
-				SET_STATIC_PIXEL_SHADER( sdk_windowimposter_ps20b );
-			}
-			else
-			{
-				DECLARE_STATIC_PIXEL_SHADER( sdk_windowimposter_ps20 );
-					SET_STATIC_PIXEL_SHADER_COMBO( PARALLAXCORRECT, 0 ); // No parallax cubemaps with ps_2_0 :(
-				SET_STATIC_PIXEL_SHADER( sdk_windowimposter_ps20 );
-			}
+			DECLARE_STATIC_PIXEL_SHADER( SDK_windowimposter_ps20b );
+				SET_STATIC_PIXEL_SHADER_COMBO( PARALLAXCORRECT, hasParallaxCorrection ); // Parallax cubemaps enabled for 2_0b and onwards
+			SET_STATIC_PIXEL_SHADER( SDK_windowimposter_ps20b );
 
 			unsigned int flags = VERTEX_POSITION;
 			int nTexCoordCount = 2;
@@ -119,22 +107,13 @@ BEGIN_VS_SHADER( sdk_windowimposter_DX90,
 		}
 		DYNAMIC_STATE
 		{
-			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_windowimposter_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_windowimposter_vs20 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
-			SET_DYNAMIC_VERTEX_SHADER( sdk_windowimposter_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( SDK_windowimposter_vs20 );
 
-			if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( sdk_windowimposter_ps20b );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-				SET_DYNAMIC_PIXEL_SHADER( sdk_windowimposter_ps20b );
-			}
-			else
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( sdk_windowimposter_ps20 );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-				SET_DYNAMIC_PIXEL_SHADER( sdk_windowimposter_ps20 );
-			}
+			DECLARE_DYNAMIC_PIXEL_SHADER( SDK_windowimposter_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+			SET_DYNAMIC_PIXEL_SHADER( SDK_windowimposter_ps20b );
 
 			SetModulationVertexShaderDynamicState();
 

@@ -93,6 +93,7 @@ enum view_id_t
 	VIEW_INTRO_CAMERA = 6,
 	VIEW_SHADOW_DEPTH_TEXTURE = 7,
 	VIEW_SSAO = 8,
+	VIEW_VOLUMETRICS,
 	VIEW_ID_COUNT
 };
 view_id_t CurrentViewID();
@@ -338,6 +339,9 @@ protected:
 	// Sets up the view parameters of map overview mode (cl_leveloverview)
 	void			SetUpOverView();
 
+	void			UpdateLighting( const CViewSetup &view );
+	void			ProcessGlobals( const CViewSetup &view );
+
 	// generates a low-res screenshot for save games
 	virtual void	WriteSaveGameScreenshotOfSize( const char *pFilename, int width, int height, bool bCreatePowerOf2Padded = false, bool bWriteVTF = false );
 	void			WriteSaveGameScreenshot( const char *filename );
@@ -461,6 +465,11 @@ private:
 	bool			ShouldDrawViewModel( bool drawViewmodel );
 	void			DrawViewModels( const CViewSetup &view, bool drawViewmodel );
 
+#ifdef VANCE
+	void			DrawSky( const CViewSetup &view );
+	void			PushGBufferRT( bool firstPush = false );
+#endif
+
 	void			PerformScreenSpaceEffects( int x, int y, int w, int h );
 
 	// Overlays
@@ -523,6 +532,12 @@ private:
 	bool m_bUsingIndexedScreenOverlays;
 #endif
 	CMaterialReference m_UnderWaterOverlayMaterial;
+	CMaterialReference	m_SkydomeMaterial;
+
+	ITexture			*m_DepthBuffer;
+	ITexture			*m_NormalBuffer;
+	ITexture			*m_MRAOBuffer;
+	ITexture			*m_AlbedoBuffer;
 
 	Vector			m_vecLastFacing;
 	float			m_flCheapWaterStartDistance;
@@ -547,6 +562,9 @@ private:
 	int				m_BuildRenderableListsNumber;
 
 	friend class CBase3dView;
+	friend class CDepthView;
+	friend class CCSMDepthView;
+	friend class CVolumetricsView;
 
 	Frustum m_Frustum;
 

@@ -1,44 +1,43 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //
 //=============================================================================//
-#include	"cbase.h"
-#include	"ai_basenpc.h"
-#include	"AI_Default.h"
-#include	"AI_Task.h"
-#include	"AI_Schedule.h"
-#include	"AI_Node.h"
-#include	"AI_Hull.h"
-#include	"AI_Hint.h"
-#include	"AI_Memory.h"
-#include	"AI_Route.h"
-#include	"AI_Motor.h"
-#include	"AI_Senses.h"
-#include	"soundent.h"
-#include	"game.h"
-#include	"NPCEvent.h"
-#include	"EntityList.h"
-#include	"activitylist.h"
-#include	"animation.h"
-#include	"basecombatweapon.h"
-#include	"IEffects.h"
-#include	"vstdlib/random.h"
-#include	"engine/IEngineSound.h"
-#include	"ammodef.h"
-#include	"AI_Behavior_Follow.h"
-#include	"AI_Navigator.h"
-#include	"decals.h"
+#include "cbase.h"
+#include "ai_basenpc.h"
+#include "ai_default.h"
+#include "ai_task.h"
+#include "ai_schedule.h"
+#include "ai_node.h"
+#include "ai_hull.h"
+#include "ai_hint.h"
+#include "ai_memory.h"
+#include "ai_route.h"
+#include "ai_motor.h"
+#include "ai_senses.h"
+#include "ai_behavior_follow.h"
+#include "ai_navigator.h"
+#include "soundent.h"
+#include "game.h"
+#include "npcevent.h"
+#include "entitylist.h"
+#include "activitylist.h"
+#include "animation.h"
+#include "basecombatweapon.h"
+#include "IEffects.h"
+#include "vstdlib/random.h"
+#include "engine/IEngineSound.h"
+#include "ammodef.h"
+#include "decals.h"
 
-
-#define		ROACH_IDLE				0
-#define		ROACH_BORED				1
-#define		ROACH_SCARED_BY_ENT		2
-#define		ROACH_SCARED_BY_LIGHT	3
-#define		ROACH_SMELL_FOOD		4
-#define		ROACH_EAT				5
+#define	ROACH_IDLE				0
+#define	ROACH_BORED				1
+#define	ROACH_SCARED_BY_ENT		2
+#define	ROACH_SCARED_BY_LIGHT	3
+#define	ROACH_SMELL_FOOD		4
+#define	ROACH_EAT				5
 
 //=========================================================
 // Monster's Anim Events Go Here

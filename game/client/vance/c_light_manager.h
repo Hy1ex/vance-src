@@ -1,9 +1,11 @@
 #ifndef C_LIGHT_MANAGER_H
 #define C_LIGHT_MANAGER_H
 
+#include "cbase.h"
 #include "igamesystem.h"
-#include "UtlVector.h"
-#include "../../public/mathlib/vector4d.h"
+#include "tier1/utlvector.h"
+#include "mathlib/vector4d.h"
+#include "view_shared.h"
 
 #define DEFLIGHT_SPOT_ZNEAR 8.0f
 #define DEFLIGHT_SPOT_RESOLUTION 1024

@@ -10,21 +10,15 @@
 #include "SDK_teeth_vs20.inc"
 #include "SDK_teeth_flashlight_vs20.inc"
 #include "SDK_teeth_bump_vs20.inc"
-#include "SDK_teeth_ps20.inc"
 #include "SDK_teeth_ps20b.inc"
-#include "SDK_teeth_flashlight_ps20.inc"
 #include "SDK_teeth_flashlight_ps20b.inc"
-#include "SDK_teeth_bump_ps20.inc"
 #include "SDK_teeth_bump_ps20b.inc"
-
-#ifndef _X360
 #include "SDK_teeth_vs30.inc"
 #include "SDK_teeth_ps30.inc"
 #include "SDK_teeth_bump_vs30.inc"
 #include "SDK_teeth_bump_ps30.inc"
 #include "SDK_teeth_flashlight_vs30.inc"
 #include "SDK_teeth_flashlight_ps30.inc"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -113,82 +107,58 @@ BEGIN_VS_SHADER( SDK_Teeth_DX9, "Help for SDK_Teeth_DX9" )
 
 			if ( hasBump )
 			{
-#ifndef _X360
 				if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 				{
 					bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
-					DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_bump_vs20 );
+					DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_bump_vs20 );
 					SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
 					SET_STATIC_VERTEX_SHADER_COMBO( USE_STATIC_CONTROL_FLOW, bUseStaticControlFlow );
-					SET_STATIC_VERTEX_SHADER( sdk_teeth_bump_vs20 );
+					SET_STATIC_VERTEX_SHADER( SDK_teeth_bump_vs20 );
 
 					// ps_2_b version which does phong
-					if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-					{
-						DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps20b );
-						SET_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps20b );
-					}
-					else
-					{
-						DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps20 );
-						SET_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps20 );
-					}
+					DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_bump_ps20b );
+					SET_STATIC_PIXEL_SHADER( SDK_teeth_bump_ps20b );
 				}
-#ifndef _X360
 				else
 				{
 					// The vertex shader uses the vertex id stream
 					SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
-					DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
+					DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_bump_vs30 );
 					SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
-					SET_STATIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
+					SET_STATIC_VERTEX_SHADER( SDK_teeth_bump_vs30 );
 
-					DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps30 );
-					SET_STATIC_PIXEL_SHADER( sdk_teeth_bump_ps30 );
+					DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_bump_ps30 );
+					SET_STATIC_PIXEL_SHADER( SDK_teeth_bump_ps30 );
 				}
-#endif
 			}
 			else
 			{
-#ifndef _X360
 				if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 				{
 					bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
-					DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_vs20 );
+					DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_vs20 );
 					SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
 					SET_STATIC_VERTEX_SHADER_COMBO( USE_STATIC_CONTROL_FLOW, bUseStaticControlFlow );
-					SET_STATIC_VERTEX_SHADER( sdk_teeth_vs20 );
+					SET_STATIC_VERTEX_SHADER( SDK_teeth_vs20 );
 
-					if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-					{
-						DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_ps20b );
-						SET_STATIC_PIXEL_SHADER( sdk_teeth_ps20b );
-					}
-					else
-					{
-						DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_ps20 );
-						SET_STATIC_PIXEL_SHADER( sdk_teeth_ps20 );
-					}
+					DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_ps20b );
+					SET_STATIC_PIXEL_SHADER( SDK_teeth_ps20b );
 				}
-#ifndef _X360
 				else
 				{
 					// The vertex shader uses the vertex id stream
 					SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
-					DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_vs30 );
+					DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_vs30 );
 					SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
-					SET_STATIC_VERTEX_SHADER( sdk_teeth_vs30 );
+					SET_STATIC_VERTEX_SHADER( SDK_teeth_vs30 );
 
-					DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_ps30 );
-					SET_STATIC_PIXEL_SHADER( sdk_teeth_ps30 );
+					DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_ps30 );
+					SET_STATIC_PIXEL_SHADER( SDK_teeth_ps30 );
 				}
-#endif
 			}
 
 			// On DX9, do sRGB
@@ -230,115 +200,87 @@ BEGIN_VS_SHADER( SDK_Teeth_DX9, "Help for SDK_Teeth_DX9" )
 
 			if ( hasBump )
 			{	
-#ifndef _X360
 				if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 				{
 					bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs20 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_bump_vs20 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, bUseStaticControlFlow ? 0 : lightState.m_nNumLights );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs20 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_bump_vs20 );
 		
 					// ps_2_b version which does Phong
-					if ( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps20b );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS,  lightState.m_nNumLights );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( AMBIENT_LIGHT, lightState.m_bAmbientLight ? 1 : 0 );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps20b );
-					}
-					else
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps20 );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS, lightState.m_nNumLights );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( AMBIENT_LIGHT, lightState.m_bAmbientLight ? 1 : 0 );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps20 );
-					}
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_bump_ps20b );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS,  lightState.m_nNumLights );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( AMBIENT_LIGHT, lightState.m_bAmbientLight ? 1 : 0 );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_bump_ps20b );
 				}
-#ifndef _X360
 				else
 				{
 					SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_bump_vs30 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_bump_vs30 );
 
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps30 );
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_bump_ps30 );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( NUM_LIGHTS,  lightState.m_nNumLights );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( AMBIENT_LIGHT, lightState.m_bAmbientLight ? 1 : 0 );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_bump_ps30 );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_bump_ps30 );
 				}
-#endif
 			}
 			else
 			{
 				// For non-bumped case, ambient cube is computed in the vertex shader
 				SetAmbientCubeDynamicStateVertexShader();
 
-#ifndef _X360
 				if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 				{
 					bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_vs20 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_vs20 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DYNAMIC_LIGHT, lightState.HasDynamicLight() );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( NUM_LIGHTS, bUseStaticControlFlow ? 0 : lightState.m_nNumLights );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_vs20 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_vs20 );
 
-					if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps20b );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps20b );
-					}
-					else
-					{
-						DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps20 );
-						SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-						SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps20 );
-					}
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_ps20b );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_ps20b );
 				}
-#ifndef _X360
 				else
 				{
 					SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
-					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_vs30 );
+					DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_vs30 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( DYNAMIC_LIGHT, lightState.HasDynamicLight() );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 					SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-					SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_vs30 );
+					SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_vs30 );
 
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps30 );
+					DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_ps30 );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_ps30 );
+					SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_ps30 );
 				}
-#endif
 			}
 
 			if( params[INTRO]->GetIntValue() )
@@ -386,41 +328,30 @@ BEGIN_VS_SHADER( SDK_Teeth_DX9, "Help for SDK_Teeth_DX9" )
 				nShadowFilterMode = g_pHardwareConfig->GetShadowFilterMode();	// Based upon vendor and device dependent formats
 			}
 
-#ifndef _X360
 			if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 			{
-				DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_flashlight_vs20 );
+				DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_flashlight_vs20 );
 				SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
-				SET_STATIC_VERTEX_SHADER( sdk_teeth_flashlight_vs20 );
+				SET_STATIC_VERTEX_SHADER( SDK_teeth_flashlight_vs20 );
 
-				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-				{
-					DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20b );
-					SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
-					SET_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20b );
-				}
-				else
-				{
-					DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20 );
-					SET_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20 );
-				}
+				DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_flashlight_ps20b );
+				SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
+				SET_STATIC_PIXEL_SHADER( SDK_teeth_flashlight_ps20b );
 			}
-#ifndef _X360
 			else
 			{
 				// The vertex shader uses the vertex id stream
 				SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
-				DECLARE_STATIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
+				DECLARE_STATIC_VERTEX_SHADER( SDK_teeth_flashlight_vs30 );
 				SET_STATIC_VERTEX_SHADER_COMBO( INTRO, params[INTRO]->GetIntValue() ? 1 : 0 );
-				SET_STATIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
+				SET_STATIC_VERTEX_SHADER( SDK_teeth_flashlight_vs30 );
 
-				DECLARE_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps30 );
+				DECLARE_STATIC_PIXEL_SHADER( SDK_teeth_flashlight_ps30 );
 				SET_STATIC_PIXEL_SHADER_COMBO( FLASHLIGHTDEPTHFILTERMODE, nShadowFilterMode );
-				SET_STATIC_PIXEL_SHADER( sdk_teeth_flashlight_ps30 );
+				SET_STATIC_PIXEL_SHADER( SDK_teeth_flashlight_ps30 );
 			}
-#endif
+
 			// On DX9, do sRGB
 			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, true );
 			pShaderShadow->EnableSRGBWrite( true );
@@ -489,53 +420,35 @@ BEGIN_VS_SHADER( SDK_Teeth_DX9, "Help for SDK_Teeth_DX9" )
 			pShaderAPI->GetWorldSpaceCameraPosition( vFlashlightPos );
 			pShaderAPI->SetPixelShaderConstant( PSREG_FLASHLIGHT_POSITION_RIM_BOOST, vFlashlightPos, 1 );
 
-			if ( IsX360() )
-			{
-				pShaderAPI->SetBooleanPixelShaderConstant( 0, &flashlightState.m_nShadowQuality, 1 );
-			}
-
-#ifndef _X360
 			if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
 			{
-				DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs20 );
+				DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_flashlight_vs20 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs20 );
+				SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_flashlight_vs20 );
 
-				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-				{
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20b );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20b );
-				}
-				else
-				{
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20 );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps20 );
-				}
+				DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_flashlight_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
+				SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_flashlight_ps20b );
 			}
-#ifndef _X360
 			else
 			{
 				SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
-				DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
+				DECLARE_DYNAMIC_VERTEX_SHADER( SDK_teeth_flashlight_vs30 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
+				SET_DYNAMIC_VERTEX_SHADER( SDK_teeth_flashlight_vs30 );
 
-				DECLARE_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps30 );
+				DECLARE_DYNAMIC_PIXEL_SHADER( SDK_teeth_flashlight_ps30 );
 				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 				SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
-				SET_DYNAMIC_PIXEL_SHADER( sdk_teeth_flashlight_ps30 );
+				SET_DYNAMIC_PIXEL_SHADER( SDK_teeth_flashlight_ps30 );
 			}
-#endif
 
 			if( params[INTRO]->GetIntValue() )
 			{

@@ -307,6 +307,7 @@ void CViewRender::Init( void )
 
 	m_TranslucentSingleColor.Init( "debug/debugtranslucentsinglecolor", TEXTURE_GROUP_OTHER );
 	m_ModulateSingleColor.Init( "engine/modulatesinglecolor", TEXTURE_GROUP_OTHER );
+	m_SkydomeMaterial.Init("shaders/skydome", TEXTURE_GROUP_MODEL);
 
 	extern CMaterialReference g_material_WriteZ;
 	g_material_WriteZ.Init( "engine/writez", TEXTURE_GROUP_OTHER );
@@ -324,6 +325,82 @@ void CViewRender::Init( void )
 	m_flLastFOV = default_fov.GetFloat();
 #endif
 
+	// MOVE THESE TO CLIENT RENDER TARGETS
+	ITexture *depthOld = materials->FindTexture( "_rt_FullFrameDepth", TEXTURE_GROUP_RENDER_TARGET );
+	static int flags = TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_RENDERTARGET;
+	if ( depthOld )
+		flags = depthOld->GetFlags();
+
+	int iW, iH;
+	materials->GetBackBufferDimensions( iW, iH );
+	materials->BeginRenderTargetAllocation();
+	materials->CreateNamedRenderTargetTextureEx(
+		"_rt_DepthBuffer",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA32323232F,
+		MATERIAL_RT_DEPTH_SEPARATE,
+		flags,
+		0 );
+	materials->CreateNamedRenderTargetTextureEx(
+		"_rt_VolumetricsBuffer",
+		iW / 4, iH / 4, RT_SIZE_NO_CHANGE,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0 );
+
+	materials->CreateNamedRenderTargetTextureEx(
+		"_rt_VanceHDR",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT,
+		CREATERENDERTARGETFLAGS_HDR );
+
+	materials->CreateNamedRenderTargetTextureEx(
+		"_rt_Scope",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		TEXTUREFLAGS_CLAMPS | TEXTUREFLAGS_CLAMPT,
+		CREATERENDERTARGETFLAGS_HDR );
+
+	m_NormalBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_Normals",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0 );
+	m_MRAOBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_MRAO",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGBA16161616F,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0 );
+
+	m_AlbedoBuffer = materials->CreateNamedRenderTargetTextureEx(
+		"_rt_Albedo",
+		iW, iH, RT_SIZE_FULL_FRAME_BUFFER,
+		IMAGE_FORMAT_RGB888,
+		MATERIAL_RT_DEPTH_SHARED,
+		flags,
+		0 );
+
+	// Init all IScreenSpaceEffects
+	g_pScreenSpaceEffects->InitScreenSpaceEffects();
+
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_unsharp" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_fxaa" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_waterfx" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_bloom" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_tonemap" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_ssao" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_ssr" );
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_volumetrics" );
+
+	materials->EndRenderTargetAllocation();
 }
 
 //-----------------------------------------------------------------------------
@@ -355,7 +432,21 @@ void CViewRender::LevelInit( void )
 //-----------------------------------------------------------------------------
 void CViewRender::LevelShutdown( void )
 {
-	g_pScreenSpaceEffects->ShutdownScreenSpaceEffects( );
+	g_pScreenSpaceEffects->ShutdownScreenSpaceEffects();
+
+	g_pScreenSpaceEffects->EnableScreenSpaceEffect( "vance_unsharp" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_fxaa" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_waterfx" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_bloom" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_tonemap" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_ssao" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_ssr" );
+	g_pScreenSpaceEffects->DisableScreenSpaceEffect( "vance_volumetrics" );
+
+	m_TranslucentSingleColor.Shutdown();
+	m_ModulateSingleColor.Shutdown();
+	m_ScreenOverlayMaterial.Shutdown();
+	m_UnderWaterOverlayMaterial.Shutdown();
 }
 
 //-----------------------------------------------------------------------------

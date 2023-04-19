@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd "$(dirname "${BASH_SOURCE-$0}")" || exit
+pushd "$(dirname "${BASH_SOURCE-$0}")" > /dev/null || exit
 source env.sh
 
 export LD_LIBRARY_PATH="$GAME_DIR/bin:$LD_LIBRARY_PATH"
@@ -20,7 +20,9 @@ fi
 
 run() {
 	echo "run(): $*"
-	pushd "$GAME_DIR" || exit
+	pushd "$GAME_DIR" || exit > /dev/null
 	eval "$*"
-	popd || exit
+	popd || exit > /dev/null
 }
+
+popd || exit

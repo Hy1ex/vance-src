@@ -76,6 +76,11 @@ public:
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const { return MASK_SOLID; } 
 #endif	// HL2_EPISODIC
 
+#ifdef VANCE
+	bool IsHackable() const override { return true; }
+	void Hack( CBaseEntity *pActivator, CBaseEntity *pCaller )  override;
+#endif
+
 	// Player pickup
 	virtual void	OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t reason );
 	virtual void	OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Reason );

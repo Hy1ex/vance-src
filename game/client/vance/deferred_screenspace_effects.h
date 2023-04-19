@@ -4,6 +4,7 @@
 #pragma once
 #endif
 
+#include "cbase.h"
 #include "ScreenSpaceEffects.h"
 
 class CFXAA : public IScreenSpaceEffect

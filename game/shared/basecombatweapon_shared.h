@@ -100,6 +100,30 @@ typedef struct
 	bool		required;
 } acttable_t;
 
+#ifdef VANCE
+struct poseparamtable_t
+{
+	const char *pszName;
+	float		flValue;
+};
+
+// Put this in your derived class definition to declare it's poseparam table
+#define DECLARE_POSEPARAMTABLE() static poseparamtable_t m_poseparamtable[]; \
+	virtual poseparamtable_t *PoseParamList( int &iPoseParamCount ) { return nullptr; }
+
+// You also need to include the activity table itself in your class' implementation:
+// e.g.
+//	acttable_t	CTFGrapplingHook::m_poseparamtable[] = 
+//	{
+//		{ "r_arm", 2 },
+//	};
+//
+// The grapplinghook overrides the r_arm pose param, value to 2.
+
+#define IMPLEMENT_POSEPARAMTABLE(className)\
+	poseparamtable_t *className::PoseParamList( int &iPoseParamCount ) { iPoseParamCount = ARRAYSIZE( m_poseparamtable ); return m_poseparamtable; }
+#endif
+
 class CHudTexture;
 class Color;
 
@@ -457,9 +481,18 @@ public:
 	virtual	acttable_t*		ActivityList( void ) { return NULL; }
 	virtual	int				ActivityListCount( void ) { return 0; }
 
+#ifdef VANCE
+	virtual void				PoseParameterOverride( bool bReset );
+	virtual poseparamtable_t	*PoseParamList( int &iPoseParamCount ) { return nullptr; }
+#endif
+
 	virtual void			Activate( void );
 
 	virtual bool ShouldUseLargeViewModelVROverride() { return false; }
+
+#ifdef VANCE
+	CBaseCombatWeapon *m_pSwitchingTo = nullptr;
+#endif
 
 #ifdef MAPBASE
 	// Gets the weapon script name to load.
@@ -695,6 +728,10 @@ public:
 
 	bool					SetIdealActivity( Activity ideal );
 	void					MaintainIdealActivity( void );
+
+protected:
+	float					m_flHolsterTime;
+	bool					m_bHolstering;
 
 private:
 	Activity				m_Activity;

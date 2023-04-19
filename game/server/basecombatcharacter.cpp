@@ -111,6 +111,11 @@ BEGIN_DATADESC( CBaseCombatCharacter )
 	DEFINE_AUTO_ARRAY( m_iAmmo, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_hMyWeapons, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_hActiveWeapon, FIELD_EHANDLE ),
+
+#ifdef VANCE
+	DEFINE_FIELD( m_hDeployingWeapon, FIELD_EHANDLE ),
+#endif
+
 #ifdef MAPBASE
 	DEFINE_INPUT( m_bForceServerRagdoll, FIELD_BOOLEAN, "SetForceServerRagdoll" ),
 #else
@@ -296,6 +301,10 @@ IMPLEMENT_SERVERCLASS_ST(CBaseCombatCharacter, DT_BaseCombatCharacter)
 
 	SendPropEHandle( SENDINFO( m_hActiveWeapon ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_hMyWeapons), SendPropEHandle( SENDINFO_ARRAY(m_hMyWeapons) ) ),
+
+#ifdef VANCE
+	SendPropEHandle( SENDINFO( m_hDeployingWeapon ) ),
+#endif
 
 #ifdef INVASION_DLL
 	SendPropInt( SENDINFO(m_iPowerups), MAX_POWERUPS, SPROP_UNSIGNED ), 

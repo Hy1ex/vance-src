@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2007, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -11,7 +11,6 @@
 #include "cpp_shader_constant_register_map.h"
 
 #include "SDK_unlittwotexture_vs20.inc"
-#include "SDK_unlittwotexture_ps20.inc"
 #include "SDK_unlittwotexture_ps20b.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -180,21 +179,12 @@ BEGIN_VS_SHADER( SDK_UnlitTwoTexture_DX9, "Help for SDK_UnlitTwoTexture_DX9" )
 				// If this is set, blend with the alpha channels of the textures and modulation color
 				bool bTranslucent = IsAlphaModulating() || IS_FLAG_SET( MATERIAL_VAR_TRANSLUCENT ) || TextureIsTranslucent( BASETEXTURE, true ) || TextureIsTranslucent( TEXTURE2, true );
 
-				DECLARE_STATIC_VERTEX_SHADER( sdk_unlittwotexture_vs20 );
-				SET_STATIC_VERTEX_SHADER( sdk_unlittwotexture_vs20 );
+				DECLARE_STATIC_VERTEX_SHADER( SDK_unlittwotexture_vs20 );
+				SET_STATIC_VERTEX_SHADER( SDK_unlittwotexture_vs20 );
 
-				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-				{
-					DECLARE_STATIC_PIXEL_SHADER( sdk_unlittwotexture_ps20b );
-					SET_STATIC_PIXEL_SHADER_COMBO( TRANSLUCENT, bTranslucent );
-					SET_STATIC_PIXEL_SHADER( sdk_unlittwotexture_ps20b );
-				}
-				else
-				{
-					DECLARE_STATIC_PIXEL_SHADER( sdk_unlittwotexture_ps20 );
-					SET_STATIC_PIXEL_SHADER_COMBO( TRANSLUCENT, bTranslucent );
-					SET_STATIC_PIXEL_SHADER( sdk_unlittwotexture_ps20 );
-				}
+				DECLARE_STATIC_PIXEL_SHADER( SDK_unlittwotexture_ps20b );
+				SET_STATIC_PIXEL_SHADER_COMBO( TRANSLUCENT, bTranslucent );
+				SET_STATIC_PIXEL_SHADER( SDK_unlittwotexture_ps20b );
 
 				DefaultFog();
 
@@ -217,25 +207,16 @@ BEGIN_VS_SHADER( SDK_UnlitTwoTexture_DX9, "Help for SDK_UnlitTwoTexture_DX9" )
 
 				int numBones = pShaderAPI->GetCurrentNumBones();
 
-				DECLARE_DYNAMIC_VERTEX_SHADER( sdk_unlittwotexture_vs20 );
+				DECLARE_DYNAMIC_VERTEX_SHADER( SDK_unlittwotexture_vs20 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING,  numBones > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( sdk_unlittwotexture_vs20 );
+				SET_DYNAMIC_VERTEX_SHADER( SDK_unlittwotexture_vs20 );
 
-				if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-				{
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_unlittwotexture_ps20b );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_unlittwotexture_ps20b );
-				}
-				else
-				{
-					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_unlittwotexture_ps20 );
-					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-					SET_DYNAMIC_PIXEL_SHADER( sdk_unlittwotexture_ps20 );
-				}
+				DECLARE_DYNAMIC_PIXEL_SHADER( SDK_unlittwotexture_ps20b );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+				SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bFullyOpaque && pShaderAPI->ShouldWriteDepthToDestAlpha() );
+				SET_DYNAMIC_PIXEL_SHADER( SDK_unlittwotexture_ps20b );
 			}
 			Draw();
 		}

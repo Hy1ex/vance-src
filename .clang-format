@@ -1,36 +1,160 @@
 ---
-Language: Cpp
-BasedOnStyle: Microsoft
-Standard: Cpp11
-
-AlignOperands: false
-
-IndentCaseLabels: 'true'
-IndentPPDirectives: BeforeHash
-IndentWidth: '4'
-
-FixNamespaceComments: 'true'
-NamespaceIndentation: All
-
-PointerAlignment: Right
-
-SortIncludes: 'false'
-
-TabWidth: '4'
-UseTab: Always
-
 AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: Left
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+AttributeMacros:
+ - CONSTRUCT_EARLY
+ - DLL_CLASS_EXPORT
+ - DLL_CLASS_IMPORT
+ - DLL_EXPORT
+ - DLL_GLOBAL_EXPORT
+ - DLL_GLOBAL_IMPORT
+ - DLL_IMPORT
+ - EXPLICIT
+ - FASTCALL
+ - FMTFUNCTION
+ - FORCEINLINE
+ - FORCEINLINE_TEMPLATE
+ - MULTIPLE_INHERITANCE
+ - NOINLINE
+ - NO_VTABLE
+ - NULLTERMINATED
+ - PLATFORM_INTERFACE
+ - RESTRICT
+ - RESTRICT_FUNC
+ - SELECTANY
+ - SELECTOR
+ - SINGLE_INHERITANCE
+ - STDCALL
+ - TEMPLATE_SPEC_STATIC
+ - TEMPLATE_STATIC
+BinPackArguments: true
+BinPackParameters: true
+BitFieldColonSpacing: Both
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Allman
+BreakBeforeConceptDeclarations: Always
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterComma
+ColumnLimit: 0
+CompactNamespaces: false
+ContinuationIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+Cpp11BracedListStyle: true
+DeriveLineEnding: false
+DerivePointerAlignment: false
+DisableFormat: false
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: false
+ForEachMacros:
+ - FOR_EACH_CURRENCY
+ - FOR_EACH_DICT
+ - FOR_EACH_DICT_FAST
+ - FOR_EACH_ENTLIST
+ - FOR_EACH_ENTLIST_HEAD
+ - FOR_EACH_HASHMAP
+ - FOR_EACH_HASHMAP_LRU
+ - FOR_EACH_HASHTABLE
+ - FOR_EACH_LL
+ - FOR_EACH_LL_BACK
+ - FOR_EACH_MAP
+ - FOR_EACH_MAP_BACK
+ - FOR_EACH_MAP_FAST
+ - FOR_EACH_OBJ
+ - FOR_EACH_PTR_ARRAY
+ - FOR_EACH_RBTREE_FAST
+ - FOR_EACH_SUBKEY
+ - FOR_EACH_TRUE_SUBKEY
+ - FOR_EACH_UTLRBTREE
+ - FOR_EACH_VALID_SPLITSCREEN_PLAYER
+ - FOR_EACH_VALUE
+ - FOR_EACH_VEC
+ - FOR_EACH_VEC_BACK
+IncludeBlocks: Regroup
+IncludeCategories:
+ - Regex: "cbase.h"
+   Priority: -1
+ - Regex: "stdafx_client.h"
+   Priority: -1
+ - Regex: "stdafx.h"
+   Priority: -1
+ - Regex: "pch_tier0.h"
+   Priority: -1
+ - Regex: "tier0/memdbgon.h"
+   Priority: 10000
+ - Regex: ".*"
+   Priority: 1
+IndentCaseBlocks: true
+IndentCaseLabels: false
+IndentPPDirectives: None
+IndentRequiresClause: true
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+Language: Cpp
+MacroBlockBegin: "^BEGIN_.*|IMPLEMENT_NETWORKCLASS.*$|^IMPLEMENT_CLIENTCLASS.*$|^IMPLEMENT_SERVERCLASS.*$|^CLIENTEFFECT_REGISTER_BEGIN.*$"
+MacroBlockEnd: "^END_.*$|^CLIENTEFFECT_REGISTER_END.*$"
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: All
+PackConstructorInitializers: BinPack
+PenaltyReturnTypeOnItsOwnLine: 1000000
+PointerAlignment: Right # todo: change to Left
+PPIndentWidth: 1
+ReferenceAlignment: Right # todo: change to Left
+ReflowComments: true
+RequiresClausePosition: OwnLine
+SeparateDefinitionBlocks: Always
+SortIncludes: true
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInConditionalStatement: true
+SpacesInContainerLiterals: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: true
+SpacesInSquareBrackets: false
+Standard: c++20
+StatementMacros:
+ - DECLARE_CLIENTCLASS
+ - DECLARE_CLIENTCLASS_NOBASE
+ - DECLARE_SERVERCLASS
+ - DECLARE_SERVERCLASS_NOBASE
+ - IMPLEMENT_CLIENTCLASS
+ - IMPLEMENT_SERVERCLASS
+ - NOTE_UNUSED
+TabWidth: 4
+UseTab: Always
+UseCRLF: false
+WhitespaceSensitiveMacros:
+ - MKSTRING
 
-SpacesInAngles: 'false'
-SpacesInCStyleCastParentheses: 'false'
-SpacesInConditionalStatement: 'true'
-SpacesInContainerLiterals: 'false'
-SpacesInParentheses: 'true'
-SpacesInSquareBrackets: 'false'
-
-ReflowComments: 'false'
-
-PenaltyExcessCharacter: 0
 ---
 Language: Proto
 DisableFormat: true

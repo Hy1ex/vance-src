@@ -1588,7 +1588,7 @@ static void DrawBloomDebugBoxes( IMatRenderContext *pRenderContext )
 	pRenderContext->Viewport( 0, 0, dest_width, dest_height );
 }
 
-static float GetBloomAmount( void )
+float GetBloomAmount( void )
 {
 	// return bloom amount ( 0.0 if disabled or otherwise turned off )
 	if ( engine->GetDXSupportLevel() < 80 )
@@ -1711,8 +1711,8 @@ static void DownsampleFBQuarterSize( IMatRenderContext *pRenderContext, int nSrc
 												nSrcWidth, nSrcHeight );
 }
 
-static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float flBloomScale,
-										int x, int y, int w, int h )
+void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float flBloomScale,
+							   int x, int y, int w, int h )
 {
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
 

@@ -397,6 +397,9 @@ public:
 
 	// Weapons..
 	CBaseCombatWeapon*	GetActiveWeapon() const;
+#ifdef VANCE
+	CBaseCombatWeapon	*GetDeployingWeapon( void ) const;
+#endif
 	int					WeaponCount() const;
 	CBaseCombatWeapon*	GetWeapon( int i ) const;
 	bool				RemoveWeapon( CBaseCombatWeapon *pWeapon );
@@ -635,6 +638,11 @@ protected:
 	CNetworkArray( CBaseCombatWeaponHandle, m_hMyWeapons, MAX_WEAPONS );
 
 	CNetworkHandle( CBaseCombatWeapon, m_hActiveWeapon );
+
+#ifdef VANCE
+	CNetworkHandle( CBaseCombatWeapon, m_hDeployingWeapon );
+	friend class CBasePlayer;
+#endif
 
 	friend class CCleanupDefaultRelationShips;
 	

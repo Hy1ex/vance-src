@@ -2,7 +2,7 @@
 #define VANCE_PLAYER_H
 
 #include "hl2_player.h"
-#include "singleplayer_animstate.h"
+//#include "singleplayer_animstate.h"
 
 #define P_PLAYER_ALYX	"models/player/alyx.mdl"
 #define P_PLAYER_HEV	"models/player/hev.mdl"
@@ -118,8 +118,8 @@ private:
 	CAI_Expresser	*m_pExpresser;
 	bool			m_bInAScript;
 
-	CSinglePlayerAnimState *m_pPlayerAnimState;
-	QAngle m_angEyeAngles;
+	//CSinglePlayerAnimState *m_pPlayerAnimState;
+	//QAngle m_angEyeAngles;
 
 	CNetworkVar(float, m_flNextKickAttack);
 	CNetworkVar(float, m_flNextKick);

@@ -9,7 +9,7 @@
 #include "ai_speech.h"
 #include "ai_playerally.h"
 #include "vance_viewmodel.h"
-#include "singleplayer_animstate.h"
+//#include "singleplayer_animstate.h"
 #include "datacache/imdlcache.h"
 #include "in_buttons.h"
 #include "trains.h"
@@ -149,8 +149,8 @@ ConCommand bleed( "bleed", Cmd_Bleed, "Makes the executing Player start bleeding
 CVancePlayer::CVancePlayer()
 {
 	// Here we create and init the player animation state.
-	m_pPlayerAnimState = CreatePlayerAnimationState(this);
-	m_angEyeAngles.Init();
+	//m_pPlayerAnimState = CreatePlayerAnimationState(this);
+	//m_angEyeAngles.Init();
 
 	// Code originally written by Valve.
 	m_nNumMissPositions = 0;
@@ -165,11 +165,11 @@ CVancePlayer::CVancePlayer()
 CVancePlayer::~CVancePlayer()
 {
 	// Clears the animation state.
-	if (m_pPlayerAnimState != NULL)
+	/*if (m_pPlayerAnimState != NULL)
 	{
 		m_pPlayerAnimState->Release();
 		m_pPlayerAnimState = NULL;
-	}
+	}*/
 }
 
 CVancePlayer *CVancePlayer::Create( edict_t *pEdict )
@@ -1424,13 +1424,13 @@ void CVancePlayer::PostThink()
 		}
 	}*/
 
-	m_angEyeAngles = EyeAngles();
+	/*m_angEyeAngles = EyeAngles();
 
 	QAngle angles = GetLocalAngles();
 	angles[PITCH] = 0;
 	SetLocalAngles(angles);
 
-	m_pPlayerAnimState->Update();
+	m_pPlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );*/
 }
 
 void CVancePlayer::StartAdmireGlovesAnimation()

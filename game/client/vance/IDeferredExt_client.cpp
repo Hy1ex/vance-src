@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "IDeferredExt.h"
+#include "shader_override.h"
 
 #include "tier0/memdbgon.h"
 
@@ -10,18 +11,18 @@ IDeferredExtension *GetDeferredExt()
 	return __g_defExt;
 }
 
+CUtlString GetModulePath( const char *pszModuleName, const char *pszPathId );
+
 bool ConnectDeferredExt()
 {
-	char modulePath[MAX_PATH * 4];
-	Q_snprintf(modulePath, sizeof(modulePath), "%s/bin/game_shader_dx9.dll", engine->GetGameDirectory());
+	OverrideShaders();
+	
+	CUtlString modulePath = GetModulePath( "game_shader", "GAMEBIN" );
+
 	if (!Sys_LoadInterface(modulePath, DEFERRED_EXTENSION_VERSION, &__g_pDeferredShaderModule, reinterpret_cast<void**>(&__g_defExt)))
-		Warning("Unable to pull IDeferredExtension interface from game_shader_dx9.dll.\nPulling from stdshader_dx9.dll\n");
+		Warning("Unable to pull IDeferredExtension interface from game_shader_dx9.dll.\n");
 	else
 		return __g_defExt != NULL;
-
-	Q_snprintf(modulePath, sizeof(modulePath), "bin/stdshader_dx9.dll");
-	if (!Sys_LoadInterface(modulePath, DEFERRED_EXTENSION_VERSION, &__g_pDeferredShaderModule, reinterpret_cast<void**>(&__g_defExt)))
-		Warning("Unable to pull IDeferredExtension interface from stdshader_dx9.dll.\n");
 
 	return __g_defExt != NULL;
 }

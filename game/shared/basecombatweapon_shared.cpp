@@ -1777,15 +1777,35 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 #endif
 	}
 
+#ifdef VANCE
+	m_pSwitchingTo = pSwitchingTo;
+#endif
+
 	// If we don't have a holster anim, hide immediately to avoid timing issues
 	if ( !flSequenceDuration )
 	{
 		SetWeaponVisible( false );
+#ifdef VANCE
+		if ( pSwitchingTo )
+		{
+#ifdef GAME_DLL
+			GetOwner()->SetActiveWeapon( m_pSwitchingTo );
+//#else
+//			GetOwner()->m_hActiveWeapon = m_pSwitchingTo;
+#endif
+			GetOwner()->GetActiveWeapon()->Deploy();
+			m_pSwitchingTo = nullptr;
+		}
+
+#endif
 	}
 	else
 	{
 		// Hide the weapon when the holster animation's finished
 		SetContextThink( &CBaseCombatWeapon::HideThink, gpGlobals->curtime + flSequenceDuration, HIDEWEAPON_THINK_CONTEXT );
+#ifdef VANCE
+		SetNextThink( gpGlobals->curtime );
+#endif
 	}
 
 	// if we were displaying a hud hint, squelch it.
@@ -1801,6 +1821,13 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 #ifdef MAPBASE
 	if (HasSpawnFlags(SF_WEAPON_NO_AUTO_SWITCH_WHEN_EMPTY))
 		RemoveSpawnFlags(SF_WEAPON_NO_AUTO_SWITCH_WHEN_EMPTY);
+#endif
+
+#ifdef VANCE
+	// reset pose parameters
+	m_flHolsterTime = gpGlobals->curtime + flSequenceDuration;
+	m_bHolstering = true;
+	PoseParameterOverride( true );
 #endif
 
 	return true;
@@ -1955,11 +1982,32 @@ void CBaseCombatWeapon::InputForceSecondaryFire( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::InputHideWeapon( inputdata_t &inputdata )
 {
+#ifdef VANCE
+	if ( m_bHolstering )
+	{
+		if ( m_flHolsterTime < gpGlobals->curtime && m_pSwitchingTo )
+		{
+			SetWeaponVisible( false );
+#ifdef GAME_DLL
+			GetOwner()->SetActiveWeapon( m_pSwitchingTo );
+#else
+			GetOwner()->m_hActiveWeapon = m_pSwitchingTo;
+#endif
+			GetOwner()->GetActiveWeapon()->Deploy();
+			m_pSwitchingTo = nullptr;
+			m_bHolstering = false;
+			SetThink( nullptr );
+		}
+	}
+	SetNextThink(gpGlobals->curtime);
+
+#else
 	// Only hide if we're still the active weapon. If we're not the active weapon
 	if ( GetOwner() && GetOwner()->GetActiveWeapon() == this )
 	{
 		SetWeaponVisible( false );
 	}
+#endif
 }
 #endif
 
@@ -2909,6 +2957,35 @@ Activity CBaseCombatWeapon::ActivityOverride( Activity baseAct, bool *pRequired 
 	}
 	return baseAct;
 }
+
+#ifdef VANCE
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CBaseCombatWeapon::PoseParameterOverride( bool bReset )
+{
+	CBaseCombatCharacter *pOwner = GetOwner();
+	if ( !pOwner )
+		return;
+
+	CStudioHdr *pStudioHdr = pOwner->GetModelPtr();
+	if ( !pStudioHdr )
+		return;
+	
+	int iCount = 0;
+	poseparamtable_t *pPoseParamList = PoseParamList( iCount );
+	if ( pPoseParamList )
+	{
+		for ( int i=0; i<iCount; ++i )
+		{
+			int iPoseParam = pOwner->LookupPoseParameter( pStudioHdr, pPoseParamList[i].pszName );
+		
+			if ( iPoseParam != -1 )
+				pOwner->SetPoseParameter( iPoseParam, bReset ? 0 : pPoseParamList[i].flValue );
+		}
+	}
+}
+#endif
 
 #ifdef MAPBASE_VSCRIPT
 //-----------------------------------------------------------------------------

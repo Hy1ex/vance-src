@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd "$(dirname "${BASH_SOURCE-$0}")" || exit
+pushd "$(dirname "${BASH_SOURCE-$0}")" > /dev/null || exit
 source env.sh
 
 export WINEPREFIX="$SRC_DIR/.wine"
@@ -12,8 +12,8 @@ if [ ! -d "$WINEPREFIX" ]; then
 	wine64 wineboot --init
 	
 	# Configure registry
-	#run wine regedit "$SRC_DIR/devtools/linux/wine-theme.reg"
-	#run wine regedit "$SRC_DIR/devtools/linux/wine-breeze-dark.reg"
+	run wine regedit "$SRC_DIR/devtools/linux/wine-theme.reg"
+	run wine regedit "$SRC_DIR/devtools/linux/wine-breeze-dark.reg"
 
 	# Install D3DCompiler for shadercompile
 	winetricks prefix="$WINEPREFIX" d3dcompiler_47
@@ -29,3 +29,5 @@ run() {
 	echo "run(): $*"
 	eval "$*"
 }
+
+popd || exit

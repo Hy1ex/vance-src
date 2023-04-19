@@ -24,12 +24,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectBuild )
-CLIENTEFFECT_MATERIAL( "effects/tesla_glow_noz" )
-CLIENTEFFECT_MATERIAL( "effects/spark" )
-CLIENTEFFECT_MATERIAL( "effects/combinemuzzle2" )
-CLIENTEFFECT_REGISTER_END()
-
 //-----------------------------------------------------------------------------
 // Networking
 //-----------------------------------------------------------------------------
@@ -58,6 +52,14 @@ C_EntityDissolve::C_EntityDissolve( void )
 	m_pController = NULL;
 	m_bCoreExplode = false;
 	m_vEffectColor = Vector( 255, 255, 255 );
+}
+
+void C_EntityDissolve::Precache()
+{
+	BaseClass::Precache();
+	PrecacheMaterial( "effects/tesla_glow_noz" );
+	PrecacheMaterial( "effects/spark" );
+	PrecacheMaterial( "effects/combinemuzzle2" );
 }
 
 //-----------------------------------------------------------------------------

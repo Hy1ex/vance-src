@@ -218,6 +218,10 @@ BEGIN_DATADESC( CBaseAnimating )
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetLightingOriginHack", InputSetLightingOriginRelative ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetLightingOrigin", InputSetLightingOrigin ),
 	DEFINE_OUTPUT( m_OnIgnite, "OnIgnite" ),
+#ifdef VANCE
+	DEFINE_KEYFIELD( m_bHackable, FIELD_BOOLEAN, "Hackable" ),
+	DEFINE_OUTPUT( m_OnHacked, "OnHacked" ),
+#endif
 #ifdef MAPBASE
 	DEFINE_OUTPUT( m_OnServerRagdoll, "OnServerRagdoll" ),
 #endif
@@ -3960,3 +3964,12 @@ CStudioHdr *CBaseAnimating::OnNewModel()
 
 	return hdr;
 }
+
+#ifdef VANCE
+void CBaseAnimating::Hack( CBaseEntity *pActivator, CBaseEntity *pCaller )
+{
+	m_bHacked = true;
+	m_OnHacked.FireOutput( pActivator, pCaller );
+}
+#endif
+

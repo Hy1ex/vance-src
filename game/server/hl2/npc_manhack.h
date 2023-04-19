@@ -181,6 +181,10 @@ public:
 		m_iHealth = 0;
 	}
 
+#ifdef VANCE
+	bool IsHackable() const override { return true; }
+	void Hack( CBaseEntity *pActivator, CBaseEntity *pCaller ) override;
+#endif
 
 	DEFINE_CUSTOM_AI;
 

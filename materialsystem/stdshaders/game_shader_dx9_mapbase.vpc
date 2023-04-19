@@ -33,8 +33,6 @@ $Project
 		$File	"lightmappedgeneric_ps2_3_x.h"
 		
 		$File	"worldtwotextureblend.cpp"
-		$File	"worldvertextransition.cpp"
-		$File	"worldvertextransition_dx8_helper.cpp"
 		$File	"refract.cpp"
 		$File	"refract_dx9_helper.cpp"
 		

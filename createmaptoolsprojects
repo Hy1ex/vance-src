@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-pushd `dirname $0`
-devtools/bin/vpc /hl2 /episodic +maptools /mksln maptools
-popd
+cd "$(dirname "${BASH_SOURCE-$0}")" || exit
+devtools/bin/vpc /vance +maptools /mksln maptools
+
+make -Bnwk -no-silent -j"$(nproc)" -fmaptools.mak | compiledb
+#bear -- make -Bnwk -no-silent -j"$(nproc)" -fmaptools.mak
+

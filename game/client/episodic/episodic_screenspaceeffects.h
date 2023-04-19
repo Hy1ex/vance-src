@@ -36,7 +36,9 @@ private:
 	bool		m_bUpdateView;
 };
 
+#ifndef VANCE
 ADD_SCREENSPACE_EFFECT( CStunEffect, episodic_stun );
+#endif
 
 //
 //  EP1 Intro Blur
@@ -73,7 +75,9 @@ private:
 	bool		m_bFadeOut;
 };
 
+#ifndef VANCE
 ADD_SCREENSPACE_EFFECT( CEP1IntroEffect, episodic_intro );
+#endif
 
 //
 //  EP2 Player Stunned Effect
@@ -114,6 +118,8 @@ private:
 	bool		m_bFadeOut;
 };
 
+#ifndef VANCE
 ADD_SCREENSPACE_EFFECT( CEP2StunEffect, ep2_groggy );
+#endif
 
 #endif // EPISODIC_SCREENSPACEEFFECTS_H

@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -64,14 +64,11 @@ SHADER_DRAW
 		pShaderShadow->VertexShaderVertexFormat(fmt, 1, 0, 0);
 
 		// Pre-cache shaders
-		DECLARE_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
-		SET_STATIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+		DECLARE_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		SET_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
 
-		//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-		{
-			DECLARE_STATIC_PIXEL_SHADER(ssgi_combine_ps30);
-			SET_STATIC_PIXEL_SHADER(ssgi_combine_ps30);
-		}
+		DECLARE_STATIC_PIXEL_SHADER( ssgi_combine_ps30 );
+		SET_STATIC_PIXEL_SHADER( ssgi_combine_ps30 );
 	}
 
 	DYNAMIC_STATE
@@ -92,14 +89,11 @@ SHADER_DRAW
 		fResolution[1] = float(1.0 / nHeight);
 		pShaderAPI->SetPixelShaderConstant(1, fResolution);
 
-		DECLARE_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
-		SET_DYNAMIC_VERTEX_SHADER(sdk_screenspaceeffect_vs30);
+		DECLARE_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
 
-		//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-		{
-			DECLARE_DYNAMIC_PIXEL_SHADER(ssgi_combine_ps30);
-			SET_DYNAMIC_PIXEL_SHADER(ssgi_combine_ps30);
-		}
+		DECLARE_DYNAMIC_PIXEL_SHADER( ssgi_combine_ps30 );
+		SET_DYNAMIC_PIXEL_SHADER( ssgi_combine_ps30 );
 	}
 	Draw();
 }

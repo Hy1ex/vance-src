@@ -10,7 +10,6 @@
 #include "shaderlib/cshader.h"
 
 #include "SDK_eyeglint_vs20.inc"
-#include "SDK_eyeglint_ps20.inc"
 #include "SDK_eyeglint_ps20b.inc"
 
 DEFINE_FALLBACK_SHADER( SDK_EyeGlint, SDK_EyeGlint_dx9 )
@@ -48,18 +47,20 @@ SHADER_DRAW
 
 		pShaderShadow->EnableSRGBWrite( false ); // linear texture
 
-		DECLARE_STATIC_VERTEX_SHADER( sdk_eyeglint_vs20 );
-		SET_STATIC_VERTEX_SHADER( sdk_eyeglint_vs20 );
+		DECLARE_STATIC_VERTEX_SHADER( SDK_eyeglint_vs20 );
+		SET_STATIC_VERTEX_SHADER( SDK_eyeglint_vs20 );
 
-		SET_STATIC_PS2X_PIXEL_SHADER_NO_COMBOS( sdk_eyeglint );
+		DECLARE_STATIC_PIXEL_SHADER( SDK_eyeglint_ps20b );
+		SET_STATIC_PIXEL_SHADER( SDK_eyeglint_ps20b );
 	}
 
 	DYNAMIC_STATE
 	{
-		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_eyeglint_vs20 );
-		SET_DYNAMIC_VERTEX_SHADER( sdk_eyeglint_vs20 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( SDK_eyeglint_vs20 );
+		SET_DYNAMIC_VERTEX_SHADER( SDK_eyeglint_vs20 );
 
-		SET_DYNAMIC_PS2X_PIXEL_SHADER_NO_COMBOS( sdk_eyeglint );
+		DECLARE_DYNAMIC_PIXEL_SHADER( SDK_eyeglint_ps20b );
+		SET_DYNAMIC_PIXEL_SHADER( SDK_eyeglint_ps20b );
 	}
 	Draw();
 }

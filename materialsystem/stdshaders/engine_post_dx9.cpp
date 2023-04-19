@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2007, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2007, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -332,13 +332,13 @@ BEGIN_VS_SHADER_FLAGS( SDK_Engine_Post_dx9, "Engine post-processing effects (sof
 			int		userDataSize		= 0;
 			pShaderShadow->VertexShaderVertexFormat( format, numTexCoords, pTexCoordDimensions, userDataSize );
 
-			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs20 );
+			SET_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs20 );
 
-			DECLARE_STATIC_PIXEL_SHADER( sdk_engine_post_ps20b );
+			DECLARE_STATIC_PIXEL_SHADER( SDK_engine_post_ps20b );
 			SET_STATIC_PIXEL_SHADER_COMBO( TOOL_MODE, bToolMode );
 			SET_STATIC_PIXEL_SHADER_COMBO( DEPTH_BLUR_ENABLE, bDepthBlurEnable );
-			SET_STATIC_PIXEL_SHADER( sdk_engine_post_ps20b );
+			SET_STATIC_PIXEL_SHADER( SDK_engine_post_ps20b );
 		}
 		DYNAMIC_STATE
 		{
@@ -614,7 +614,7 @@ BEGIN_VS_SHADER_FLAGS( SDK_Engine_Post_dx9, "Engine post-processing effects (sof
 			// JasonM - double check this if the SFM needs to use the engine post FX clip in main
 			bool bConvertToLinear = bToolMode && bConvertFromLinear && ( g_pHardwareConfig->GetHDRType() == HDR_TYPE_FLOAT );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_engine_post_ps20b );
+			DECLARE_DYNAMIC_PIXEL_SHADER( SDK_engine_post_ps20b );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( AA_ENABLE,						aaEnabled );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( COL_CORRECT_NUM_LOOKUPS,		colCorrectNumLookups );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( CONVERT_FROM_LINEAR,			bConvertFromLinear );
@@ -626,10 +626,10 @@ BEGIN_VS_SHADER_FLAGS( SDK_Engine_Post_dx9, "Engine post-processing effects (sof
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( VOMIT_ENABLE,					bVomitEnable );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( TV_GAMMA,						params[TV_GAMMA]->GetIntValue() && bToolMode ? 1 : 0 );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( DESATURATEENABLE,				bDesaturateEnable );
-			SET_DYNAMIC_PIXEL_SHADER( sdk_engine_post_ps20b );
+			SET_DYNAMIC_PIXEL_SHADER( SDK_engine_post_ps20b );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs20 );
+			SET_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs20 );
 		}
 		Draw();
 	}

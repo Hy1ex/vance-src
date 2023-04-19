@@ -30,12 +30,12 @@ $Group "game"
 
 $Group "shaderdlls"
 {
-	"game_shader_dx9"
+	"game_shader"
 }
 
 $Group "shaders"
 {
-	"game_shader_dx9"
+	"game_shader"
 	"mathlib"
 }
 
@@ -44,7 +44,7 @@ $Group "everything"
 	"captioncompiler"
 	"client"
 	"fgdlib"
-	"game_shader_dx9"
+	"game_shader"
 	"glview"
 	"height2normal"
 	"mathlib"

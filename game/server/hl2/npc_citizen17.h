@@ -470,6 +470,7 @@ class CSquadInsignia : public CBaseAnimating
 {
 	DECLARE_CLASS( CSquadInsignia, CBaseAnimating );
 	void Spawn();
+	void Precache();
 };
 
 //-------------------------------------

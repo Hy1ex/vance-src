@@ -306,27 +306,10 @@ float3 BlendPixelFog( const float3 vShaderColor, float pixelFogFactor, const flo
 }
 
 
-#if ((defined(SHADER_MODEL_PS_2_B) || defined(SHADER_MODEL_PS_3_0)) && ( CONVERT_TO_SRGB != 0 ) )
-sampler1D GammaTableSampler : register( s15 );
-
-float3 SRGBOutput( const float3 vShaderColor )
-{	
-	//On ps2b capable hardware we always have the linear->gamma conversion table texture in sampler s15.
-	float3 result;
-	result.r = tex1D( GammaTableSampler, vShaderColor.r ).r;
-	result.g = tex1D( GammaTableSampler, vShaderColor.g ).r;
-	result.b = tex1D( GammaTableSampler, vShaderColor.b ).r;
-	return result;	
-}
-
-#else
-
 float3 SRGBOutput( const float3 vShaderColor )
 {
 	return vShaderColor; //ps 1.1, 1.4, and 2.0 never do srgb conversion in the pixel shader
 }
-
-#endif
 
 
 float SoftParticleDepth( float flDepth )

@@ -22,6 +22,7 @@ public:
 	C_EntityDissolve( void );
 
 	// Inherited from C_BaseEntity
+	virtual void	Precache();
 	virtual void	GetRenderBounds( Vector& theMins, Vector& theMaxs );
 	virtual int		DrawModel( int flags );
 	virtual bool	ShouldDraw() { return true; }

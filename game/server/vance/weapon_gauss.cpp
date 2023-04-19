@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2001, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -10,7 +10,7 @@
 #include "basehlcombatweapon.h"
 #include "decals.h"
 #include "beam_shared.h"
-#include "AmmoDef.h"
+#include "ammodef.h"
 #include "IEffects.h"
 #include "engine/IEngineSound.h"
 #include "in_buttons.h"

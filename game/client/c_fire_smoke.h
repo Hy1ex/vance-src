@@ -121,6 +121,8 @@ public:
 	C_FireSmoke();
 	~C_FireSmoke();
 
+	void	Precache();
+
 	void	Start( void );
 	void	Simulate( void );
 

@@ -20,11 +20,6 @@
 #include "tier0/memdbgon.h"
 
 
-CLIENTEFFECT_REGISTER_BEGIN( SmokeStackMaterials )
-	CLIENTEFFECT_MATERIAL( "particle/SmokeStack" )
-CLIENTEFFECT_REGISTER_END()
-
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pRecvProp - 
@@ -107,6 +102,12 @@ C_FireSmoke::~C_FireSmoke()
 		m_hEffect = NULL;
 	}
 
+}
+
+void C_FireSmoke::Precache()
+{
+	BaseClass::Precache();
+	PrecacheMaterial( "particle/SmokeStack" );
 }
 
 //-----------------------------------------------------------------------------

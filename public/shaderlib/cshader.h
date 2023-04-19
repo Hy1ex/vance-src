@@ -12,9 +12,6 @@
 #pragma once
 #endif
 
-// uncomment this if you want to build for nv3x
-//#define NV3X 1
-
 // This is what all shaders include.
 // CBaseShader will become CShader in this file.
 #include "materialsystem/ishaderapi.h"
@@ -32,7 +29,9 @@
 #include "shaderlib/ShaderDLL.h"
 
 // make "local variable is initialized but not referenced" warnings errors for combo checking macros
+#ifdef _MSC_VER
 #pragma warning ( error : 4189 )
+#endif
 
 //-----------------------------------------------------------------------------
 // Global interfaces
@@ -41,33 +40,21 @@ extern IMaterialSystemHardwareConfig *g_pHardwareConfig;
 extern const MaterialSystem_Config_t *g_pConfig;
 extern bool g_shaderConfigDumpEnable;
 
-// Helper method
-bool IsUsingGraphics();
-
-#define SOFTWARE_VERTEX_SHADER(name)			\
-	static void SoftwareVertexShader_ ## name( CMeshBuilder &meshBuilder, IMaterialVar **params, IShaderDynamicAPI* pShaderAPI )
-
-#define FORWARD_DECLARE_SOFTWARE_VERTEX_SHADER(name)\
-	static void SoftwareVertexShader_ ## name( CMeshBuilder &meshBuilder, IMaterialVar **params, IShaderDynamicAPI* pShaderAPI );
-
-#define USE_SOFTWARE_VERTEX_SHADER(name) \
-	m_SoftwareVertexShader = SoftwareVertexShader_ ## name
-
 #define SHADER_INIT_PARAMS()			\
-	virtual void OnInitShaderParams( IMaterialVar **params, const char *pMaterialName )
+	void OnInitShaderParams( IMaterialVar **params, const char *pMaterialName ) override
 
 #define SHADER_FALLBACK			\
-	virtual char const* GetFallbackShader( IMaterialVar** params ) const
+	const char *GetFallbackShader( IMaterialVar** params ) const override
 
 // Typesafe flag setting
-inline void CShader_SetFlags( IMaterialVar **params, MaterialVarFlags_t _flag )
+inline void CShader_SetFlags( IMaterialVar **params, MaterialVarFlags_t flag )
 {
-	params[FLAGS]->SetIntValue( params[FLAGS]->GetIntValue() | (_flag) );
+	params[FLAGS]->SetIntValue( params[FLAGS]->GetIntValue() | flag );
 }
 
-inline bool CShader_IsFlagSet( IMaterialVar **params, MaterialVarFlags_t _flag )
+inline bool CShader_IsFlagSet( IMaterialVar **params, MaterialVarFlags_t flag )
 {
-	return ((params[FLAGS]->GetIntValue() & (_flag) ) != 0);
+	return (params[FLAGS]->GetIntValue() & flag ) != 0;
 }
 
 #define SET_FLAGS( _flag )		CShader_SetFlags( params, _flag )
@@ -215,19 +202,19 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 
 
 #define SHADER_INIT						\
-	char const* GetName() const			\
+	char const* GetName() const override			\
 	{									\
 		return s_Name;					\
 	}									\
-	int GetFlags() const				\
+	int GetFlags() const override				\
 	{									\
 		return s_nFlags;				\
 	}									\
-	int GetNumParams() const			\
+	int GetNumParams() const override			\
 	{\
 		return CBaseClass::GetNumParams() + s_ShaderParams.Count();\
 	}\
-	char const* GetParamName( int param ) const \
+	char const* GetParamName( int param ) const override \
 	{\
 		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
 		if (param < nBaseClassParamCount)					\
@@ -235,7 +222,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		else												\
 			return s_ShaderParams[param - nBaseClassParamCount]->GetName();	\
 	}\
-	char const* GetParamHelp( int param ) const \
+	char const* GetParamHelp( int param ) const override \
 	{\
 		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
 		if (param < nBaseClassParamCount)						\
@@ -248,7 +235,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		else													\
 			return s_ShaderParams[param - nBaseClassParamCount]->GetHelp();		\
 	}\
-	ShaderParamType_t GetParamType( int param ) const \
+	ShaderParamType_t GetParamType( int param ) const override \
 	{\
 		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
 		if (param < nBaseClassParamCount)				\
@@ -256,7 +243,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		else \
 			return s_ShaderParams[param - nBaseClassParamCount]->GetType();		\
 	}\
-	char const* GetParamDefault( int param ) const \
+	char const* GetParamDefault( int param ) const override \
 	{\
 		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
 		if (param < nBaseClassParamCount)						\
@@ -269,7 +256,7 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		else													\
 			return s_ShaderParams[param - nBaseClassParamCount]->GetDefault();	\
 	}\
-	int GetParamFlags( int param ) const \
+	int GetParamFlags( int param ) const override \
 	{\
 		int nBaseClassParamCount = CBaseClass::GetNumParams();	\
 		if (param < nBaseClassParamCount)						\
@@ -282,15 +269,14 @@ inline bool CShader_IsFlag2Set( IMaterialVar **params, MaterialVarFlags2_t _flag
 		else													\
 			return s_ShaderParams[param - nBaseClassParamCount]->GetFlags(); \
 	}\
-	void OnInitShaderInstance( IMaterialVar **params, IShaderInit *pShaderInit, const char *pMaterialName )
+	void OnInitShaderInstance( IMaterialVar **params, IShaderInit *pShaderInit, const char *pMaterialName ) override
 
 #define SHADER_DRAW \
-	void OnDrawElements( IMaterialVar **params, IShaderShadow* pShaderShadow, IShaderDynamicAPI* pShaderAPI, VertexCompressionType_t vertexCompression, CBasePerMaterialContextData **pContextDataPtr )
+	void OnDrawElements( IMaterialVar **params, IShaderShadow* pShaderShadow, IShaderDynamicAPI* pShaderAPI, VertexCompressionType_t vertexCompression, CBasePerMaterialContextData **pContextDataPtr ) override
 
 #define SHADOW_STATE if (pShaderShadow)
 #define DYNAMIC_STATE if (pShaderAPI)
 
-#define ShaderWarning	if (pShaderShadow) Warning
 
 //-----------------------------------------------------------------------------
 // Used to easily define a shader which *always* falls back

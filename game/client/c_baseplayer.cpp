@@ -74,6 +74,7 @@ int g_nKillCamTarget1 = 0;
 int g_nKillCamTarget2 = 0;
 
 extern ConVar mp_forcecamera; // in gamevars_shared.h
+extern ConVar r_flashlightfov;
 
 #define FLASHLIGHT_DISTANCE		1000
 #define MAX_VGUI_INPUT_MODE_SPEED 30
