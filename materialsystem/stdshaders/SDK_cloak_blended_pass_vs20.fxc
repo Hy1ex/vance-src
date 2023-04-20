@@ -4,7 +4,7 @@
 
 // DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 // DYNAMIC: "SKINNING"					"0..1"
-// DYNAMIC: "MORPHING"					"0..1" [vs30]
+// DYNAMIC: "MORPHING"					"0..1" [ = pShaderAPI->IsHWMorphingEnabled() ]
 
 // Includes
 #include "common_vs_fxc.h"
@@ -13,7 +13,7 @@
 static const bool g_bSkinning		= SKINNING ? true : false;
 const float4 cBaseTexCoordTransform[2]	:  register( SHADER_SPECIFIC_CONST_0 );
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_6 );
@@ -39,7 +39,7 @@ struct VS_INPUT
 	float3 vPosFlex				: POSITION1;
 	float3 vNormalFlex			: NORMAL1;
 
-	#ifdef SHADER_MODEL_VS_3_0
+	#if ( USE_MORPHING )
 		float vVertexID				: POSITION2;
 	#endif
 };
@@ -72,19 +72,19 @@ VS_OUTPUT main( const VS_INPUT i )
 		float4 vObjTangent;
 		DecompressVertex_NormalTangent( i.vNormal, i.vTangent, vObjNormal, vObjTangent );
 
-		#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-			ApplyMorph( i.vPosFlex, i.vNormalFlex, vObjPosition.xyz, vObjNormal, vObjTangent.xyz );
-		#else
+		#if ( USE_MORPHING )
 			ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, i.vVertexID, float3( 0, 0, 0 ), vObjPosition.xyz, vObjNormal, vObjTangent.xyz );
+		#else
+			ApplyMorph( i.vPosFlex, i.vNormalFlex, vObjPosition.xyz, vObjNormal, vObjTangent.xyz );
 		#endif
 	#else // !BUMPMAP
 		DecompressVertex_Normal( i.vNormal, vObjNormal );
 
-		#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-			ApplyMorph( i.vPosFlex, i.vNormalFlex, vObjPosition.xyz, vObjNormal );
-		#else
+		#if ( USE_MORPHING )
 			ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, i.vVertexID, float3( 0, 0, 0 ), 
 				vObjPosition.xyz, vObjNormal );
+		#else
+			ApplyMorph( i.vPosFlex, i.vNormalFlex, vObjPosition.xyz, vObjNormal );
 		#endif
 	#endif
 

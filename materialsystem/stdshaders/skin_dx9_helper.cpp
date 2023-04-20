@@ -9,14 +9,11 @@
 #include "skin_dx9_helper.h"
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"
+#include "commandbuilder.h"
 #include "SDK_skin_vs20.inc"
 #include "SDK_skin_ps20b.inc"
-#include "commandbuilder.h"
-
-#ifndef _X360
 #include "SDK_skin_vs30.inc"
 #include "SDK_skin_ps30.inc"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -809,18 +806,14 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 		float vShaderControls[4] = { fHasBaseAlphaPhongMask, flMinLighting, flTintReplacementAmount, fInvertPhongMask };
 		pShaderAPI->SetPixelShaderConstant( PSREG_CONSTANT_27, vShaderControls, 1 );
 
+		float vDetailBlendMode_NumLights[4];
 		if ( hasDetailTexture )
 		{
-#if 0														// needs constant change
-			if ( info.m_nDetailTint  != -1 )
-				pShader->SetPixelShaderConstantGammaToLinear( 10, info.m_nDetailTint );
-			else
-			{
-				float boring_tint[4]={1,1,1,1};
-				pShaderAPI->SetPixelShaderConstant( 10, boring_tint, 1 );
-			}
-#endif
+			vDetailBlendMode_NumLights[0] = nDetailBlendMode;
 		}
+
+		vDetailBlendMode_NumLights[1] = lightState.m_nNumLights;
+		pShaderAPI->SetPixelShaderConstant( 32, vDetailBlendMode_NumLights, 1 );
 
 		if ( bHasSelfIllumFresnel && !bHasFlashlight )
 		{

@@ -1,16 +1,14 @@
-//	STATIC: "ONLY_PROJECT_POSITION"	"0..1" [XBOX]
-//	STATIC: "ONLY_PROJECT_POSITION"	"0..0" [PC]
 //  STATIC: "COLOR_DEPTH"			"0..1"
 
 //	DYNAMIC: "COMPRESSED_VERTS"		"0..1"
 //	DYNAMIC: "SKINNING"				"0..1"
-//  DYNAMIC: "MORPHING"				"0..1"  [vs30]
+//  DYNAMIC: "MORPHING"				"0..1"
 
 #include "common_vs_fxc.h"
 
 static const bool g_bSkinning = SKINNING ? true : false;
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_6 );
@@ -30,7 +28,7 @@ struct VS_INPUT
 	// Position delta stream
 	float3 vPosFlex				: POSITION1;
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 	float vVertexID				: POSITION2;
 #endif
 };
@@ -38,10 +36,7 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 vProjPos				: POSITION;
-
-#if (ONLY_PROJECT_POSITION == 0) //360 sometimes runs without the pixel shader component, but has to patch this output if it does.
 	float2 texCoord				: TEXCOORD0;
-#endif
 
 #if COLOR_DEPTH
 	float4 vWorldPos_projPosZ	: TEXCOORD1;
@@ -55,11 +50,11 @@ VS_OUTPUT main( const VS_INPUT v )
 	float3 vWorldPos;
 	float4 vPosition = v.vPos;
 
-#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-	ApplyMorph( v.vPosFlex, vPosition.xyz );
-#else
+#if ( USE_MORPHING )
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, 
 		v.vVertexID, float3(0, 0, 0), vPosition.xyz );
+#else
+	ApplyMorph( v.vPosFlex, vPosition.xyz );
 #endif
 
 	SkinPosition( g_bSkinning, vPosition, v.vBoneWeights, v.vBoneIndices, vWorldPos );
@@ -68,11 +63,9 @@ VS_OUTPUT main( const VS_INPUT v )
 
 	o.vProjPos    = vProjPos;
 
-#if (ONLY_PROJECT_POSITION == 0)
 	o.texCoord   = v.vTexCoord;
-#endif
 
-#if ( COLOR_DEPTH && !ONLY_PROJECT_POSITION )
+#if ( COLOR_DEPTH )
 	o.vWorldPos_projPosZ.z = vProjPos.z;
 	o.vWorldPos_projPosZ.w = vProjPos.w;
 #endif

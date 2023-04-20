@@ -2,7 +2,7 @@
 
 // DYNAMIC: "COMPRESSED_VERTS"			"0..1"
 // DYNAMIC: "SKINNING"					"0..1"
-// DYNAMIC: "MORPHING"					"0..1" [vs30]
+// DYNAMIC: "MORPHING"					"0..1" [ = pShaderAPI->IsHWMorphingEnabled() ]
 
 // Includes
 #include "common_vs_fxc.h"
@@ -10,7 +10,7 @@
 // Globals
 static const bool g_bSkinning = SKINNING ? true : false;
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_6 );
@@ -29,7 +29,7 @@ struct VS_INPUT
 
 	float3 vPosFlex				: POSITION1;	// Delta positions for flexing
 	
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 	float vVertexID				: POSITION2;
 #endif
 };
@@ -47,10 +47,10 @@ VS_OUTPUT main( const VS_INPUT i )
 
 	float4 vObjPosition = i.vPos;
 	
-#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-	ApplyMorph( i.vPosFlex, vObjPosition.xyz );
-#else
+#if ( USE_MORPHING )
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, i.vVertexID, float3( 0, 0, 0 ), vObjPosition.xyz );
+#else
+	ApplyMorph( i.vPosFlex, vObjPosition.xyz );
 #endif
 
 	// Transform the position

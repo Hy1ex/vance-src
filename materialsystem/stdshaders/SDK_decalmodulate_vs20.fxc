@@ -2,23 +2,21 @@
 //========== Copyright (c) Valve Corporation, All rights reserved. ==========//
 
 //  STATIC: "VERTEXCOLOR"			"0..1"
-//  STATIC: "LIGHTING_PREVIEW"		"0..1"	[PC]
-//  STATIC: "LIGHTING_PREVIEW"		"0..0"	[XBOX]
+//  STATIC: "LIGHTING_PREVIEW"		"0..1"
 //  STATIC: "FLASHLIGHT"			"0..1"  
 
 //	DYNAMIC: "DOWATERFOG"			"0..1"
 //  DYNAMIC: "COMPRESSED_VERTS"		"0..1"
-//	DYNAMIC: "SKINNING"				"0..0"  [vs20]
-//	DYNAMIC: "SKINNING"				"0..1"  [vs30]
+//	DYNAMIC: "SKINNING"				"0..1"
 
-// DYNAMIC: "MORPHING"				"0..1" [vs30] [ = pShaderAPI->IsHWMorphingEnabled() ]
+// DYNAMIC: "MORPHING"				"0..1" [ = pShaderAPI->IsHWMorphingEnabled() ]
 
 #include "common_vs_fxc.h"
  
 static const bool g_bSkinning		= SKINNING ? true : false;
 static const int  g_FogType			= DOWATERFOG;
 static const bool g_bVertexColor	= VERTEXCOLOR ? true : false;
-#if ( defined( SHADER_MODEL_VS_3_0 ) && MORPHING )
+#if ( USE_MORPHING )
 	#define DECALOFFSET 1
 #else
 	#define DECALOFFSET 0
@@ -26,7 +24,7 @@ static const bool g_bVertexColor	= VERTEXCOLOR ? true : false;
 
 const float4 cBaseTexCoordTransform[2]		: register( SHADER_SPECIFIC_CONST_0 );
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim			: register( SHADER_SPECIFIC_CONST_10 );
@@ -52,7 +50,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex			: POSITION1;
 	float3 vNormalFlex		: NORMAL1;
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 	float vVertexID			: POSITION2;
 #endif
 };
@@ -86,11 +84,12 @@ VS_OUTPUT main( const VS_INPUT v )
 		DecompressVertex_Normal( v.vNormal, vNormal );
 	}
 	
-#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
-#else
+
+#if ( USE_MORPHING )
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, 
 		v.vVertexID, v.vTexCoord2, vPosition.xyz, vNormal );
+#else
+	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
 #endif
 	  
 	// Perform skinning
@@ -106,7 +105,7 @@ VS_OUTPUT main( const VS_INPUT v )
 		worldNormal = normalize( worldNormal );
 	}
 
-#if defined( SHADER_MODEL_VS_3_0 ) && MORPHING
+#if ( USE_MORPHING )
 	// Avoid z precision errors
 	worldPos += worldNormal * 0.05f * v.vTexCoord2.z;
 #endif

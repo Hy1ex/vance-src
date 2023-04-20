@@ -19,7 +19,14 @@
 // Ditch all fastpath attemps if we are doing LIGHTING_PREVIEW.
 //	SKIP: defined $LIGHTING_PREVIEW && defined $FASTPATH && $LIGHTING_PREVIEW && $FASTPATH
 // --------------------------------------------------------------------------------
+//	SKIP: $MORPHING // Echoes; We likely won't ever use HW morphs.
+//	SKIP: $DECAL && ( $MORPHING == 0 )
 
+#if ( defined( SHADER_MODEL_VS_3_0 ) && MORPHING )
+#define USE_MORPHING 1
+#else
+#define USE_MORPHING 0
+#endif
 
 #ifndef COMPRESSED_VERTS
 // Default to no vertex compression

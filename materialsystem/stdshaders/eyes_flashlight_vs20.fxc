@@ -14,7 +14,7 @@
 //	DYNAMIC: "COMPRESSED_VERTS"		"0..1"
 //	DYNAMIC: "SKINNING"				"0..1"
 //	DYNAMIC: "DOWATERFOG"			"0..1"
-//  DYNAMIC: "MORPHING"				"0..1" [vs30]
+//  DYNAMIC: "MORPHING"				"0..1"
 
 #include "common_vs_fxc.h"
 
@@ -30,7 +30,7 @@ const float4 cFlashlighAtten	:  register( SHADER_SPECIFIC_CONST_5 ); // const, l
 const float4 cIrisProjectionU	:  register( SHADER_SPECIFIC_CONST_8 );
 const float4 cIrisProjectionV	:  register( SHADER_SPECIFIC_CONST_9 );
 
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 // NOTE: cMorphTargetTextureDim.xy = target dimensions,
 //		 cMorphTargetTextureDim.z = 4tuples/morph
 const float3 cMorphTargetTextureDim : register( SHADER_SPECIFIC_CONST_10 );
@@ -50,7 +50,7 @@ struct VS_INPUT
 	// Position and normal/tangent deltas
 	float3 vPosFlex					: POSITION1;
 	float3 vNormalFlex				: NORMAL1;
-#ifdef SHADER_MODEL_VS_3_0
+#if ( USE_MORPHING )
 	float vVertexID					: POSITION2;
 #endif
 };
@@ -85,10 +85,10 @@ VS_OUTPUT main( const VS_INPUT v )
 	float3 vNormal;
 	DecompressVertex_Normal( v.vNormal, vNormal );
 
-#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
-	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
-#else
+#if ( USE_MORPHING )
 	ApplyMorph( morphSampler, cMorphTargetTextureDim, cMorphSubrect, v.vVertexID, float3( 0, 0, 0 ), vPosition.xyz, vNormal );
+#else
+	ApplyMorph( v.vPosFlex, v.vNormalFlex, vPosition.xyz, vNormal );
 #endif
 
 	// Perform skinning
