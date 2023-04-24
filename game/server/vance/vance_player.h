@@ -216,6 +216,7 @@ private:
 	CNetworkVar(float, m_flSlideFrictionScale);
 	Vector		m_vecSlideDirection;
 	float		m_fMidairSlideWindowTime = 0.0f;
+	bool		m_bAllowMidairSlide = true;
 
 	friend class CVanceGameMovement;
 };

@@ -99,7 +99,7 @@ ConVar vance_climb_debug("vance_climb_debug", "0");
 extern ConVar vance_slide_time;
 ConVar vance_slide_addvelocity( "vance_slide_addvelocity", "200.0", FCVAR_CHEAT );
 ConVar vance_slide_frictionscale( "vance_slide_frictionscale", "0.1", FCVAR_CHEAT );
-ConVar vance_slide_midair_window("vance_slide_midair_window", "0.1", FCVAR_CHEAT);
+ConVar vance_slide_midair_window("vance_slide_midair_window", "0.4", FCVAR_CHEAT);
 
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
 ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
@@ -2488,8 +2488,8 @@ void CVancePlayer::SetAnimation(PLAYER_ANIM playerAnim)
 void CVancePlayer::SlideTick()
 {
 	//trace down
-	trace_t tr;
-	UTIL_TraceLine(GetAbsOrigin() + Vector(0, 0, 10), GetAbsOrigin() - Vector(0, 0, 64), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr);
+	//trace_t tr;
+	//UTIL_TraceLine(GetAbsOrigin() + Vector(0, 0, 10), GetAbsOrigin() - Vector(0, 0, 64), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, &tr);
 
 	//should we keep sliding
 	bool ContinueSlide = true;
@@ -2498,7 +2498,7 @@ void CVancePlayer::SlideTick()
 		ContinueSlide = false;
 	else if (GetLocalVelocity().Length2D() < 300) //too slow
 		ContinueSlide = false;
-	else if (!tr.DidHitWorld()) //nothing under us
+	else if (!(GetFlags() & FL_ONGROUND)) //nothing under us
 		ContinueSlide = false;
 
 	if (ContinueSlide)
@@ -2517,7 +2517,10 @@ void CVancePlayer::TrySlide()
 	// dont slide in air
 	if (!(GetFlags() & FL_ONGROUND))
 	{
-		m_fMidairSlideWindowTime = gpGlobals->curtime + vance_slide_midair_window.GetFloat();
+		if (m_bAllowMidairSlide){
+			m_fMidairSlideWindowTime = gpGlobals->curtime + vance_slide_midair_window.GetFloat();
+			m_bAllowMidairSlide = false;
+		}
 		return;
 	}
 
@@ -2695,6 +2698,9 @@ void CVancePlayer::Think()
 			default:
 				Warning( "%s L%s: SHOULD NOT BE HERE\n", __FILE__, __LINE__ );
 		}
+	}
+	if (!m_bAllowMidairSlide && (GetFlags() & FL_ONGROUND)){
+		m_bAllowMidairSlide = true;
 	}
 
 	SetNextThink(gpGlobals->curtime);
