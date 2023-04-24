@@ -123,6 +123,8 @@ BEGIN_DATADESC( CVancePlayer )
 DEFINE_FIELD(m_ParkourAction, FIELD_INTEGER),
 DEFINE_FIELD(m_flSlideEndTime, FIELD_TIME),
 DEFINE_FIELD(m_flSlideFrictionScale, FIELD_FLOAT),
+DEFINE_FIELD(m_iNumStims, FIELD_INTEGER),
+DEFINE_FIELD(m_iNumTourniquets, FIELD_INTEGER),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
@@ -2501,7 +2503,7 @@ void CVancePlayer::SlideTick()
 
 	if (ContinueSlide)
 	{
-		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat();
+		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat() + (pow((1.0f - (m_flSlideEndTime - gpGlobals->curtime) / vance_slide_time.GetFloat()), 2) * 1.0f-vance_slide_frictionscale.GetFloat());
 	}
 	else
 	{

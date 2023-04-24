@@ -185,10 +185,10 @@ private:
 	float		m_fBleedEndTime;	// When will bleeding stop?
 
 	// Tourniquets
-	int			m_iNumTourniquets;
+	CNetworkVar(int, m_iNumTourniquets);
 
 	// Stims
-	int			m_iNumStims;
+	CNetworkVar(int, m_iNumStims);
 	bool		m_bStimRegeneration;
 	float		m_fStimRegenerationNextHealTime;
 	float		m_fStimRegenerationEndTime;
