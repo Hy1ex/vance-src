@@ -6,7 +6,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
 #include "lightmappedgeneric_decal.inc"
 #include "mathlib/bumpvects.h"

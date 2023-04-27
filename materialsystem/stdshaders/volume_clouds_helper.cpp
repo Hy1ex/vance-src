@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "mathlib/vmatrix.h"
 #include "volume_clouds_helper.h"
 #include "convar.h"

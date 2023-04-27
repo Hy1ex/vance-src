@@ -129,14 +129,12 @@
 
 ==================================================================================================== */
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "mathlib/vmatrix.h"
 #include "cloak_blended_pass_helper.h"
 #include "convar.h"
-#include "SDK_cloak_blended_pass_vs20.inc"
-#include "SDK_cloak_blended_pass_ps20b.inc"
-#include "SDK_cloak_blended_pass_vs30.inc"
-#include "SDK_cloak_blended_pass_ps30.inc"
+#include "sdk_cloak_blended_pass_vs30.inc"
+#include "sdk_cloak_blended_pass_ps30.inc"
 
 void InitParamsCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, const char *pMaterialName, CloakBlendedPassVars_t &info )
 {
@@ -195,35 +193,18 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		int userDataSize = 0;
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
-#ifndef _X360
-		if ( !g_pHardwareConfig->HasFastVertexTextures() )
-#endif
-		{
-			// Vertex Shader
-			DECLARE_STATIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs20 );
-			SET_STATIC_VERTEX_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
-			SET_STATIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs20 );
+		// The vertex shader uses the vertex id stream
+		SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
-			// Pixel Shader
-			DECLARE_STATIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps20b );
-			SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
-			SET_STATIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps20b );
-		}
-		else
-		{
-			// The vertex shader uses the vertex id stream
-			SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
+		// Vertex Shader
+		DECLARE_STATIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
+		SET_STATIC_VERTEX_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
+		SET_STATIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
 
-			// Vertex Shader
-			DECLARE_STATIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs30 );
-			SET_STATIC_VERTEX_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
-			SET_STATIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs30 );
-
-			// Pixel Shader
-			DECLARE_STATIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps30 );
-			SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
-			SET_STATIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps30 );
-		}
+		// Pixel Shader
+		DECLARE_STATIC_PIXEL_SHADER( sdk_cloak_blended_pass_ps30 );
+		SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
+		SET_STATIC_PIXEL_SHADER( sdk_cloak_blended_pass_ps30 );
 
 		// Textures
 		pShaderShadow->EnableTexture( SHADER_SAMPLER0, true ); // Refraction texture
@@ -253,33 +234,18 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 			pShader->SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, info.m_nBumpTransform );
 		}
 
-		if ( !g_pHardwareConfig->HasFastVertexTextures() )
-		{
-			// Set Vertex Shader Combos
-			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-			SET_DYNAMIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs20 );
+		pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
-			// Set Pixel Shader Combos
-			DECLARE_DYNAMIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps20b );
-			SET_DYNAMIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps20b );
-		}
-		else
-		{
-			pShader->SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
+		// Set Vertex Shader Combos
+		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
+		SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
+		SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
+		SET_DYNAMIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
 
-			// Set Vertex Shader Combos
-			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-			SET_DYNAMIC_VERTEX_SHADER( SDK_cloak_blended_pass_vs30 );
-
-			// Set Pixel Shader Combos
-			DECLARE_DYNAMIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps30 );
-			SET_DYNAMIC_PIXEL_SHADER( SDK_cloak_blended_pass_ps30 );
-		}
+		// Set Pixel Shader Combos
+		DECLARE_DYNAMIC_PIXEL_SHADER( sdk_cloak_blended_pass_ps30 );
+		SET_DYNAMIC_PIXEL_SHADER( sdk_cloak_blended_pass_ps30 );
 
 		// Bind textures
 		pShaderAPI->BindStandardTexture( SHADER_SAMPLER0, TEXTURE_FRAME_BUFFER_FULL_TEXTURE_0 ); // Refraction Map

@@ -1,4 +1,4 @@
-//====== Copyright © Sandern Corporation, All rights reserved. ===========//
+//====== Copyright ï¿½ Sandern Corporation, All rights reserved. ===========//
 //
 // Purpose: 
 //
@@ -24,7 +24,9 @@ CON_COMMAND(print_num_replaced_mats, "")
 	ConColorMsg(COLOR_GREEN, "%d replaced materials\n", matCount);
 }
 
-bool replMatPossible = true;
+//bool replMatPossible = true;
+// Echoes; Disabled.
+bool replMatPossible = false;
 
 //-----------------------------------------------------------------------------
 // List of materials that should be replaced
@@ -36,8 +38,6 @@ static const char * const pszShaderReplaceDict[][2] = {
 	//"LightmappedGeneric_Decal",		"SDK_LightmappedGeneric_Decal",
 };
 static const int iNumShaderReplaceDict = ARRAYSIZE(pszShaderReplaceDict);
-
-#include "icommandline.h"
 
 // Copied from cdeferred_manager_client.cpp
 static void ShaderReplaceReplMat(const char *szNewShadername, IMaterial *pMat)
@@ -191,17 +191,10 @@ const char *Console_GetLastLine(size_t errorSize)
 
 	char *pszRet = NULL;
 	strcpy(pszRet, pszLine);
-	delete pszLine;
+	delete[] pszLine;
 
 	return pszRet;
 }
-
-#ifdef _DEBUG
-#define DebuggerBreakOnError(pszError) if (V_stricmp(Console_GetLastLine(strlen(pszError)), pszError) == 0) \
-	DebuggerBreak();
-#else
-#define DebuggerBreakOnError(pszError)
-#endif
 
 IMaterial* CDeferredMaterialSystem::FindProceduralMaterial(const char* pMaterialName, const char* pTextureGroupName,
 	KeyValues* pVMTKeyValues)
@@ -217,11 +210,7 @@ IMaterial* CDeferredMaterialSystem::FindProceduralMaterial(const char* pMaterial
 		}
 	}
 
-	IMaterial *pMaterial = BaseClass::FindProceduralMaterial(pMaterialName, pTextureGroupName, pVMTKeyValues);
-	//	DebuggerBreakOnError("ShaderAPIDX8::CreateD3DTexture: D3DERR_INVALIDCALL\n");
-	if (!pMaterial)
-		DebuggerBreak();
-	return pMaterial;
+	return BaseClass::FindProceduralMaterial(pMaterialName, pTextureGroupName, pVMTKeyValues);
 }
 
 IMaterial* CDeferredMaterialSystem::CreateMaterial(const char* pMaterialName, KeyValues* pVMTKeyValues)
@@ -237,11 +226,7 @@ IMaterial* CDeferredMaterialSystem::CreateMaterial(const char* pMaterialName, Ke
 		}
 	}
 	
-	IMaterial *pMaterial = BaseClass::CreateMaterial(pMaterialName, pVMTKeyValues);
-	//	DebuggerBreakOnError("ShaderAPIDX8::CreateD3DTexture: D3DERR_INVALIDCALL\n");
-	if (!pMaterial)
-		DebuggerBreak();
-	return pMaterial;
+	return BaseClass::CreateMaterial(pMaterialName, pVMTKeyValues);
 }
 
 IMaterial* CDeferredMaterialSystem::ReplaceMaterialInternal(IMaterial* pMat) const
@@ -297,7 +282,6 @@ static ReplacementSystem s_ReplacementSystem;
 
 void ReplacementSystem::Enable()
 {
-
 	if (m_pOldMaterialSystem || !replMatPossible)
 		return;
 

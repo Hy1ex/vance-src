@@ -5,10 +5,10 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
-#include "SDK_screenspaceeffect_vs30.inc"
-#include "Vance_Tonemap_ps30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
+#include "vance_tonemap_ps30.inc"
 
 ConVar r_post_tonemap_underexposure("r_post_tonemap_underexposure", "1");
 ConVar r_post_tonemap_overexposure("r_post_tonemap_overexposure", "1");
@@ -51,11 +51,11 @@ SHADER_DRAW
 		pShaderShadow->VertexShaderVertexFormat(fmt, 1, 0, 0);
 
 		// Pre-cache shaders
-		DECLARE_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
-		SET_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+		SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
-		DECLARE_STATIC_PIXEL_SHADER( Vance_Tonemap_ps30 );
-		SET_STATIC_PIXEL_SHADER( Vance_Tonemap_ps30 );
+		DECLARE_STATIC_PIXEL_SHADER( vance_tonemap_ps30 );
+		SET_STATIC_PIXEL_SHADER( vance_tonemap_ps30 );
 	}
 
 	DYNAMIC_STATE
@@ -77,12 +77,12 @@ SHADER_DRAW
 		fExposure[1] = fExposure[2] = fExposure[3] = fExposure[0];
 		pShaderAPI->SetPixelShaderConstant(2, fExposure);
 
-		DECLARE_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
-		SET_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
-		DECLARE_DYNAMIC_PIXEL_SHADER( Vance_Tonemap_ps30 );
+		DECLARE_DYNAMIC_PIXEL_SHADER( vance_tonemap_ps30 );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( MODE, clamp( r_post_tonemap_mode.GetInt(), 0, 3 ) );
-		SET_DYNAMIC_PIXEL_SHADER( Vance_Tonemap_ps30 );
+		SET_DYNAMIC_PIXEL_SHADER( vance_tonemap_ps30 );
 	}
 	Draw();
 }

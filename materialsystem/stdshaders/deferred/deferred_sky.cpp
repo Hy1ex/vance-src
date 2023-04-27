@@ -1,11 +1,11 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
 #include "deferred_composite_vs30.inc"
 #include "deferred_sky_ps30.inc"

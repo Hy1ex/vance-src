@@ -1,13 +1,13 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
-#include "screenspace_simple_vs30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
 #include "chromatic_ps30.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -50,14 +50,11 @@ BEGIN_VS_SHADER( Chromatic_Dispersion, "Help for Chromatic Dispersion" )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
-			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_STATIC_PIXEL_SHADER( chromatic_ps30 );
-				SET_STATIC_PIXEL_SHADER( chromatic_ps30 );
-			}
+			DECLARE_STATIC_PIXEL_SHADER( chromatic_ps30 );
+			SET_STATIC_PIXEL_SHADER( chromatic_ps30 );
 		}
 
 		DYNAMIC_STATE
@@ -66,15 +63,12 @@ BEGIN_VS_SHADER( Chromatic_Dispersion, "Help for Chromatic Dispersion" )
 			pShaderAPI->SetPixelShaderConstant( 0, g_const0 );
 
 			BindTexture( SHADER_SAMPLER0, FBTEXTURE, -1 );
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
-			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
-			{
-				DECLARE_DYNAMIC_PIXEL_SHADER( chromatic_ps30 );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( RADIAL, params[RADIAL]->GetIntValue() );
-				SET_DYNAMIC_PIXEL_SHADER( chromatic_ps30 );
-			}
+			DECLARE_DYNAMIC_PIXEL_SHADER( chromatic_ps30 );
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( RADIAL, params[RADIAL]->GetIntValue() );
+			SET_DYNAMIC_PIXEL_SHADER( chromatic_ps30 );
 		}
 		Draw();
 	}

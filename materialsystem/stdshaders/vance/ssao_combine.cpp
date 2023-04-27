@@ -5,9 +5,9 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
-#include "SDK_screenspaceeffect_vs30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
 #include "ssgi_combine_ps30.inc"
 
 
@@ -64,8 +64,8 @@ SHADER_DRAW
 		pShaderShadow->VertexShaderVertexFormat(fmt, 1, 0, 0);
 
 		// Pre-cache shaders
-		DECLARE_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
-		SET_STATIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+		SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 		DECLARE_STATIC_PIXEL_SHADER( ssgi_combine_ps30 );
 		SET_STATIC_PIXEL_SHADER( ssgi_combine_ps30 );
@@ -89,8 +89,8 @@ SHADER_DRAW
 		fResolution[1] = float(1.0 / nHeight);
 		pShaderAPI->SetPixelShaderConstant(1, fResolution);
 
-		DECLARE_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
-		SET_DYNAMIC_VERTEX_SHADER( SDK_screenspaceeffect_vs30 );
+		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 		DECLARE_DYNAMIC_PIXEL_SHADER( ssgi_combine_ps30 );
 		SET_DYNAMIC_PIXEL_SHADER( ssgi_combine_ps30 );

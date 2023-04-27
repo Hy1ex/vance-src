@@ -5,13 +5,11 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
-#include "refract_dx9_helper.h"
+#include "refract_helper.h"
 
-DEFINE_FALLBACK_SHADER( SDK_Refract, SDK_Refract_DX90 )
-
-BEGIN_VS_SHADER( SDK_Refract_DX90, "Help for SDK_Refract" )
+BEGIN_VS_SHADER( Refract, "Help for Refract" )
 
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM_OVERRIDE( COLOR, SHADER_PARAM_TYPE_COLOR, "{255 255 255}", "unused", SHADER_PARAM_NOT_EDITABLE )

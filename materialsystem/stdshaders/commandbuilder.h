@@ -13,7 +13,7 @@
 #include "shaderapi/commandbuffer.h"
 #endif
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "shaderapi/ishaderapi.h"
 
 #ifdef _WIN32

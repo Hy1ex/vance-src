@@ -1062,6 +1062,11 @@ private:
 
 	friend class CVisibleShadowList;
 	friend class CVisibleShadowFrustumList;
+
+#ifdef VANCE
+	CTextureReference m_CascadedDepthTexture;
+	CTextureReference m_CascadedColorTexture;
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -1536,6 +1541,15 @@ void CClientShadowMgr::InitDepthTextureShadows()
 			m_DepthTextureCacheLocks.AddToTail( bFalse );
 		}
 
+#ifdef VANCE
+		const int iCadcadedShadowRes = 2048;
+		m_CascadedColorTexture.InitRenderTarget(iCadcadedShadowRes * 4, iCadcadedShadowRes, RT_SIZE_NO_CHANGE,
+			nullFormat, MATERIAL_RT_DEPTH_NONE, false, "_rt_CascadedShadowColor");
+		m_CascadedDepthTexture.InitRenderTarget(iCadcadedShadowRes * 4, iCadcadedShadowRes, RT_SIZE_NO_CHANGE,
+			dstFormat, MATERIAL_RT_DEPTH_NONE, false, "_rt_CascadedShadowDepth");
+		materials->EndRenderTargetAllocation();
+#endif
+
 		materials->EndRenderTargetAllocation();
 	}
 }
@@ -1554,6 +1568,11 @@ void CClientShadowMgr::ShutdownDepthTextureShadows()
 			m_DepthTextureCacheLocks.Remove( m_DepthTextureCache.Count()-1 );
 			m_DepthTextureCache.Remove( m_DepthTextureCache.Count()-1 );
 		}
+
+#ifdef VANCE
+		m_CascadedDepthTexture.Shutdown();
+		m_CascadedColorTexture.Shutdown();
+#endif
 
 		m_bDepthTextureActive = false;
 	}

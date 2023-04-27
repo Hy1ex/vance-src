@@ -4,7 +4,7 @@
 //
 //==================================================================================================
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
 #include "skydome_atmosphere_helper.h"
 #include "commandbuilder.h"
@@ -197,7 +197,6 @@ SHADER_DRAW
 
 		// Assume we're only going to get in here if we support 2b
 		DECLARE_STATIC_PIXEL_SHADER(skydome_ps30);
-		SET_STATIC_PIXEL_SHADER_COMBO(CONVERT_TO_SRGB, 0);
 		SET_STATIC_PIXEL_SHADER(skydome_ps30);
 
 		// HACK HACK HACK - enable alpha writes all the time so that we have them for underwater stuff

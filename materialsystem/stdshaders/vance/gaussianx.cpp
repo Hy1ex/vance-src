@@ -1,13 +1,13 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
-#include "screenspace_simple_vs30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
 #include "gaussianx_ps30.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -50,8 +50,8 @@ BEGIN_VS_SHADER( GaussianX, "Help for Gaussian X" )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{
@@ -85,8 +85,8 @@ BEGIN_VS_SHADER( GaussianX, "Help for Gaussian X" )
 			{
 				BindTexture(SHADER_SAMPLER0, pShaderAPI->GetRenderTargetEx(0));
 			}
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			//if( g_pHardwareConfig->SupportsPixelShaders_2_b() )
 			{

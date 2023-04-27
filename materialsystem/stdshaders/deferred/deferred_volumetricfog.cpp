@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
 #include "deferred_composite_vs30.inc"
 #include "deferred_volumetricfog_ps30.inc"

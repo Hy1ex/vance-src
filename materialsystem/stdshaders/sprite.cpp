@@ -4,16 +4,19 @@
 //
 // $NoKeywords: $
 //
-// Implementation of the sprite shader
 //=============================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include <string.h>
 #include "const.h"
-#include "sprite_vs11.inc"
+
+#include "cpp_shader_constant_register_map.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#include "sdk_sprite_vs30.inc"
+#include "sdk_sprite_ps30.inc"
 
 // WARNING!  Change these in engine/SpriteGn.h if you change them here!
 #define SPR_VP_PARALLEL_UPRIGHT		0
@@ -22,36 +25,41 @@
 #define SPR_ORIENTED				3
 #define SPR_VP_PARALLEL_ORIENTED	4
 
-
-DEFINE_FALLBACK_SHADER( Sprite, Sprite_DX8 )
-
-BEGIN_VS_SHADER( Sprite_DX8, 
-			  "Help for Sprite_DX8" )
+BEGIN_VS_SHADER( Sprite,  "Help for Sprite" )
 			  
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( SPRITEORIGIN, SHADER_PARAM_TYPE_VEC3, "[0 0 0]", "sprite origin" )
 		SHADER_PARAM( SPRITEORIENTATION, SHADER_PARAM_TYPE_INTEGER, "0", "sprite orientation" )
 		SHADER_PARAM( SPRITERENDERMODE, SHADER_PARAM_TYPE_INTEGER, "0", "sprite rendermode" )
 		SHADER_PARAM( IGNOREVERTEXCOLORS, SHADER_PARAM_TYPE_BOOL, "1", "ignore vertex colors" )
+		SHADER_PARAM( NOSRGB, SHADER_PARAM_TYPE_BOOL, "0", "do not operate in srgb space" )
+		SHADER_PARAM( HDRCOLORSCALE, SHADER_PARAM_TYPE_FLOAT, "1.0", "hdr color scale" )
 	END_SHADER_PARAMS
 
 	SHADER_FALLBACK
 	{
-		if ( IsPC() && g_pHardwareConfig->GetDXSupportLevel() < 80 )
-			return "Sprite_DX6";
+		if (g_pHardwareConfig->GetDXSupportLevel() < 90)
+			return "Sprite_DX8";
 		return 0;
 	}
-
 	SHADER_INIT_PARAMS()
 	{
 		// FIXME: This can share code with sprite.cpp
-		// FIXME: Not sure if this is the best solution, but it's a very]
-		// easy one. When graphics aren't enabled, we oftentimes need to get
-		// at the parameters of a shader. Therefore, we must set the default
-		// values in a separate phase from when we load resources.
-
 		if (!params[ALPHA]->IsDefined())
-			params[ ALPHA ]->SetFloatValue( 1.0f );
+		{
+			params[ALPHA]->SetFloatValue( 1.0f );
+		}
+
+		if (!params[HDRCOLORSCALE]->IsDefined())
+		{
+			params[HDRCOLORSCALE]->SetFloatValue( 1.0f );
+		}
+
+		if ( !params[NOSRGB]->IsDefined() )
+		{
+			// Disable sRGB reads and writes by default
+			params[NOSRGB]->SetIntValue( 1 );
+		}
 
 		SET_FLAGS( MATERIAL_VAR_NO_DEBUG_OVERRIDE );
 		SET_FLAGS( MATERIAL_VAR_VERTEXCOLOR );
@@ -96,7 +104,8 @@ BEGIN_VS_SHADER( Sprite_DX8,
 
 	SHADER_INIT
 	{
-		LoadTexture( BASETEXTURE );
+		bool bSRGB = s_ppParams[NOSRGB]->GetIntValue() == 0;
+		LoadTexture( BASETEXTURE, bSRGB ? TEXTUREFLAGS_SRGB : 0 );
 	}
 
 #define SHADER_USE_VERTEX_COLOR		1
@@ -104,58 +113,82 @@ BEGIN_VS_SHADER( Sprite_DX8,
 
 	void SetSpriteCommonShadowState( unsigned int shaderFlags )
 	{
+		IShaderShadow *pShaderShadow = s_pShaderShadow;
+		IMaterialVar **params = s_ppParams;
+
 		s_pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
+		bool bSRGB = s_ppParams[NOSRGB]->GetIntValue() == 0;
+		pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, bSRGB );
 
 		unsigned int flags = VERTEX_POSITION;
 		if( shaderFlags & SHADER_USE_VERTEX_COLOR )
 		{
 			flags |= VERTEX_COLOR;
 		}
-		s_pShaderShadow->VertexShaderVertexFormat( flags, 1, 0, 0 );
+		int numTexCoords = 1;
+		s_pShaderShadow->VertexShaderVertexFormat( flags, numTexCoords, 0, 0 );
 
-		sprite_vs11_Static_Index vshIndex;
-		bool vertexColor = ( shaderFlags & SHADER_USE_VERTEX_COLOR ) ? true : false;
-		vshIndex.SetVERTEXCOLOR( vertexColor );
-		s_pShaderShadow->SetVertexShader( "sprite_vs11", vshIndex.GetIndex() );
+		DECLARE_STATIC_VERTEX_SHADER( sdk_sprite_vs30 );
+		SET_STATIC_VERTEX_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags & SHADER_USE_VERTEX_COLOR ) ? true : false );
+		SET_STATIC_VERTEX_SHADER_COMBO( SRGB,  bSRGB );
+		SET_STATIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
-		// "VERTEXCOLOR" "0..1"
-		// "CONSTANTCOLOR" "0..1"
-		int pshIndex = 0;
-		if ( shaderFlags & SHADER_USE_VERTEX_COLOR ) pshIndex |= 0x1;
-		if ( shaderFlags & SHADER_USE_CONSTANT_COLOR ) pshIndex |= 0x2;
-		s_pShaderShadow->SetPixelShader( "sprite_ps11", pshIndex );
+		DECLARE_STATIC_PIXEL_SHADER( sdk_sprite_ps30 );
+		SET_STATIC_PIXEL_SHADER_COMBO( VERTEXCOLOR,  ( shaderFlags &  SHADER_USE_VERTEX_COLOR ) ? true : false );
+		SET_STATIC_PIXEL_SHADER_COMBO( CONSTANTCOLOR,  ( shaderFlags & SHADER_USE_CONSTANT_COLOR ) ? true : false );
+		SET_STATIC_PIXEL_SHADER_COMBO( HDRTYPE,  g_pHardwareConfig->GetHDRType() );
+		SET_STATIC_PIXEL_SHADER_COMBO( SRGB, bSRGB );
+		SET_STATIC_PIXEL_SHADER( sdk_sprite_ps30 );
+
+		// OSX always has to sRGB write (don't do this on Linux/Win GL - it causes glow sprites to be way too dark)
+		s_pShaderShadow->EnableSRGBWrite( bSRGB || ( IsOSX() && !g_pHardwareConfig->FakeSRGBWrite() ) );
 	}
 
 	void SetSpriteCommonDynamicState( unsigned int shaderFlags )
 	{
+		IShaderDynamicAPI *pShaderAPI = s_pShaderAPI;
+		bool bSRGB = s_ppParams[NOSRGB]->GetIntValue() == 0;
+
 		BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
 
 		MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 		int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-		sprite_vs11_Dynamic_Index vshIndex;
-		vshIndex.SetSKINNING( 0 );
-		vshIndex.SetDOWATERFOG( fogIndex );
-		s_pShaderAPI->SetVertexShaderIndex( vshIndex.GetIndex() );
+		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
+		SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
-		s_pShaderAPI->SetPixelShaderIndex( 0 );
-		if ( shaderFlags & SHADER_USE_CONSTANT_COLOR )
+		DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED, IsHDREnabled() );
+		SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+		SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
+
+		pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
+
+		float vEyePos_SpecExponent[4];
+		pShaderAPI->GetWorldSpaceCameraPosition( vEyePos_SpecExponent );
+		vEyePos_SpecExponent[3] = 0.0f;
+		pShaderAPI->SetPixelShaderConstant( PSREG_EYEPOS_SPEC_EXPONENT, vEyePos_SpecExponent, 1 );
+
+		if( shaderFlags & SHADER_USE_CONSTANT_COLOR )
 		{
-			SetPixelShaderConstant( 0, COLOR, ALPHA );
+			if ( bSRGB )
+				SetPixelShaderConstantGammaToLinear( 0, COLOR, ALPHA );
+			else
+				SetPixelShaderConstant( 0, COLOR, ALPHA );
 		}
 
-	 	float color[4] = { 1.0, 1.0, 1.0, 1.0 };
-		s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_MODULATION_COLOR, color );
-
-		// identity base texture transorm
-		float ident[2][4] = { 
-			{ 1.0f, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, 1.0f, 0.0f, 0.0f } 
-		};
-		s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, &ident[0][0], 2 ); 
+		if( IsHDREnabled() )
+		{
+			if ( bSRGB )
+				SetPixelShaderConstantGammaToLinear( 1, HDRCOLORSCALE );
+			else
+				SetPixelShaderConstant( 1, HDRCOLORSCALE );
+		}
 	}
 
 	SHADER_DRAW
 	{
+		bool bSRGB = params[NOSRGB]->GetIntValue() == 0;
+
 		SHADOW_STATE
 		{
 			pShaderShadow->EnableCulling( false );
@@ -167,6 +200,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 			SHADOW_STATE
 			{
 				FogToFogColor();
+
 				SetSpriteCommonShadowState( 0 );
 			}
 			DYNAMIC_STATE
@@ -182,6 +216,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 				pShaderShadow->EnableDepthWrites( false );
 				pShaderShadow->EnableBlending( true );
 				pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
+				
 				FogToFogColor();
 
 				SetSpriteCommonShadowState( SHADER_USE_VERTEX_COLOR );
@@ -197,9 +232,10 @@ BEGIN_VS_SHADER( Sprite_DX8,
 			SHADOW_STATE
 			{
 				pShaderShadow->EnableDepthWrites( false );
-				pShaderShadow->DepthFunc( SHADER_DEPTHFUNC_ALWAYS );
+				pShaderShadow->EnableDepthTest( false );
 				pShaderShadow->EnableBlending( true );
 				pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE );
+				
 				FogToBlack();
 
 				SetSpriteCommonShadowState( SHADER_USE_VERTEX_COLOR );
@@ -217,6 +253,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 				pShaderShadow->EnableDepthWrites( false );
 				pShaderShadow->EnableBlending( true );
 				pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
+				
 				FogToFogColor();
 
 				SetSpriteCommonShadowState( SHADER_USE_VERTEX_COLOR );
@@ -233,6 +270,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 				pShaderShadow->EnableDepthWrites( false );
 				pShaderShadow->EnableBlending( true );
 				pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE_MINUS_SRC_ALPHA );
+				
 				FogToFogColor();
 
 				SetSpriteCommonShadowState( SHADER_USE_VERTEX_COLOR );
@@ -249,6 +287,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 				pShaderShadow->EnableDepthWrites( false );
 				pShaderShadow->EnableBlending( true );
 				pShaderShadow->BlendFunc( SHADER_BLEND_ONE_MINUS_SRC_ALPHA, SHADER_BLEND_ONE );
+				
 				FogToBlack();
 
 				SetSpriteCommonShadowState( SHADER_USE_VERTEX_COLOR );
@@ -272,6 +311,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 					pShaderShadow->EnableDepthWrites( false );
 					pShaderShadow->EnableBlending( true );
 					pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE );
+					
 					FogToBlack();
 
 					SetSpriteCommonShadowState( flags );
@@ -297,6 +337,7 @@ BEGIN_VS_SHADER( Sprite_DX8,
 					pShaderShadow->EnableDepthWrites( false );
 					pShaderShadow->EnableBlending( true );
 					pShaderShadow->BlendFunc( SHADER_BLEND_SRC_ALPHA, SHADER_BLEND_ONE );
+					
 					FogToBlack();
 
 					SetSpriteCommonShadowState( flags );
@@ -309,27 +350,35 @@ BEGIN_VS_SHADER( Sprite_DX8,
 
 					MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 					int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-					sprite_vs11_Dynamic_Index vshIndex;
-					vshIndex.SetSKINNING( 0 );
-					vshIndex.SetDOWATERFOG( fogIndex );
-					s_pShaderAPI->SetVertexShaderIndex( vshIndex.GetIndex() );
+					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
+					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
-					float color[4] = { 1.0, 1.0, 1.0, 1.0 };
-					s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_MODULATION_COLOR, color );
+					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
 
-					s_pShaderAPI->SetPixelShaderIndex( 0 );
-	
-					color[0] = color[1] = color[2] = flFade * frameBlendAlpha;
+					pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
+
+					float vEyePos_SpecExponent[4];
+					pShaderAPI->GetWorldSpaceCameraPosition( vEyePos_SpecExponent );
+					vEyePos_SpecExponent[3] = 0.0f;
+					pShaderAPI->SetPixelShaderConstant( PSREG_EYEPOS_SPEC_EXPONENT, vEyePos_SpecExponent, 1 );
+
+					float color[4];
+					if ( bSRGB )
+						color[0] = color[1] = color[2] = GammaToLinear( flFade * frameBlendAlpha );
+					else
+						color[0] = color[1] = color[2] = flFade * frameBlendAlpha;
 					color[3] = 1.0f;
 					s_pShaderAPI->SetPixelShaderConstant( 0, color );
-
-	
-					// identity base texture transorm
-					float ident[2][4] = { 
-						{ 1.0f, 0.0f, 0.0f, 0.0f },
-						{ 0.0f, 1.0f, 0.0f, 0.0f } 
-					};
-					s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, &ident[0][0], 2 ); 
+					if( IsHDREnabled() )
+					{
+						if ( bSRGB )
+							SetPixelShaderConstantGammaToLinear( 1, HDRCOLORSCALE );
+						else
+							SetPixelShaderConstant( 1, HDRCOLORSCALE );
+					}
 				}
 				Draw();
 				SHADOW_STATE
@@ -347,32 +396,41 @@ BEGIN_VS_SHADER( Sprite_DX8,
 
 					MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
 					int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
-					sprite_vs11_Dynamic_Index vshIndex;
-					vshIndex.SetSKINNING( 0 );
-					vshIndex.SetDOWATERFOG( fogIndex );
-					s_pShaderAPI->SetVertexShaderIndex( vshIndex.GetIndex() );
+					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
+					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
-					float color[4] = { 1.0, 1.0, 1.0, 1.0 };
-					s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_MODULATION_COLOR, color );
+					DECLARE_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( HDRENABLED,  IsHDREnabled() );
+					SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
+					SET_DYNAMIC_PIXEL_SHADER( sdk_sprite_ps30 );
 
-					s_pShaderAPI->SetPixelShaderIndex( 0 );
+					pShaderAPI->SetPixelShaderFogParams( PSREG_FOG_PARAMS );
 
-					color[0] = color[1] = color[2] = flFade * frameBlendAlpha;
+					float vEyePos_SpecExponent[4];
+					pShaderAPI->GetWorldSpaceCameraPosition( vEyePos_SpecExponent );
+					vEyePos_SpecExponent[3] = 0.0f;
+					pShaderAPI->SetPixelShaderConstant( PSREG_EYEPOS_SPEC_EXPONENT, vEyePos_SpecExponent, 1 );
+
+					float color[4];
+					if ( bSRGB )
+						color[0] = color[1] = color[2] = GammaToLinear( flFade * frameBlendAlpha );
+					else
+						color[0] = color[1] = color[2] = flFade * frameBlendAlpha;
 					color[3] = 1.0f;
 					s_pShaderAPI->SetPixelShaderConstant( 0, color );
-
-					// identity base texture transorm
-					float ident[2][4] = { 
-						{ 1.0f, 0.0f, 0.0f, 0.0f },
-						{ 0.0f, 1.0f, 0.0f, 0.0f } 
-					};
-					s_pShaderAPI->SetVertexShaderConstant( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, &ident[0][0], 2 ); 
+					if( IsHDREnabled() )
+					{
+						if ( bSRGB )
+							SetPixelShaderConstantGammaToLinear( 1, HDRCOLORSCALE );
+						else
+							SetPixelShaderConstant( 1, HDRCOLORSCALE );
+					}
 				}
 				Draw();
 			}
+
 			break;
 		default:
-			ShaderWarning( "shader Sprite: Unknown sprite render mode\n" );
 			break;
 		}
 	}

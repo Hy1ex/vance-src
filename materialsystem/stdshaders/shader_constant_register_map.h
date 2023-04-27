@@ -6,7 +6,7 @@
 //=============================================================================
 
 #ifndef C_CODE_HACK
-#include "common_vertexlitgeneric_dx9.h"
+#include "common_vertexlitgeneric.h"
 #endif
 
 #define PSREG_SELFILLUMTINT						PSREG_CONSTANT_00

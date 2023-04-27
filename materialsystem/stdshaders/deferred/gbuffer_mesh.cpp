@@ -4,7 +4,7 @@
 //
 //==================================================================================================
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
 #include "globallight_mesh_helper.h"
 

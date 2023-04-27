@@ -4,7 +4,7 @@
 //
 //==================================================================================================
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
 #include "skydome_atmosphere_helper.h"
 #include "commandbuilder.h"

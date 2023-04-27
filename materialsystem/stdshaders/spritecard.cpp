@@ -6,7 +6,7 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
 
 // STDSHADER_DX9_DLL_EXPORT
@@ -28,10 +28,6 @@
 #include "tier0/memdbgon.h"
 
 #define DEFAULT_PARTICLE_FEATHERING_ENABLED 1
-
-#ifdef STDSHADER_DX8_DLL_EXPORT
-DEFINE_FALLBACK_SHADER( Spritecard, Spritecard_DX8 )
-#endif
 
 int GetDefaultDepthFeatheringValue( void ) //Allow the command-line to go against the default soft-particle value
 {
@@ -67,11 +63,7 @@ int GetDefaultDepthFeatheringValue( void ) //Allow the command-line to go agains
 }
 
 
-#ifdef STDSHADER_DX9_DLL_EXPORT
 BEGIN_VS_SHADER_FLAGS( Spritecard, "Help for Spritecard", SHADER_NOT_EDITABLE )
-#else
-BEGIN_VS_SHADER_FLAGS( Spritecard_DX8, "Help for Spritecard_DX8", SHADER_NOT_EDITABLE )
-#endif
 
 BEGIN_SHADER_PARAMS
 SHADER_PARAM( DEPTHBLEND, SHADER_PARAM_TYPE_INTEGER, "0", "fade at intersection boundaries" )

@@ -1,13 +1,13 @@
-//===== Copyright © 2011, GearDev Software, All rights reserved. ======//
+//===== Copyright ï¿½ 2011, GearDev Software, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=====================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 
-#include "screenspace_simple_vs30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
 #include "fxaa_ps30.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -59,8 +59,8 @@ BEGIN_VS_SHADER_FLAGS( FXAA, "Help for FXAA", SHADER_NOT_EDITABLE )
 			pShaderShadow->EnableColorWrites( true );
 			pShaderShadow->EnableAlphaWrites( true );
 
-			DECLARE_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			DECLARE_STATIC_PIXEL_SHADER( fxaa_ps30 );
 			SET_STATIC_PIXEL_SHADER( fxaa_ps30 );
@@ -76,8 +76,8 @@ BEGIN_VS_SHADER_FLAGS( FXAA, "Help for FXAA", SHADER_NOT_EDITABLE )
 
 			BindTexture( SHADER_SAMPLER0, FRAMEBUFFER );
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			DECLARE_DYNAMIC_PIXEL_SHADER( fxaa_ps30 );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( QUALITY, params[QUALITY]->GetIntValue() );

@@ -6,13 +6,11 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "BaseVSShader.h"
-#include "SDK_depthwrite_ps20b.inc"
-#include "SDK_depthwrite_vs20.inc"
-#include "SDK_depthwrite_ps30.inc"
-#include "SDK_depthwrite_vs30.inc"
+#include "basevsshader.h"
+#include "sdk_depthwrite_ps30.inc"
+#include "sdk_depthwrite_vs30.inc"
 
-BEGIN_VS_SHADER_FLAGS( SDK_DepthWrite, "Help for Depth Write", SHADER_NOT_EDITABLE )
+BEGIN_VS_SHADER_FLAGS( DepthWrite, "Help for Depth Write", SHADER_NOT_EDITABLE )
 
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( ALPHATESTREFERENCE, SHADER_PARAM_TYPE_FLOAT, "", "Alpha reference value" )
@@ -87,99 +85,47 @@ BEGIN_VS_SHADER_FLAGS( SDK_DepthWrite, "Help for Depth Write", SHADER_NOT_EDITAB
 			// If a material was already marked nocull, don't cull it
 			pShaderShadow->EnableCulling( IS_FLAG_SET(MATERIAL_VAR_ALPHATEST) && !IS_FLAG_SET(MATERIAL_VAR_NOCULL) );
 
-			if ( !g_pHardwareConfig->HasFastVertexTextures() )
-			{
-				DECLARE_STATIC_VERTEX_SHADER( SDK_depthwrite_vs20 );
-				SET_STATIC_VERTEX_SHADER_COMBO( ONLY_PROJECT_POSITION, !bAlphaClip && IsX360() && !nColorDepth ); //360 needs to know if it *shouldn't* output texture coordinates to avoid shader patches
-				SET_STATIC_VERTEX_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
-				SET_STATIC_VERTEX_SHADER_COMBO( TREESWAY, nTreeSwayMode );
-				SET_STATIC_VERTEX_SHADER( SDK_depthwrite_vs20 );
-				
-				if ( bAlphaClip || g_pHardwareConfig->PlatformRequiresNonNullPixelShaders() || nColorDepth )
-				{
-					if( bAlphaClip )
-					{
-						pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
-						pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, true );
-					}
+			SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
 
-					DECLARE_STATIC_PIXEL_SHADER( SDK_depthwrite_ps20b );
-					SET_STATIC_PIXEL_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
-					SET_STATIC_PIXEL_SHADER( SDK_depthwrite_ps20b );
-				}
-			}
-			else
-			{
-				SET_FLAGS2( MATERIAL_VAR2_USES_VERTEXID );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_depthwrite_vs30 );
+			SET_STATIC_VERTEX_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
+			SET_STATIC_VERTEX_SHADER_COMBO( TREESWAY, nTreeSwayMode );
+			SET_STATIC_VERTEX_SHADER( sdk_depthwrite_vs30 );
 
-				DECLARE_STATIC_VERTEX_SHADER( SDK_depthwrite_vs30 );
-				SET_STATIC_VERTEX_SHADER_COMBO( ONLY_PROJECT_POSITION, 0 ); //360 only combo, and this is a PC path
-				SET_STATIC_VERTEX_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
-				SET_STATIC_VERTEX_SHADER_COMBO( TREESWAY, nTreeSwayMode );
-				SET_STATIC_VERTEX_SHADER( SDK_depthwrite_vs30 );
+			pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
+			pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, true );
 
-				pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
-				pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, true );
-
-				DECLARE_STATIC_PIXEL_SHADER( SDK_depthwrite_ps30 );
-				SET_STATIC_PIXEL_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
-				SET_STATIC_PIXEL_SHADER( SDK_depthwrite_ps30 );
-			}
+			DECLARE_STATIC_PIXEL_SHADER( sdk_depthwrite_ps30 );
+			SET_STATIC_PIXEL_SHADER_COMBO( COLOR_DEPTH, nColorDepth );
+			SET_STATIC_PIXEL_SHADER( sdk_depthwrite_ps30 );
 		}
 
 		DYNAMIC_STATE
 		{
-			if ( !g_pHardwareConfig->HasFastVertexTextures() )
+			SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
+
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_depthwrite_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
+			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, vertexCompression );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_depthwrite_vs30 );
+
+			if ( bAlphaClip )
 			{
-				DECLARE_DYNAMIC_VERTEX_SHADER( SDK_depthwrite_vs20 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( SDK_depthwrite_vs20 );
+				BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
 
-				if ( bAlphaClip )
+				float vAlphaThreshold[4] = {0.7f, 0.7f, 0.7f, 0.7f};
+				if ( ALPHATESTREFERENCE != -1 && ( params[ALPHATESTREFERENCE]->GetFloatValue() > 0.0f ) )
 				{
-					BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
-
-					float vAlphaThreshold[4] = {0.7f, 0.7f, 0.7f, 0.7f};
-					if ( ALPHATESTREFERENCE != -1 && ( params[ALPHATESTREFERENCE]->GetFloatValue() > 0.0f ) )
-					{
-						vAlphaThreshold[0] = vAlphaThreshold[1] = vAlphaThreshold[2] = vAlphaThreshold[3] = params[ALPHATESTREFERENCE]->GetFloatValue();
-					}
-
-					pShaderAPI->SetPixelShaderConstant( 0, vAlphaThreshold, 1 );
+					vAlphaThreshold[0] = vAlphaThreshold[1] = vAlphaThreshold[2] = vAlphaThreshold[3] = params[ALPHATESTREFERENCE]->GetFloatValue();
 				}
 
-				DECLARE_DYNAMIC_PIXEL_SHADER( SDK_depthwrite_ps20b );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( ALPHACLIP, bAlphaClip );
-				SET_DYNAMIC_PIXEL_SHADER( SDK_depthwrite_ps20b );
+				pShaderAPI->SetPixelShaderConstant( 0, vAlphaThreshold, 1 );
 			}
-			else // 3.0 shader case (PC only)
-			{
-				SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
-				DECLARE_DYNAMIC_VERTEX_SHADER( SDK_depthwrite_vs30 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
-				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, vertexCompression );
-				SET_DYNAMIC_VERTEX_SHADER( SDK_depthwrite_vs30 );
-
-				if ( bAlphaClip )
-				{
-					BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
-
-					float vAlphaThreshold[4] = {0.7f, 0.7f, 0.7f, 0.7f};
-					if ( ALPHATESTREFERENCE != -1 && ( params[ALPHATESTREFERENCE]->GetFloatValue() > 0.0f ) )
-					{
-						vAlphaThreshold[0] = vAlphaThreshold[1] = vAlphaThreshold[2] = vAlphaThreshold[3] = params[ALPHATESTREFERENCE]->GetFloatValue();
-					}
-
-					pShaderAPI->SetPixelShaderConstant( 0, vAlphaThreshold, 1 );
-				}
-
-				DECLARE_DYNAMIC_PIXEL_SHADER( SDK_depthwrite_ps30 );
-				SET_DYNAMIC_PIXEL_SHADER_COMBO( ALPHACLIP, bAlphaClip );
-				SET_DYNAMIC_PIXEL_SHADER( SDK_depthwrite_ps30 );
-			}
+			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_depthwrite_ps30 );
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( ALPHACLIP, bAlphaClip );
+			SET_DYNAMIC_PIXEL_SHADER( sdk_depthwrite_ps30 );
 
 			if ( nTreeSwayMode != 0 )
 			{

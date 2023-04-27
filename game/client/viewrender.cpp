@@ -1756,7 +1756,7 @@ void CViewRender::UpdateLighting(const CViewSetup& view)
 	s_iCSMSwapIndex = (s_iCSMSwapIndex + 1) % 4;
 
 	lightData_Global_t lightDataState;
-	lightDataState.vecLight = vecFwd;
+	lightDataState.vecLight.AsVector3D() = vecFwd;
 	lightDataState.light = vecLight.Base();
 	lightDataState.ambient = vecAmbient.Base();
 	lightDataState.sizes = Vector4D(

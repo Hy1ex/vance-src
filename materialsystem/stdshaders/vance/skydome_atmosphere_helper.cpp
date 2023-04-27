@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //
 //===========================================================================//
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "skydome_atmosphere_helper.h"
 #include "convar.h"
 #include "cpp_shader_constant_register_map.h"

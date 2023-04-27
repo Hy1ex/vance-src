@@ -1,18 +1,16 @@
 //===== Copyright � 1996-2008, Valve Corporation, All rights reserved. ======//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "convar.h"
-#include "SDK_splinerope_ps20b.inc"
-#include "SDK_splinerope_vs20.inc"
+#include "sdk_splinerope_ps30.inc"
+#include "sdk_splinerope_vs30.inc"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 static ConVar rope_min_pixel_diameter( "rope_min_pixel_diameter", "2.0", FCVAR_CHEAT );
 
-DEFINE_FALLBACK_SHADER( SDK_Cable, SDK_Cable_DX9 )
-
-BEGIN_VS_SHADER( SDK_Cable_DX9, "Help for SplineRope" )
+BEGIN_VS_SHADER( Cable, "Help for SplineRope" )
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( SHADERSRGBREAD360, SHADER_PARAM_TYPE_BOOL, "0", "Simulate srgb read in shader code")
 		SHADER_PARAM( SHADOWDEPTH, SHADER_PARAM_TYPE_INTEGER, "0", "writing to a shadow depth buffer" )
@@ -45,7 +43,6 @@ BEGIN_VS_SHADER( SDK_Cable_DX9, "Help for SplineRope" )
 
 	SHADER_DRAW
 	{
-		bool bShaderSrgbRead = ( IsX360() && params[SHADERSRGBREAD360]->GetIntValue() );
 		bool bShadowDepth = ( params[SHADOWDEPTH]->GetIntValue() != 0 );
 		SHADOW_STATE
 		{
@@ -68,7 +65,6 @@ BEGIN_VS_SHADER( SDK_Cable_DX9, "Help for SplineRope" )
 
 				// base texture
 				pShaderShadow->EnableTexture( SHADER_SAMPLER0, true );
-				pShaderShadow->EnableSRGBRead( SHADER_SAMPLER0, !bShaderSrgbRead );
 
 				// normal map
 				pShaderShadow->EnableTexture( SHADER_SAMPLER1, true );
@@ -89,13 +85,12 @@ BEGIN_VS_SHADER( SDK_Cable_DX9, "Help for SplineRope" )
 			int numTexCoords = 4;
 			pShaderShadow->VertexShaderVertexFormat( flags, numTexCoords, s_TexCoordSize, 0 );
 
-			DECLARE_STATIC_VERTEX_SHADER( SDK_splinerope_vs20 );
-			SET_STATIC_VERTEX_SHADER( SDK_splinerope_vs20 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_splinerope_vs30 );
+			SET_STATIC_VERTEX_SHADER( sdk_splinerope_vs30 );
 
-			DECLARE_STATIC_PIXEL_SHADER( SDK_splinerope_ps20b );
-			SET_STATIC_PIXEL_SHADER_COMBO( SHADER_SRGB_READ, bShaderSrgbRead );
+			DECLARE_STATIC_PIXEL_SHADER( sdk_splinerope_ps30 );
 			SET_STATIC_PIXEL_SHADER_COMBO( SHADOWDEPTH, bShadowDepth );
-			SET_STATIC_PIXEL_SHADER( SDK_splinerope_ps20b );
+			SET_STATIC_PIXEL_SHADER( sdk_splinerope_ps30 );
 		}
 		DYNAMIC_STATE
 		{
@@ -131,15 +126,13 @@ BEGIN_VS_SHADER( SDK_Cable_DX9, "Help for SplineRope" )
 				pShaderAPI->SetPixelShaderConstant( 1, vEyePos, 1 );
 			}
 
-			DECLARE_DYNAMIC_VERTEX_SHADER( SDK_splinerope_vs20 );
-			SET_DYNAMIC_VERTEX_SHADER_COMBO( DOWATERFOG, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
-			SET_DYNAMIC_VERTEX_SHADER( SDK_splinerope_vs20 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_splinerope_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_splinerope_vs30 );
 
-			DECLARE_DYNAMIC_PIXEL_SHADER( SDK_splinerope_ps20b );
+			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_splinerope_ps30 );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, pShaderAPI->ShouldWriteDepthToDestAlpha() );
-			//SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetSceneFogMode() == MATERIAL_FOG_LINEAR_BELOW_FOG_Z );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
-			SET_DYNAMIC_PIXEL_SHADER( SDK_splinerope_ps20b );
+			SET_DYNAMIC_PIXEL_SHADER( sdk_splinerope_ps30 );
 		}
 		Draw( );
 	}

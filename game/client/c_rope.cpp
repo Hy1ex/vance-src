@@ -510,7 +510,7 @@ void CRopeManager::DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_
 
 	if ( bShadowDepth && !m_pDepthWriteMaterial && g_pMaterialSystem )
 	{
-		KeyValues *pVMTKeyValues = new KeyValues( "SDK_DepthWrite" );
+		KeyValues *pVMTKeyValues = new KeyValues( "DepthWrite" );
 		pVMTKeyValues->SetInt( "$no_fullbright", 1 );
 		pVMTKeyValues->SetInt( "$alphatest", 0 );
 		pVMTKeyValues->SetInt( "$nocull", 1 );
@@ -545,7 +545,7 @@ void CRopeManager::DrawRenderCache_NonQueued( bool bShadowDepth, RopeRenderData_
 			IMaterial *pMaterial = bShadowDepth ? g_pSplineCableShadowdepth : pRenderCache[iRenderCache].m_pSolidMaterial;
 
 			// Need to make sure that all rope materials use the splinerope shader since there are a lot of assumptions about how the shader interfaces with this code.
-			AssertOnce( V_strstr( pMaterial->GetShaderName(), "SDK_Cable" ) != NULL ); // splinerope
+			AssertOnce( V_strstr( pMaterial->GetShaderName(), "Cable" ) != NULL ); // splinerope
 
 			pRenderContext->Bind( pMaterial );
 

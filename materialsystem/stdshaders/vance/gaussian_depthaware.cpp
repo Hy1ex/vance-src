@@ -1,14 +1,14 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#include "BaseVSShader.h"
+#include "basevsshader.h"
 #include "IDeferredExt.h"
 
-#include "screenspace_simple_vs30.inc"
+#include "sdk_screenspaceeffect_vs30.inc"
 #include "gaussian_depthaware_ps30.inc"
 
 ConVar r_post_ssao_blursize("r_post_ssao_blursize", "4.0", FCVAR_CHEAT);
@@ -75,8 +75,8 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 			pShaderShadow->VertexShaderVertexFormat( fmt, 1, 0, 0 );
 
 			// Pre-cache shaders
-			DECLARE_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_STATIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_STATIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			DECLARE_STATIC_PIXEL_SHADER(gaussian_depthaware_ps30);
 			SET_STATIC_PIXEL_SHADER_COMBO(HORIZONTAL, params[HORIZONTAL]->GetIntValue());
@@ -105,8 +105,8 @@ BEGIN_VS_SHADER( Gaussian_DepthAware, "Depth aware gaussian blur" )
 			BindTexture( SHADER_SAMPLER0, FBTEXTURE, -1 );
 			BindTexture( SHADER_SAMPLER1, DEPTHBUFFER, -1);
 			BindTexture( SHADER_SAMPLER2, NORMALS, -1);
-			DECLARE_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
-			SET_DYNAMIC_VERTEX_SHADER( screenspace_simple_vs30 );
+			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
+			SET_DYNAMIC_VERTEX_SHADER( sdk_screenspaceeffect_vs30 );
 
 			pShaderAPI->SetPixelShaderConstant(2, GetDeferredExt()->m_matProjInv.Base(), 4);
 
