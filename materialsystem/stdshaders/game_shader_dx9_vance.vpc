@@ -1,0 +1,96 @@
+//-----------------------------------------------------------------------------
+//	game_shader_dx9.vpc
+//
+//	Project Script for mods to use an an example of how to override shaders
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME		"vance"
+$Include "$SRCDIR\materialsystem\stdshaders\game_shader_dx9_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\;.\vance;.\deferred"
+		$PreprocessorDefinitions		"$BASE;VANCE"
+	}
+}
+
+$Project "Shaders (VANCE)"
+{
+	$Folder	"Source Files"
+	{
+		$File	"bloom.cpp"
+		$File	"screenspace_general.cpp"
+		$File	"cloak_blended_pass_helper.cpp"
+		$File	"core.cpp"
+		$File	"decalmodulate.cpp"
+		$File	"depthoffield.cpp"
+		$File	"depthwrite.cpp"
+		$File	"emissive_scroll_blended_pass_helper.cpp"
+		$File	"engine_post.cpp"
+		$File	"eye_refract_helper.cpp"
+		$File	"eye_refract.cpp"
+		$File	"eyeglint.cpp"
+		$File	"eyes_helper.cpp"
+		$File	"eyes.cpp"
+		$File	"flesh_interior_blended_pass_helper.cpp"
+		$File	"lightmappedgeneric_helper.cpp"
+		$File	"lightmappedgeneric_helper.h"
+		$File	"lightmappedgeneric.cpp"
+		$File	"lightmappedreflective.cpp"
+		$File	"monitorscreen.cpp"
+		$File	"refract_helper.cpp"
+		$File	"refract.cpp"
+		$File	"shatteredglass.cpp"
+		$File	"skin_helper.cpp"
+		$File	"splinerope.cpp"
+		$File	"sprite.cpp"
+		$File	"teeth.cpp"
+		$File	"unlitgeneric.cpp"
+		$File	"unlittwotexture.cpp"
+		$File	"vertexlitgeneric_helper.cpp"
+		$File	"vertexlitgeneric.cpp"
+		$File	"water.cpp"
+		$File	"windowimposter.cpp"
+		$File	"worldtwotextureblend.cpp"
+
+		$Folder	"Post-processing"
+		{
+			$File	"vance/chromatic.cpp"
+			$File	"vance/fxaa.cpp"
+			$File	"vance/gaussian_depthaware.cpp"
+			$File	"vance/gaussian_depthaware_roughness.cpp"
+			$File	"vance/gaussianx.cpp"
+			$File	"vance/gaussiany.cpp"
+			$File	"vance/screenwater.cpp"
+			$File	"vance/unsharp.cpp"
+			$File	"vance/unsharp_blur.cpp"
+			$File	"vance/luma.cpp"
+			$File	"vance/tonemap.cpp"
+			$File	"vance/bloom_combine.cpp"
+			$File	"vance/ssao_combine.cpp"
+			$File	"vance/ssgi.cpp"
+			$File	"vance/skydome_atmosphere.cpp"
+			$File	"vance/skydome_atmosphere_helper.cpp"
+			$File	"vance/skydome_atmosphere_helper.h"
+		}
+
+		$File	"vance/vertexlitpbr.cpp"
+		$File	"vance/vertexlitpbr_helper.cpp"
+		$File	"vance/vertexlitpbr_helper.h"
+		$File	"vance/lightmappedpbr.cpp"
+		$File	"vance/lightmappedpbr_helper.cpp"
+		$File	"vance/lightmappedpbr_helper.h"
+		$File	"vance/lightpass_helper.cpp"
+		$File	"vance/lightpass_helper.h"
+		$File	"vance/light_volumetrics.cpp"
+		$File	"vance/vance_scope.cpp"
+		$File	"vance/light_mesh.cpp"
+
+		$File	"deferred/ideferredext.cpp"
+	}
+	
+	$Shaders	"game_shader_dx9_30.txt"
+}

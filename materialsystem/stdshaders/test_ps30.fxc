@@ -1,0 +1,17 @@
+
+struct C_INPUT
+{
+	float4 value;
+};
+
+C_INPUT g_cInput : register( c0 );
+
+struct PS_INPUT
+{
+	float2 vUv0 : TEXCOORD0;
+};
+
+float4 main( PS_INPUT i ) : COLOR
+{
+	return float4( 1.0f, 1.0f, 1.0f, 1.0f );
+}
