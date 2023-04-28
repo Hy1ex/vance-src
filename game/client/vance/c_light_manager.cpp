@@ -286,6 +286,11 @@ void CLightingManager::LevelInitPreEntity()
 	}
 
 	FlushLights();
+
+	if (GetLightingManager()->GetViewVolumetrics() != NULL)
+	{
+		GetLightingManager()->ClearVolumetricsMesh();
+	}
 }
 
 void CLightingManager::RenderVolumetrics(const CViewSetup &view)
