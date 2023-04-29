@@ -1,11 +1,12 @@
+#include "cbase.h"
 #include "cdll_client_int.h"
 #include "filesystem.h"
-#include "icommandline.h"
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "materialsystem/materialsystem_config.h"
 #include "shaderapi/IShaderDevice.h"
 #include "hook/IShaderSystemInternal.h"
 #include "hook/CHardwareConfig.h"
+
 
 CUtlString GetModulePath( const char *pszModuleName, const char *pszPathId )
 {
