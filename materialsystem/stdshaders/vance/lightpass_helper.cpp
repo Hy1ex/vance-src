@@ -258,7 +258,7 @@ void DrawLightPass(CBaseVSShader * pShader, IMaterialVar * *params, IShaderDynam
 		DECLARE_DYNAMIC_VERTEX_SHADER(lightpass_vs30);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(COMPRESSED_VERTS, (bModel && (int)vertexCompression) ? 1 : 0);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(SKINNING, (bModel&& pShaderAPI->GetCurrentNumBones() > 0) ? 1 : 0);
-		SET_DYNAMIC_VERTEX_SHADER_COMBO(MORPHING, (bModel&& pShaderAPI->IsHWMorphingEnabled()) ? 1 : 0);
+		//SET_DYNAMIC_VERTEX_SHADER_COMBO(MORPHING, (bModel&& pShaderAPI->IsHWMorphingEnabled()) ? 1 : 0);
 		SET_DYNAMIC_VERTEX_SHADER(lightpass_vs30);
 
 		// Set Pixel Shader Combos
@@ -344,7 +344,7 @@ void DrawLightPass(CBaseVSShader * pShader, IMaterialVar * *params, IShaderDynam
 		const lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
 		const VMatrix worldToTexture0 = *reinterpret_cast<VMatrix *>( pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0 ) );
 		const Vector2D biasVar = { r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat() };
-		const Vector2D textureSize = { pCascadedDepthTexture->GetMappingHeight() * 4.0f, pCascadedDepthTexture->GetMappingHeight() };
+		const Vector2D textureSize = { static_cast<float>( pCascadedDepthTexture->GetMappingHeight() * 4), static_cast<float>( pCascadedDepthTexture->GetMappingHeight() ) };
 
 		if (pCascadedDepthTexture)
 		{

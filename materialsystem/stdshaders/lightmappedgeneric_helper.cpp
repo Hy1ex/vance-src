@@ -1047,7 +1047,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 				bool bMaskedBlending=( (info.m_nMaskedBlending != -1) &&
 									   (params[info.m_nMaskedBlending]->GetIntValue() != 0) );
 
-				bool bReliefMapping = false; //( bumpmap_variant == 2 ) && ( ! bSeamlessMapping );
+				//bool bReliefMapping = false; //( bumpmap_variant == 2 ) && ( ! bSeamlessMapping );
 
 				DECLARE_STATIC_VERTEX_SHADER( sdk_lightmappedgeneric_vs30 );
 				SET_STATIC_VERTEX_SHADER_COMBO( ENVMAP_MASK,  hasEnvmapMask );
@@ -1489,7 +1489,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 			bWriteWaterFogToAlpha = false;
 		}
 
-		float envmapContrast = params[info.m_nEnvmapContrast]->GetFloatValue();
+		//float envmapContrast = params[info.m_nEnvmapContrast]->GetFloatValue();
 
 		DECLARE_DYNAMIC_PIXEL_SHADER( sdk_lightmappedgeneric_ps30 );
 #ifdef VANCE
@@ -1504,7 +1504,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		// Don't write fog to alpha if we're using translucency
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, bWriteWaterFogToAlpha );
-		SET_DYNAMIC_PIXEL_SHADER_COMBO( LIGHTING_PREVIEW, nFixedLightingMode );
+		//SET_DYNAMIC_PIXEL_SHADER_COMBO( LIGHTING_PREVIEW, nFixedLightingMode );
 
 #ifdef VANCE
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( VANCE_CSM, bCSM && !hasFlashlight );
@@ -1519,7 +1519,7 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 			const lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
 			const VMatrix worldToTexture0 = *reinterpret_cast<VMatrix *>( pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0 ) );
 			const Vector2D biasVar = { r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat() };
-			const Vector2D textureSize = { pCascadedDepthTexture->GetMappingHeight() * 4.0f, pCascadedDepthTexture->GetMappingHeight() };
+			const Vector2D textureSize = { static_cast<float>( pCascadedDepthTexture->GetMappingHeight() * 4 ), static_cast<float>( pCascadedDepthTexture->GetMappingHeight() ) };
 
 #if 1
 			pShader->BindTexture( SHADER_SAMPLER13, pCascadedDepthTexture );

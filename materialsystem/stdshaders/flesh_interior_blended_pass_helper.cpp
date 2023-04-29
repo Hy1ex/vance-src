@@ -171,7 +171,7 @@ void DrawFleshInteriorBlendedPass( CBaseVSShader *pShader, IMaterialVar** params
 		int userDataSize = 0;
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
-		bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
+		//bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
 		// Vertex Shader
 		DECLARE_STATIC_VERTEX_SHADER( sdk_flesh_interior_blended_pass_vs30 );
@@ -207,7 +207,7 @@ void DrawFleshInteriorBlendedPass( CBaseVSShader *pShader, IMaterialVar** params
 		// Reset render state manually since we're drawing from two materials
 		pShaderAPI->SetDefaultState();
 
-		bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
+		//bool bUseStaticControlFlow = g_pHardwareConfig->SupportsStaticControlFlow();
 
 		// Set Vertex Shader Combos
 		LightState_t lightState = { 0, false, false };

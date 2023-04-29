@@ -485,7 +485,7 @@ static void DrawLightmappedPBR_DX9_Internal( CBaseVSShader *pShader, IMaterialVa
 				const lightData_Global_t csmData = GetDeferredExt()->GetLightData_Global();
 				const VMatrix worldToTexture0 = *reinterpret_cast<VMatrix *>( pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0 ) );
 				const Vector2D biasVar = { r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat() };
-				const Vector2D textureSize = { pCascadedDepthTexture->GetMappingHeight() * 4.0f, pCascadedDepthTexture->GetMappingHeight() };
+				const Vector2D textureSize = { static_cast<float>( pCascadedDepthTexture->GetMappingHeight() * 4 ), static_cast<float>( pCascadedDepthTexture->GetMappingHeight() ) };
 
 				pShader->BindTexture( SHADER_SAMPLER4, pCascadedDepthTexture );
 				pShaderAPI->SetPixelShaderConstant( 22, worldToTexture0.Base(), 4 );
