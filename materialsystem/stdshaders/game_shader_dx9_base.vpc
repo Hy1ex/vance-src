@@ -49,6 +49,12 @@ $Project
 	$Folder	"Source Files"
 	{
 		$File	"basevsshader.cpp"
+
+		$Folder "Verify"	[$WINDOWS]
+		{
+			$File "verification/shader_dll_verify.cpp"	[$WINDOWS]
+			$File "verification/shader_dll_verify.h"	[$WINDOWS]
+		}
 	}
 
 	$Folder	"Header Files"
