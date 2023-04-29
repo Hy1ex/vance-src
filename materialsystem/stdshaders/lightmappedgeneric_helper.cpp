@@ -1504,7 +1504,6 @@ void DrawLightmappedGeneric_DX9_Internal(CBaseVSShader *pShader, IMaterialVar** 
 		// Don't write fog to alpha if we're using translucency
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITE_DEPTH_TO_DESTALPHA, bWriteDepthToAlpha );
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( WRITEWATERFOGTODESTALPHA, bWriteWaterFogToAlpha );
-		//SET_DYNAMIC_PIXEL_SHADER_COMBO( LIGHTING_PREVIEW, nFixedLightingMode );
 
 #ifdef VANCE
 		SET_DYNAMIC_PIXEL_SHADER_COMBO( VANCE_CSM, bCSM && !hasFlashlight );

@@ -151,8 +151,6 @@ BEGIN_VS_SHADER( Sprite,  "Help for Sprite" )
 
 		BindTexture( SHADER_SAMPLER0, BASETEXTURE, FRAME );
 
-		//MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
-		//int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
 		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 		SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
@@ -348,8 +346,6 @@ BEGIN_VS_SHADER( Sprite,  "Help for Sprite" )
 					ITexture *pTexture = params[BASETEXTURE]->GetTextureValue();
 					BindTexture( SHADER_SAMPLER0, pTexture, ( int )flFrame );
 
-					//MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
-					//int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
 					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 
@@ -394,8 +390,6 @@ BEGIN_VS_SHADER( Sprite,  "Help for Sprite" )
 					int numAnimationFrames = pTexture->GetNumAnimationFrames();
 					BindTexture( SHADER_SAMPLER0, pTexture, ( ( int )flFrame + 1 ) % numAnimationFrames );
 
-					//MaterialFogMode_t fogType = s_pShaderAPI->GetSceneFogMode();
-					//int fogIndex = ( fogType == MATERIAL_FOG_LINEAR_BELOW_FOG_Z ) ? 1 : 0;
 					DECLARE_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 					SET_DYNAMIC_VERTEX_SHADER( sdk_sprite_vs30 );
 

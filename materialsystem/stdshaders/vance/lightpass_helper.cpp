@@ -258,7 +258,6 @@ void DrawLightPass(CBaseVSShader * pShader, IMaterialVar * *params, IShaderDynam
 		DECLARE_DYNAMIC_VERTEX_SHADER(lightpass_vs30);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(COMPRESSED_VERTS, (bModel && (int)vertexCompression) ? 1 : 0);
 		SET_DYNAMIC_VERTEX_SHADER_COMBO(SKINNING, (bModel&& pShaderAPI->GetCurrentNumBones() > 0) ? 1 : 0);
-		//SET_DYNAMIC_VERTEX_SHADER_COMBO(MORPHING, (bModel&& pShaderAPI->IsHWMorphingEnabled()) ? 1 : 0);
 		SET_DYNAMIC_VERTEX_SHADER(lightpass_vs30);
 
 		// Set Pixel Shader Combos

@@ -165,7 +165,6 @@ BEGIN_VS_SHADER( Teeth, "Help for Teeth" )
 				DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
-				//SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 				SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_bump_vs30 );
 
@@ -187,7 +186,6 @@ BEGIN_VS_SHADER( Teeth, "Help for Teeth" )
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( DYNAMIC_LIGHT, lightState.HasDynamicLight() );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( STATIC_LIGHT,  lightState.m_bStaticLight  ? 1 : 0 );
-				//SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 				SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 				SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_vs30 );
 
@@ -325,7 +323,6 @@ BEGIN_VS_SHADER( Teeth, "Help for Teeth" )
 
 			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-			//SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING,  pShaderAPI->IsHWMorphingEnabled() );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 			SET_DYNAMIC_VERTEX_SHADER( sdk_teeth_flashlight_vs30 );
 

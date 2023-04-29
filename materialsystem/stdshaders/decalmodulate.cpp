@@ -223,14 +223,12 @@ BEGIN_VS_SHADER( DecalModulate, "Help for DecalModulate" )
 			fConsts[1] = params[ FOGSCALE ]->GetFloatValue();
 			pShaderAPI->SetPixelShaderConstant( 0, fConsts );
 
-			//MaterialFogMode_t fogType = pShaderAPI->GetSceneFogMode();
 
-				SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
+			SetHWMorphVertexShaderState( VERTEX_SHADER_SHADER_SPECIFIC_CONST_6, VERTEX_SHADER_SHADER_SPECIFIC_CONST_7, SHADER_VERTEXTEXTURE_SAMPLER0 );
 
 			DECLARE_DYNAMIC_VERTEX_SHADER( sdk_decalmodulate_vs30 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
 			SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
-			//SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
 			SET_DYNAMIC_VERTEX_SHADER( sdk_decalmodulate_vs30 );
 
 			DECLARE_DYNAMIC_PIXEL_SHADER( sdk_decalmodulate_ps30 );

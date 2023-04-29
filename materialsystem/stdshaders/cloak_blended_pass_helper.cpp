@@ -239,7 +239,6 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		// Set Vertex Shader Combos
 		DECLARE_DYNAMIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( SKINNING, pShaderAPI->GetCurrentNumBones() > 0 );
-		//SET_DYNAMIC_VERTEX_SHADER_COMBO( MORPHING, pShaderAPI->IsHWMorphingEnabled() );
 		SET_DYNAMIC_VERTEX_SHADER_COMBO( COMPRESSED_VERTS, (int)vertexCompression );
 		SET_DYNAMIC_VERTEX_SHADER( sdk_cloak_blended_pass_vs30 );
 
