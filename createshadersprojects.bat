@@ -1,1 +1,1 @@
-devtools\bin\vpc.exe /hl2 /episodic +shaders /mksln shaders.sln
+devtools\bin\vpc.exe /vance +shaders /mksln shaders.sln
