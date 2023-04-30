@@ -199,7 +199,7 @@ public:
 	// is valid?
 	bool IsValid() const;
 
-	bool MatchesPattern( const CUtlString &Pattern, int nFlags = 0 );		// case SENSITIVE, use * for wildcard in pattern string
+	bool MatchesPattern( const CUtlString &Pattern, int nFlags = 0 ) const;		// case SENSITIVE, use * for wildcard in pattern string
 
 	int Format( PRINTF_FORMAT_STRING const char *pFormat, ... );
 	void SetDirect( const char *pValue, int nChars );

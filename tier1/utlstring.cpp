@@ -333,7 +333,7 @@ CUtlString &CUtlString::operator+=( double rhs )
 	return operator+=( tmpBuf );
 }
 
-bool CUtlString::MatchesPattern( const CUtlString &Pattern, int nFlags )
+bool CUtlString::MatchesPattern( const CUtlString &Pattern, int nFlags ) const
 {
 	const char *pszSource = String();
 	const char *pszPattern = Pattern.String();
