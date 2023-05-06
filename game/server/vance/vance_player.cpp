@@ -2503,7 +2503,7 @@ void CVancePlayer::SlideTick()
 
 	if (ContinueSlide)
 	{
-		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat() + (pow((1.0f - (m_flSlideEndTime - gpGlobals->curtime) / vance_slide_time.GetFloat()), 2) * 1.0f-vance_slide_frictionscale.GetFloat());
+		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat() + (5 * pow(1.0f - ((m_flSlideEndTime - gpGlobals->curtime) / vance_slide_time.GetFloat()), 2));
 	}
 	else
 	{

@@ -54,6 +54,9 @@ int AE_PASSENGER_PHYSICS_PUSH;
 int AE_FASTZOMBIE_VEHICLE_LEAP;
 int AE_FASTZOMBIE_VEHICLE_SS_DIE;	// Killed while doing scripted sequence on vehicle
 
+//rnd for kicking headcrabs off
+ConVar	sk_fastzombie_neckBreakChance("sk_fastzombie_neckBreakChance", "0.7", FCVAR_NONE);
+
 #endif // HL2_EPISODIC
 
 enum
@@ -682,6 +685,8 @@ void CFastZombie::Spawn( void )
 	}
 
 	m_flNextAttack = gpGlobals->curtime;
+
+	m_bWeakNeckChance = sk_fastzombie_neckBreakChance.GetFloat();
 
 	m_pLayer2 = NULL;
 	m_iClimbCount = 0;

@@ -73,6 +73,9 @@ extern bool IsAlyxInDarknessMode();
 
 ConVar	sk_zombie_soldier_health( "sk_zombie_soldier_health","0");
 
+//rnd for kicking headcrabs off
+ConVar	sk_zombie_soldier_neckBreakChance("sk_zombie_soldier_neckBreakChance", "0.3", FCVAR_NONE);
+
 float g_flZombineGrenadeTimes = 0;
 
 class CNPC_Zombine : public CAI_BlendingHost<CNPC_BaseZombie>, public CDefaultPlayerPickupVPhysics
@@ -222,6 +225,8 @@ void CNPC_Zombine::Spawn( void )
 	m_flSprintRestTime = 0.0f;
 
 	m_flNextMoanSound = gpGlobals->curtime + random->RandomFloat( 1.0, 4.0 );
+
+	m_bWeakNeckChance = sk_zombie_soldier_neckBreakChance.GetFloat();
 
 	g_flZombineGrenadeTimes = gpGlobals->curtime;
 	m_flGrenadePullTime = gpGlobals->curtime;

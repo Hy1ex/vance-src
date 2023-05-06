@@ -872,8 +872,10 @@ int CNPC_BaseZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 
 		DieChopped( info );
 	}
-	else
-	{
+	else if ((inputInfo.GetDamageType() & DMG_KICK) && (GetHealth() - tookDamage >= 0) && (RandomFloat(0.0f, 1.0f) <= m_bWeakNeckChance)) {
+		ReleaseHeadcrab(EyePosition(), inputInfo.GetDamageForce() * 0.02f, true, true, false);
+	}
+	else {
 		HeadcrabRelease_t release = ShouldReleaseHeadcrab( info, flDamageThreshold );
 		
 		switch( release )
@@ -2464,10 +2466,10 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 		pCrab->SetOwnerEntity( this );
 
 		pCrab->SetAbsOrigin( vecSpot );
-		pCrab->SetAbsAngles( GetAbsAngles() );
+		pCrab->SetAbsAngles(QAngle(GetAbsAngles().x, GetAbsAngles().y - 90, GetAbsAngles().z));
 		DispatchSpawn( pCrab );
 
-		pCrab->GetMotor()->SetIdealYaw( GetAbsAngles().y );
+		pCrab->GetMotor()->SetIdealYaw( GetAbsAngles().y - 90 );
 
 		// FIXME: npc's with multiple headcrabs will need some way to query different attachments.
 		// NOTE: this has till after spawn is called so that the model is set up
@@ -2480,6 +2482,7 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 			// Take out any pitch
 			QAngle angles = pCrab->GetAbsAngles();
 			angles.x = 0.0;
+			angles.y += -90.0f; //unfuck angle
 			pCrab->SetAbsAngles( angles );
 		}
 

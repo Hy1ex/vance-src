@@ -27,7 +27,10 @@
 
 
 ConVar	sk_zombie_health( "sk_zombie_health","0");
-ConVar	sk_zombie_knockout_dmg("sk_zombie_knockout_dmg", "20");
+//ConVar	sk_zombie_knockout_dmg("sk_zombie_knockout_dmg", "20");
+
+//rnd for kicking headcrabs off
+ConVar	sk_zombie_neckBreakChance("sk_zombie_neckBreakChance", "0.5", FCVAR_NONE);
 
 envelopePoint_t envZombieMoanVolumeFast[] =
 {
@@ -286,6 +289,8 @@ void CZombie::Spawn( void )
 
 	m_iHealth			= sk_zombie_health.GetFloat();
 	m_flFieldOfView		= 0.2;
+
+	m_bWeakNeckChance = sk_zombie_neckBreakChance.GetFloat();
 
 	CapabilitiesClear();
 
@@ -877,8 +882,11 @@ int CZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	}
 #endif // HL2_EPISODIC
 
+	/* disabled cause its lame
+
 	if(!m_bIsTempRagdoll && ((inputInfo.GetDamageType() & (DMG_KICK | DMG_CLUB | DMG_CRUSH)) || (inputInfo.GetDamage() >= sk_zombie_knockout_dmg.GetFloat())))
 		TempRagdoll_Become(inputInfo, inputInfo.GetDamage() >= m_iHealth);
+	*/
 
 	return BaseClass::OnTakeDamage_Alive( inputInfo );
 }

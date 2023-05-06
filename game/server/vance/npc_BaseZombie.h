@@ -239,6 +239,8 @@ public:
 
 	virtual	bool		AllowedToIgnite( void ) { return true; }
 
+	float m_bWeakNeckChance = 0.0f;
+
 public:
 	CAI_ActBusyBehavior		m_ActBusyBehavior;
 
