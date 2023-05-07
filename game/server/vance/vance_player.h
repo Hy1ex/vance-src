@@ -211,6 +211,7 @@ private:
 	Vector		m_vecClimbStartOrigin;
 	Vector		m_vecClimbOutVelocity;
 	float		m_flClimbFraction;
+	bool		m_bBigClimb;
 
 	CNetworkVar(float, m_flSlideEndTime);
 	CNetworkVar(float, m_flSlideFrictionScale);

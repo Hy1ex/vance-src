@@ -36,8 +36,11 @@ public:
 
 	void	PrimaryAttack( void );
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	void	ItemPostFrame();
 
 	float	WeaponAutoAimScale()	{ return 0.6f; }
+
+	bool	m_bInAds = false;
 
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
@@ -88,21 +91,23 @@ void CWeapon357::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChara
 	switch( pEvent->event )
 	{
 		case EVENT_WEAPON_RELOAD:
+		{
+			CEffectData data;
+
+			// Emit six spent shells
+			for ( int i = 0; i < 6; i++ )
 			{
-				CEffectData data;
+				data.m_vOrigin = pOwner->WorldSpaceCenter() + RandomVector( -4, 4 );
+				data.m_vAngles = QAngle( 90, random->RandomInt( 0, 360 ), 0 );
+				data.m_nEntIndex = entindex();
 
-				// Emit six spent shells
-				for ( int i = 0; i < 6; i++ )
-				{
-					data.m_vOrigin = pOwner->WorldSpaceCenter() + RandomVector( -4, 4 );
-					data.m_vAngles = QAngle( 90, random->RandomInt( 0, 360 ), 0 );
-					data.m_nEntIndex = entindex();
-
-					DispatchEffect( "ShellEject", data );
-				}
-
-				break;
+				DispatchEffect( "ShellEject", data );
 			}
+			break;
+		}
+		default:
+			CBaseCombatWeapon::Operator_HandleAnimEvent(pEvent, pOperator);
+			break;
 	}
 }
 
@@ -177,4 +182,15 @@ void CWeapon357::PrimaryAttack( void )
 		// HEV suit - indicate out of ammo condition
 		pPlayer->SetSuitUpdate( "!HEV_AMO0", FALSE, 0 ); 
 	}
+}
+
+//scope stuff
+
+void CWeapon357::ItemPostFrame() {
+	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+	if (pPlayer) {
+		//youd think you could just set the variable to the condition directly but then it complains
+		if (pPlayer->m_afButtonPressed & IN_ATTACK2) {m_bInAds = true;}	else {m_bInAds = false;}
+	}
+	BaseClass::ItemPostFrame();
 }

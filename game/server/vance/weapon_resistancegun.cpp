@@ -379,6 +379,12 @@ bool CWeaponResistanceGun::SendWeaponAnim( int iActivity )
 				break;
 			case ACT_VM_KICK:
 				iActivity = ACT_VM_KICK_EXTENDED;
+				break;
+			case ACT_VM_CLIMB:
+				iActivity = ACT_VM_CLIMB_EXTENDED;
+				break;
+			case ACT_VM_CLIMB_HIGH:
+				iActivity = ACT_VM_CLIMB_HIGH_EXTENDED;
 		}
 	}
 

@@ -242,7 +242,7 @@ void CWeaponSMG1::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChar
 		}
 		break;
 		*/
-
+	
 	default:
 		BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
 		break;

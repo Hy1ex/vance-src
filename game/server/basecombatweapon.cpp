@@ -174,6 +174,26 @@ void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseComb
 				WeaponSound( (WeaponSound_t)iSnd );
 			}
 		}
+		else if (pEvent->event == AE_WPN_FULLCLIP1)
+		{
+			CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+			if (pPlayer)
+			{
+				int primary = MIN(GetMaxClip1() - m_iClip1, pPlayer->GetAmmoCount(m_iPrimaryAmmoType));
+				m_iClip1 += primary;
+				pPlayer->RemoveAmmo(primary, m_iPrimaryAmmoType);
+				m_bInReload = false;
+			}
+		}
+		else if (pEvent->event == AE_WPN_STAGE_ONEBULLET)
+		{
+			CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+			if (pPlayer)
+			{
+				pPlayer->SetAmmoCount(pPlayer->GetAmmoCount(pPlayer->GetActiveWeapon()->GetPrimaryAmmoType()) + this->m_iClip1 - 1, pPlayer->GetActiveWeapon()->GetPrimaryAmmoType());
+				this->m_iClip1 = 1;
+			}
+		}
 	}
 
 	DevWarning( 2, "Unhandled animation event %d from %s --> %s\n", pEvent->event, pOperator->GetClassname(), GetClassname() );

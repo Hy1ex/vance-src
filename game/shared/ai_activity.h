@@ -2209,6 +2209,11 @@ typedef enum
 		ACT_VM_SWING_RIGHT,
 		ACT_VM_IDLE_TO_THROW,
 		ACT_VM_THROW_IDLE,
+
+		ACT_VM_CLIMB,
+		ACT_VM_CLIMB_HIGH,
+		ACT_VM_CLIMB_EXTENDED,
+		ACT_VM_CLIMB_HIGH_EXTENDED,
 #endif
 
 	// this is the end of the global activities, private per-monster activities start here.

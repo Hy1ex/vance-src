@@ -87,14 +87,16 @@ ConVar sk_nextsprint_delay("sk_nextsprint_delay", "1.0", FCVAR_NONE);
 #define SUITPOWER_CHARGE_RATE	12.5	// 100 units in 8 seconds
 
 ConVar vance_climb_speed("vance_climb_speed", "0.025", FCVAR_CHEAT);
+ConVar vance_climb_high_speed("vance_climb_high_speed", "0.01", FCVAR_CHEAT);
 ConVar vance_climb_checkray_count("vance_climb_checkray_count", "5", FCVAR_CHEAT);
 ConVar vance_climb_checkray_dist("vance_climb_checkray_dist", "64", FCVAR_CHEAT);
 ConVar vance_climb_checkray_allowedheight( "vance_climb_checkray_allowedheight", "60", FCVAR_CHEAT );
 // 10 is just enough to jump on the 64 unit tall wall
-ConVar vance_climb_checkray_height( "vance_climb_checkray_height", "10", FCVAR_CHEAT );
+ConVar vance_climb_checkray_height( "vance_climb_checkray_height", "11", FCVAR_CHEAT );
 ConVar vance_climb_debug("vance_climb_debug", "0");
 #define CLIMB_TRACE_DIST		vance_climb_checkray_dist.GetFloat()
 #define CLIMB_LERPSPEED			vance_climb_speed.GetFloat();
+#define CLIMB_LERPSPEED_SLOW	vance_climb_high_speed.GetFloat();
 
 extern ConVar vance_slide_time;
 ConVar vance_slide_addvelocity( "vance_slide_addvelocity", "200.0", FCVAR_CHEAT );
@@ -1683,7 +1685,7 @@ void CVancePlayer::PostThink()
 		ThrowingGrenade();
 	}
 
-	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime)
+	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime && m_ParkourAction.Get() != ParkourAction::Climb)
 	{
 		// Play a kick animation for the legs
 		if ( pLegsViewModel )
@@ -2010,6 +2012,7 @@ void CVancePlayer::Hit(trace_t& tr, Activity nHitActivity)
 
 void CVancePlayer::KickAttack()
 {
+
 	float flDamageMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_damage_mult_min.GetFloat(), vance_kick_damage_mult_max.GetFloat());
 	float flForceMult = RemapValClamped(GetLocalVelocity().Length2D(), 0, hl2_sprintspeed.GetFloat(), vance_kick_force_mult_min.GetFloat(), vance_kick_force_mult_max.GetFloat());
 
@@ -2558,12 +2561,22 @@ void CVancePlayer::LedgeClimbTick()
 	}
 	else
 	{
-		m_flClimbFraction += CLIMB_LERPSPEED;
+		if (m_bBigClimb){
+			m_flClimbFraction += CLIMB_LERPSPEED_SLOW;
+		} else {
+			m_flClimbFraction += CLIMB_LERPSPEED;
+		}
+
+		float fEasedClimbFraction = m_flClimbFraction;
+		if (m_flClimbFraction < 0.5f){
+			fEasedClimbFraction = 4 * pow(m_flClimbFraction, 3);
+		}
+
 		Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
 			m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // pre
 			m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
 			m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // next
-			m_flClimbFraction,
+			fEasedClimbFraction,
 			m_vecClimbCurrentOrigin);
 
 		if (vance_climb_debug.GetBool())
@@ -2586,20 +2599,20 @@ void CVancePlayer::TryLedgeClimb()
 		trace_t tr;
 		UTIL_TraceHull( vecStart + Vector( 0, 0, vance_climb_checkray_height.GetFloat() ),
 				vecStart - Vector( 0, 0, vance_climb_checkray_height.GetFloat() ) * 2,
-			VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+			VEC_HULL_MIN, VEC_HULL_MAX, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 		UTIL_TraceHull(tr.endpos, tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, 
-			MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+			MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 		if (tr.DidHit())
 			return true;
 
 		if (vance_climb_debug.GetBool())
 		{
-			debugoverlay->AddBoxOverlay( vecStart + Vector( 0, 0, vance_climb_checkray_height.GetFloat() ), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10 );
-			debugoverlay->AddBoxOverlay( vecStart - Vector( 0, 0, vance_climb_checkray_height.GetFloat() ) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 0, 255, 100, 10 );
+			debugoverlay->AddBoxOverlay( vecStart + Vector( 0, 0, vance_climb_checkray_height.GetFloat() ), VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 0, 255, 255, 100, 10 );
+			debugoverlay->AddBoxOverlay( vecStart - Vector( 0, 0, vance_climb_checkray_height.GetFloat() ) * 2, VEC_HULL_MIN, VEC_HULL_MAX, vec3_angle, 255, 0, 255, 100, 10 );
 
-			debugoverlay->AddLineOverlay(vecStart + Vector(0, 0, vance_climb_checkray_height.GetFloat()), vecStart - Vector(0, 0, vance_climb_checkray_height.GetFloat()) * 2, 0, 0, 255, true, 10);
+			debugoverlay->AddLineOverlay(vecStart + Vector(0, 0, vance_climb_checkray_height.GetFloat()), vecStart - Vector(0, 0, vance_climb_checkray_height.GetFloat()) * 2, 0, 255, 255, true, 10);
 		}
 
 		m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
@@ -2611,6 +2624,18 @@ void CVancePlayer::TryLedgeClimb()
 		SetMoveType(MOVETYPE_NOCLIP);
 		SetMoveCollide(MOVECOLLIDE_DEFAULT);
 		SetSolid(SOLID_NONE);
+
+		CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
+		if (pWeapon) {
+			pWeapon->AbortReload();
+			if (m_vecClimbDesiredOrigin.z - m_vecClimbStartOrigin.z > 56.0f) {
+				pWeapon->SendWeaponAnim(ACT_VM_CLIMB_HIGH);
+				m_bBigClimb = true;
+			} else {
+				pWeapon->SendWeaponAnim(ACT_VM_CLIMB);
+				m_bBigClimb = false;
+			}
+		}
 
 		return false;
 	};
@@ -2627,7 +2652,7 @@ void CVancePlayer::TryLedgeClimb()
 	trace_t tr;
 
 	// check for ceiling first, dont want to climb through the roof
-	UTIL_TraceLine( vecStart, vecStart + Vector( 0, 0, vance_climb_checkray_allowedheight.GetFloat() ), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine(vecStart, vecStart + Vector(0, 0, vance_climb_checkray_allowedheight.GetFloat()), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 	if ( vance_climb_debug.GetBool() ) 
 		debugoverlay->AddLineOverlay( EyePosition(), tr.endpos, 255, 0, 0, true, 10 );
 
@@ -2638,7 +2663,7 @@ void CVancePlayer::TryLedgeClimb()
 	}
 
 	 // check for a surface in front of the player, we do it from crouch eye level
-		UTIL_TraceLine( vecEyeDuck, vecEyeDuck + ( vecForward * CLIMB_TRACE_DIST ), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine(vecEyeDuck, vecEyeDuck + (vecForward * CLIMB_TRACE_DIST), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 	if (!tr.DidHitWorld())
 	{
@@ -2657,7 +2682,7 @@ void CVancePlayer::TryLedgeClimb()
 	{
 		vecStart = vecAbsPos + ( vecEyePos - vecAbsPos ) * posFraction;
 		vecEnd = vecStart + (vecForward * CLIMB_TRACE_DIST);
-		UTIL_TraceLine(vecStart, vecEnd, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr);
+		UTIL_TraceLine(vecStart, vecEnd, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 		if (vance_climb_debug.GetBool())
 		{
