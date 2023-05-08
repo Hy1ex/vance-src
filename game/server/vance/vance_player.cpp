@@ -1648,7 +1648,7 @@ void CVancePlayer::PostThink()
 		float playbackSpeed = 1.0f;
 
 		Activity activity = pWeapon->GetActivity();
-		if ( activity == pWeapon->GetWalkActivity() )
+		if ( activity == pWeapon->GetWalkActivity() || activity == ACT_VM_SPRINT2 || activity == ACT_VM_SPRINT2_EXTENDED)
 		{
 			pWeaponViewModel->SetPlaybackRate( playbackSpeed );
 		}
@@ -1787,16 +1787,10 @@ void CVancePlayer::Spawn()
 	SetModel( GetPlayerWorldModel() );
 
 	CreateViewModel( VM_LEGS );
-	CreateViewModel( VM_STIM );
 
 	if ( CBaseViewModel *pLegViewModel = GetViewModel( VM_LEGS ) )
 	{
 		pLegViewModel->SetWeaponModel( GetLegsViewModel(), NULL );
-	}
-
-	if ( CBaseViewModel *pStimViewModel = GetViewModel( VM_STIM ) )
-	{
-		pStimViewModel->SetWeaponModel( "models/weapons/v_stim.mdl", NULL );
 	}
 
 	SetTouch( &CVancePlayer::Touch );

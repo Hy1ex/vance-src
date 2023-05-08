@@ -1856,6 +1856,24 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 			WeaponIdle();
 		}
 	}
+
+	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+
+	//we are midair or arent, switch anims if we need to
+	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT) {
+		SetIdealActivity(ACT_VM_SPRINT2);
+		SetCycle(0.5f);
+	}
+	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT_EXTENDED) {
+		SetIdealActivity(ACT_VM_SPRINT2_EXTENDED);
+		SetCycle(0.5f);
+	}
+	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2) {
+		SetIdealActivity(ACT_VM_SPRINT);
+	}
+	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2_EXTENDED) {
+		SetIdealActivity(ACT_VM_SPRINT_EXTENDED);
+	}
 }
 
 void CBaseCombatWeapon::HandleFireOnEmpty()

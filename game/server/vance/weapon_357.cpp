@@ -34,13 +34,18 @@ public:
 
 	CWeapon357( void );
 
-	void	PrimaryAttack( void );
-	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
-	void	ItemPostFrame();
+	void		PrimaryAttack();
+	void		Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	void		ItemPostFrame();
 
-	float	WeaponAutoAimScale()	{ return 0.6f; }
+	float		WeaponAutoAimScale()	{ return 0.6f; }
 
-	bool	m_bInAds = false;
+	bool		m_bInAds = false;
+	void		UpdateAds(bool inAds);
+	Activity	GetPrimaryAttackActivity(void) { return m_bInAds ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK; };
+	Activity	GetIdleActivity() { return m_bInAds ? ACT_VM_IDLE_EXTENDED : ACT_VM_IDLE; };
+	Activity	GetWalkActivity() { return m_bInAds ? ACT_VM_WALK_EXTENDED : ACT_VM_WALK; };
+
 
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
@@ -189,8 +194,27 @@ void CWeapon357::PrimaryAttack( void )
 void CWeapon357::ItemPostFrame() {
 	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
 	if (pPlayer) {
-		//youd think you could just set the variable to the condition directly but then it complains
-		if (pPlayer->m_afButtonPressed & IN_ATTACK2) {m_bInAds = true;}	else {m_bInAds = false;}
+		if ((pPlayer->m_afButtonPressed & IN_ATTACK2)) { //it doesnt like if it i try and set the condition directly
+			UpdateAds(true);
+		} else if ((pPlayer->m_afButtonReleased & IN_ATTACK2)) {
+			UpdateAds(false);
+		}
 	}
 	BaseClass::ItemPostFrame();
+}
+
+void CWeapon357::UpdateAds(bool inAds) {
+	if (inAds != m_bInAds) {
+		CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+		if (inAds) {
+			if (pPlayer->SetFOV(this, pPlayer->GetDefaultFOV() - 15.0f, 0.1f)) {
+				m_bInAds = true;
+			}
+		}
+		else {
+			if (pPlayer->SetFOV(this, 0, 0.2f)) {
+				m_bInAds = false;
+			}
+		}
+	}
 }

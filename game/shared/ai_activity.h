@@ -2214,6 +2214,8 @@ typedef enum
 		ACT_VM_CLIMB_HIGH,
 		ACT_VM_CLIMB_EXTENDED,
 		ACT_VM_CLIMB_HIGH_EXTENDED,
+		ACT_VM_SPRINT2,
+		ACT_VM_SPRINT2_EXTENDED,
 #endif
 
 	// this is the end of the global activities, private per-monster activities start here.
