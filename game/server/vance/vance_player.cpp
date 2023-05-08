@@ -1717,7 +1717,7 @@ void CVancePlayer::PostThink()
 		}
 
 		// Play a special animation for weapons when kicking
-		if ( pWeapon )
+		if (pWeapon && !pWeapon->m_bInReload )
 		{
 			pWeapon->SendWeaponAnim( ACT_VM_KICK );
 		}
