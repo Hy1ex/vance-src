@@ -94,6 +94,20 @@ void CVanceBludgeonWeapon::ItemPostFrame( void )
 	if ( pOwner == NULL )
 		return;
 
+	//we are midair or arent, switch anims if we need to
+	if (!(pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT2);
+	}
+	if (!(pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT2_EXTENDED);
+	}
+	if ((pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2 && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT);
+	}
+	if ((pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT_EXTENDED);
+	}
+
 	if ( (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
 	{
 		PrimaryAttack();
