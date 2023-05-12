@@ -211,14 +211,26 @@ void CWeaponShotgun::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatC
 {
 	switch( pEvent->event )
 	{
-		case EVENT_WEAPON_SHOTGUN_FIRE:
-		{
-			FireNPCPrimaryAttack( pOperator, false );
+		case EVENT_WEAPON_SHOTGUN_FIRE:{
+			FireNPCPrimaryAttack(pOperator, false);
+			break;
 		}
-		break;
-
+		case AE_WPN_FULLCLIP1:{
+			CBaseCombatCharacter *pOwner = GetOwner();
+			if (pOwner == NULL)
+				return;
+			if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) > 0)
+			{
+				if (Clip1() < GetMaxClip1())
+				{
+					m_iClip1++;
+					pOwner->RemoveAmmo(1, m_iPrimaryAmmoType);
+				}
+			}
+			break;
+		}
 		default:
-			CBaseCombatWeapon::Operator_HandleAnimEvent( pEvent, pOperator );
+			CBaseCombatWeapon::Operator_HandleAnimEvent(pEvent, pOperator);
 			break;
 	}
 }
@@ -390,6 +402,9 @@ void CWeaponShotgun::FinishReload( void )
 //-----------------------------------------------------------------------------
 void CWeaponShotgun::FillClip( void )
 {
+	//this is all handled by animevents now
+	return;
+
 	CBaseCombatCharacter *pOwner  = GetOwner();
 	
 	if ( pOwner == NULL )
@@ -502,6 +517,19 @@ void CWeaponShotgun::ItemPostFrame( void )
 		return;
 	}
 
+	if (!(pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT2);
+	}
+	if (!(pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT2_EXTENDED);
+	}
+	if ((pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2 && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT);
+	}
+	if ((pOwner->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
+		SetIdealActivity(ACT_VM_SPRINT_EXTENDED);
+	}
+
 	if (m_bInReload)
 	{
 		// If I'm primary firing and have one round stop reloading and fire
@@ -510,7 +538,7 @@ void CWeaponShotgun::ItemPostFrame( void )
 			m_bInReload		= false;
 			m_bDelayedFire1 = true;
 		}
-		// If I'm secondary firing and have one round stop reloading and fire
+		// If I'm secondary firing and have two rounds stop reloading and fire
 		else if ((pOwner->m_nButtons & IN_ATTACK2 ) && (m_iClip1 >=2))
 		{
 			m_bInReload		= false;

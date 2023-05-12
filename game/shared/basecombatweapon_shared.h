@@ -590,6 +590,8 @@ public:
 	void					MaintainIdealActivity( void );
 
 	float					m_fDoNotDisturb = 0.0f;
+	bool					m_bDontSwitchBackToMe = false;
+	bool					m_bPlayEquipSound = true;
 
 protected:
 	float					m_flHolsterTime;

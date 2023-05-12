@@ -1786,6 +1786,8 @@ void CVancePlayer::Spawn()
 
 	SetModel( GetPlayerWorldModel() );
 
+	GiveNamedItem("weapon_unarmed");
+
 	CreateViewModel( VM_LEGS );
 
 	if ( CBaseViewModel *pLegViewModel = GetViewModel( VM_LEGS ) )

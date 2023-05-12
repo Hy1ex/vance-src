@@ -150,7 +150,7 @@ void C_BaseCombatWeapon::OnDataChanged( DataUpdateType_t updateType )
 					pHudSelection->OnWeaponPickup( this );
 				}
 
-				pPlayer->EmitSound( "Player.PickupWeapon" );
+				//pPlayer->EmitSound( "Player.PickupWeapon" );
 			}
 		}
 	}

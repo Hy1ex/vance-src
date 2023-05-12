@@ -494,7 +494,13 @@ void CBaseHudWeaponSelection::SwitchToLastWeapon( void )
 	if ( !player )
 		return;
 
-	input->MakeWeaponSelection( player->GetLastWeapon() );
+	C_BaseCombatWeapon * lastwpn = player->GetLastWeapon();
+
+	//dont switch back to the unarmed weapon
+	if (lastwpn->m_bDontSwitchBackToMe)
+		return
+
+	input->MakeWeaponSelection(lastwpn);
 }
 
 //-----------------------------------------------------------------------------

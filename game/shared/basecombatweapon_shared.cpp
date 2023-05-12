@@ -745,8 +745,9 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 	if( pNewOwner->IsPlayer() )
 	{
 		m_OnPlayerPickup.FireOutput(pNewOwner, this);
-
-		// Play the pickup sound for 1st-person observers
+	
+		//this chunk of code didnt seem to be doing what it was meant to, was probably multiplayer specific
+		/*// Play the pickup sound for 1st-person observers
 		CRecipientFilter filter;
 		for ( int i=1; i <= gpGlobals->maxClients; ++i )
 		{
@@ -759,6 +760,11 @@ void CBaseCombatWeapon::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 		if ( filter.GetRecipientCount() )
 		{
 			CBaseEntity::EmitSound( filter, pNewOwner->entindex(), "Player.PickupWeapon" );
+		}*/
+
+		if (m_bPlayEquipSound) {
+			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+			pPlayer->EmitSound("Player.PickupWeapon");
 		}
 
 		// Robin: We don't want to delete weapons the player has picked up, so 
@@ -1860,18 +1866,16 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
 
 	//we are midair or arent, switch anims if we need to
-	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT) {
+	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT && m_fDoNotDisturb <= gpGlobals->curtime) {
 		SetIdealActivity(ACT_VM_SPRINT2);
-		SetCycle(0.5f);
 	}
-	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT_EXTENDED) {
+	if (!(pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
 		SetIdealActivity(ACT_VM_SPRINT2_EXTENDED);
-		SetCycle(0.5f);
 	}
-	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2) {
+	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2 && m_fDoNotDisturb <= gpGlobals->curtime) {
 		SetIdealActivity(ACT_VM_SPRINT);
 	}
-	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2_EXTENDED) {
+	if ((pPlayer->GetFlags() & FL_ONGROUND) && GetIdealActivity() == ACT_VM_SPRINT2_EXTENDED && m_fDoNotDisturb <= gpGlobals->curtime) {
 		SetIdealActivity(ACT_VM_SPRINT_EXTENDED);
 	}
 }
@@ -2443,6 +2447,11 @@ void CBaseCombatWeapon::MaintainIdealActivity( void )
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::SetIdealActivity( Activity ideal )
 {
+	if (m_fDoNotDisturb > gpGlobals->curtime)
+	{
+		return false;
+	}
+
 	MDLCACHE_CRITICAL_SECTION();
 	int	idealSequence = SelectWeightedSequence( ideal );
 
