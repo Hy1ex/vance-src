@@ -163,6 +163,7 @@ private:
 
 	float		m_flNextSprint;			// Next time we're allowed to sprint
 	float		m_flNextWalk;			// Next time we're allowed to walk.
+	bool		WpnCanSprint();
 
 	bool		m_bSpawning;
 	float		m_flNextPainSound;

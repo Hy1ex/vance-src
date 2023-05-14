@@ -24,6 +24,7 @@ public:
 		static Vector vecCone = VECTOR_CONE_10DEGREES + VECTOR_CONE_6DEGREES;
 		return vecCone;
 	}
+	CWeaponAnastasia();
 };
 
 IMPLEMENT_SERVERCLASS_ST( CWeaponAnastasia, DT_WeaponAnastasia )
@@ -32,6 +33,11 @@ END_SEND_TABLE()
 LINK_ENTITY_TO_CLASS( weapon_anastasia, CWeaponAnastasia );
 PRECACHE_WEAPON_REGISTER( weapon_anastasia );
 
+CWeaponAnastasia::CWeaponAnastasia()
+{
+	m_bUseCustomStopSprint = true;
+	m_bStopSprintSecondary = false;
+}
 
 void CWeaponAnastasia::PrimaryAttack()
 {

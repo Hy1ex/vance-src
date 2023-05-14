@@ -539,11 +539,11 @@ void CWeaponShotgun::ItemPostFrame( void )
 			m_bDelayedFire1 = true;
 		}
 		// If I'm secondary firing and have two rounds stop reloading and fire
-		else if ((pOwner->m_nButtons & IN_ATTACK2 ) && (m_iClip1 >=2))
+		/*else if ((pOwner->m_nButtons & IN_ATTACK2 ) && (m_iClip1 >=2))
 		{
 			m_bInReload		= false;
 			m_bDelayedFire2 = true;
-		}
+		}*/
 		else if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 		{
 			// If out of ammo end reload
@@ -701,6 +701,9 @@ CWeaponShotgun::CWeaponShotgun( void )
 	m_fMaxRange1		= 500;
 	m_fMinRange2		= 0.0;
 	m_fMaxRange2		= 200;
+
+	m_bUseCustomStopSprint = true;
+	m_bStopSprintSecondary = false;
 }
 
 //-----------------------------------------------------------------------------

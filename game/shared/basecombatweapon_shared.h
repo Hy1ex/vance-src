@@ -593,6 +593,10 @@ public:
 	bool					m_bDontSwitchBackToMe = false;
 	bool					m_bPlayEquipSound = true;
 
+	bool					m_bUseCustomStopSprint = false; 
+	bool					m_bStopSprintPrimary = true;
+	bool					m_bStopSprintSecondary = true;
+
 protected:
 	float					m_flHolsterTime;
 	bool					m_bHolstering;

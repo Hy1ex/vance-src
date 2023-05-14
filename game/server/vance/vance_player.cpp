@@ -1629,13 +1629,11 @@ void CVancePlayer::PostThink()
 	float playerSpeed = GetLocalVelocity().Length2D();
 
 	// If sprinting and shot(s) fired, slow us down as a penalty.
-	if (playerSpeed >= 300 /*&& GetActiveWeapon() != NULL*/)
+	if (!WpnCanSprint())
 	{
-		if (m_nButtons & (IN_ATTACK | IN_ATTACK2))
-		{
+		if (playerSpeed >= 300)
 			StopSprinting();
-			m_flNextSprint = gpGlobals->curtime + sk_nextsprint_delay.GetFloat();
-		}
+		m_flNextSprint = gpGlobals->curtime + sk_nextsprint_delay.GetFloat();
 	}
 
 	CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
@@ -1809,9 +1807,30 @@ bool CVancePlayer::CanSprint()
 		return false;
 
 	return (m_bSprintEnabled &&										// Only if sprint is enabled
-		!(m_Local.m_bDucked && !m_Local.m_bDucking) &&			// Nor if we're ducking
+		!(m_Local.m_bDucked && !m_Local.m_bDucking) &&				// Nor if we're ducking
 		(GetWaterLevel() != 3) &&									// Certainly not underwater
 		(GlobalEntity_GetState("suit_no_sprint") != GLOBAL_ON));	// Out of the question without the sprint module
+}
+
+//reutrns whether the current weapon actions will allow us to sprint
+bool CVancePlayer::WpnCanSprint()
+{
+	if (m_PerformingGesture != GestureAction::None) //if we are doing a gesture its not our job to not sprint
+		return true;
+	CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon *>(GetActiveWeapon());
+	if (!pWeapon) //we dont even have a gun (which should never happen but might as well check)
+		return true;
+	if (pWeapon->m_bUseCustomStopSprint)
+	{
+		if ((m_nButtons & IN_ATTACK) && pWeapon->m_bStopSprintPrimary) //player is primary attacking and the weapon cares
+			return false;
+		if ((m_nButtons & IN_ATTACK2) && pWeapon->m_bStopSprintSecondary) //player is secondary attacking and the weapon cares
+			return false;
+	} else {
+		if (m_nButtons & (IN_ATTACK | IN_ATTACK2))
+			return false;
+	}
+	return true;
 }
 
 //-----------------------------------------------------------------------------

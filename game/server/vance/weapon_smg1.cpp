@@ -60,6 +60,8 @@ public:
 	virtual void	Operator_ForceNPCFire( CBaseCombatCharacter  *pOperator, bool bSecondary );
 	virtual void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 
+	void ItemPostFrame();
+
 protected:
 
 	Vector	m_vecTossVelocity;
@@ -300,6 +302,16 @@ void CWeaponSMG1::AddViewKick()
 	DoMachineGunKick( pPlayer, EASY_DAMPEN, MAX_VERTICAL_KICK, m_fFireDuration, SLIDE_LIMIT );
 }
 
+void CWeaponSMG1::ItemPostFrame(){
+	//maybe this should be moved upstream a bit if its an issue for all weapons
+	CBasePlayer *pPlayer = ToBasePlayer(GetOwner());
+	if (pPlayer && pPlayer->GetAmmoCount(m_iSecondaryAmmoType) <= 0 && (pPlayer->m_nButtons & IN_ATTACK2))
+		WeaponIdle();
+	if (pPlayer && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0 && (pPlayer->m_nButtons & IN_ATTACK))
+		WeaponIdle();
+	BaseClass::ItemPostFrame();
+}
+
 void CWeaponSMG1::PrimaryAttack()
 {
 	if (m_bFireOnEmpty)
@@ -332,8 +344,6 @@ void CWeaponSMG1::SecondaryAttack()
 	//Must have ammo
 	if ( ( pPlayer->GetAmmoCount( m_iSecondaryAmmoType ) <= 0 ) || ( pPlayer->GetWaterLevel() == 3 ) )
 	{
-		SendWeaponAnim( ACT_VM_DRYFIRE );
-		BaseClass::WeaponSound( EMPTY );
 		m_flNextSecondaryAttack = gpGlobals->curtime + 0.5f;
 		return;
 	}

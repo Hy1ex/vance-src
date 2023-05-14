@@ -40,16 +40,18 @@ public:
 
 	float		WeaponAutoAimScale()	{ return 0.6f; }
 
-	bool		m_bInAds = false;
 	void		UpdateAds(bool inAds);
-	Activity	GetPrimaryAttackActivity(void) { return m_bInAds ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK; };
-	Activity	GetIdleActivity() { return m_bInAds ? ACT_VM_IDLE_EXTENDED : ACT_VM_IDLE; };
-	Activity	GetWalkActivity() { return m_bInAds ? ACT_VM_WALK_EXTENDED : ACT_VM_WALK; };
+	Activity	GetPrimaryAttackActivity(void) { return m_bScoped.Get() ? ACT_VM_FIRE_EXTENDED : ACT_VM_PRIMARYATTACK; };
+	Activity	GetIdleActivity() { return m_bScoped.Get() ? ACT_VM_IDLE_EXTENDED : ACT_VM_IDLE; };
+	Activity	GetWalkActivity() { return m_bScoped.Get() ? ACT_VM_WALK_EXTENDED : ACT_VM_WALK; };
 
 
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 	DECLARE_ACTTABLE();
+private:
+
+	CNetworkVar(bool, m_bScoped);
 
 };
 
@@ -72,6 +74,7 @@ IMPLEMENT_ACTTABLE(CWeapon357);
 PRECACHE_WEAPON_REGISTER( weapon_357 );
 
 IMPLEMENT_SERVERCLASS_ST( CWeapon357, DT_Weapon357 )
+SendPropBool(SENDINFO(m_bScoped)),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CWeapon357 )
@@ -150,7 +153,11 @@ void CWeapon357::PrimaryAttack( void )
 	WeaponSound( SINGLE );
 	pPlayer->DoMuzzleFlash();
 
-	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
+	if (m_bScoped.Get()){
+		SendWeaponAnim(ACT_VM_FIRE_EXTENDED);
+	} else {
+		SendWeaponAnim(ACT_VM_PRIMARYATTACK);
+	}
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
@@ -200,20 +207,33 @@ void CWeapon357::ItemPostFrame() {
 			UpdateAds(false);
 		}
 	}
+	//bandaid fix for it not updating idle properly
+	if (m_bScoped.Get() && GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED)
+		WeaponIdle();
+	if (pPlayer && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0 && (pPlayer->m_nButtons & IN_ATTACK))
+		WeaponIdle();
 	BaseClass::ItemPostFrame();
 }
 
 void CWeapon357::UpdateAds(bool inAds) {
-	if (inAds != m_bInAds) {
+	if (inAds != m_bScoped.Get()) {
 		CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
 		if (inAds) {
 			if (pPlayer->SetFOV(this, pPlayer->GetDefaultFOV() - 15.0f, 0.1f)) {
-				m_bInAds = true;
+				m_bScoped = true;
+				m_bStopSprintSecondary = true;
+				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED){
+					SendWeaponAnim(ACT_VM_IDLE_EXTENDED);
+				}
 			}
 		}
 		else {
 			if (pPlayer->SetFOV(this, 0, 0.2f)) {
-				m_bInAds = false;
+				m_bScoped = false;
+				m_bStopSprintSecondary = false;
+				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED){
+					SendWeaponAnim(ACT_VM_IDLE);
+				}
 			}
 		}
 	}

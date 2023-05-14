@@ -34,6 +34,7 @@ $Project "Client (Vance)"
 
 			$File	"vance\c_weapon_hacktool.cpp"
 			$File	"vance\c_weapon_sniper.cpp"
+			$File	"vance\c_weapon_357.cpp"
 			$File	"vance\deferred_screenspace_effects.cpp"
 			$File	"vance\deferred_screenspace_effects.h"
 			$File	"vance\deferred_screenspace_effects_order.cpp"

@@ -60,4 +60,7 @@ IMPLEMENT_ACTTABLE(CWeaponUnarmed);
 CWeaponUnarmed::CWeaponUnarmed(void)
 {
 	m_bPlayEquipSound = false;
+	m_bUseCustomStopSprint = true;
+	m_bStopSprintPrimary = false;
+	m_bStopSprintSecondary = false;
 }

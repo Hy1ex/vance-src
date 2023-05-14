@@ -12,11 +12,12 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar vance_sniper_scope_speed("vance_sniper_scope_speed", "1.5", FCVAR_REPLICATED);
+ConVar vance_357_scope_speed("vance_357_ads_in_speed", "3", FCVAR_REPLICATED);
+ConVar vance_357_scope_out_speed("vance_357_ads_out_speed", "2", FCVAR_REPLICATED);
 
-class C_WeaponSniper : public C_BaseVanceWeapon
+class C_Weapon357 : public C_BaseVanceWeapon
 {
-	DECLARE_CLASS( C_WeaponSniper, C_BaseVanceWeapon);
+	DECLARE_CLASS(C_Weapon357, C_BaseVanceWeapon);
 public:
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
@@ -31,7 +32,8 @@ public:
 			: (pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
 	}
 
-	virtual void CalcIronsight(Vector& origin, QAngle& angles){
+	virtual void CalcIronsight(Vector& origin, QAngle& angles)
+	{
 		CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
 
 		if (pPlayer) {
@@ -39,14 +41,14 @@ public:
 			if (m_bScoped)
 			{
 				if (m_flScope < 1.0f)
-					m_flScope += gpGlobals->frametime * vance_sniper_scope_speed.GetFloat();
+					m_flScope += gpGlobals->frametime * vance_357_scope_speed.GetFloat();
 				else
 					m_flScope = 1.0f;
 			}
 			else
 			{
 				if (m_flScope > 0.0f)
-					m_flScope -= gpGlobals->frametime * vance_sniper_scope_speed.GetFloat();
+					m_flScope -= gpGlobals->frametime * vance_357_scope_out_speed.GetFloat();
 				else
 					m_flScope = 0.0f;
 			}
@@ -65,7 +67,8 @@ public:
 			origin += offset * spline;
 			angles.z -= curve * 15.0f; //*((int)m_bScoped * 2 - 1) * (m_bScoped ? 1.0f : 0.5f);
 			origin.z -= curve * 1.5f;
-		} else {
+		}
+		else {
 			BaseClass::CalcIronsight(origin, angles);
 		}
 	}
@@ -77,9 +80,9 @@ private:
 };
 
 
-STUB_WEAPON_CLASS_IMPLEMENT( weapon_sniper, C_WeaponSniper );
+STUB_WEAPON_CLASS_IMPLEMENT(weapon_357, C_Weapon357);
 
-IMPLEMENT_CLIENTCLASS_DT( C_WeaponSniper, DT_WeaponSniper, CWeaponSniper )
+IMPLEMENT_CLIENTCLASS_DT(C_Weapon357, DT_Weapon357, CWeapon357)
 	RecvPropBool( RECVINFO(m_bScoped)),
 END_RECV_TABLE()
 
