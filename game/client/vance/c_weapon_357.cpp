@@ -22,14 +22,14 @@ public:
 	DECLARE_CLIENTCLASS();
 	DECLARE_PREDICTABLE();
 
-	float easeInOutBack(float x)
+	float easeInOutSine(float x)
 	{
-		const float c1 = 1.70158f;
-		const float c2 = c1 * 1.525f;
+		return -(cosf(3.14159 * x) - 1) / 2;
+	}
 
-		return x < 0.5
-			? (pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
-			: (pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
+	float easeOutCubic(float x)
+	{
+		return 1 - powf(1 - x, 3);
 	}
 
 	virtual void CalcIronsight(Vector& origin, QAngle& angles)
@@ -41,7 +41,7 @@ public:
 			if (m_bScoped)
 			{
 				if (m_flScope < 1.0f)
-					m_flScope += gpGlobals->frametime * vance_357_scope_speed.GetFloat();
+					m_flScope += gpGlobals->frametime * vance_357_scope_speed.GetFloat() * 5 * (1.2 - easeOutCubic(m_flScope));
 				else
 					m_flScope = 1.0f;
 			}
@@ -61,12 +61,12 @@ public:
 			offset += right * GetVanceWpnData().vIronsightOffset.y;
 			offset += up * GetVanceWpnData().vIronsightOffset.z;
 
-			float spline = easeInOutBack(m_flScope);
+			float spline = easeInOutSine(m_flScope);
 			float curve = SmoothCurve(m_flScope);
 
 			origin += offset * spline;
-			angles.z -= curve * 15.0f; //*((int)m_bScoped * 2 - 1) * (m_bScoped ? 1.0f : 0.5f);
-			origin.z -= curve * 1.5f;
+			angles.z -= curve * 6.0f; //*((int)m_bScoped * 2 - 1) * (m_bScoped ? 1.0f : 0.5f);
+			origin.z -= curve * 0.5f;
 		}
 		else {
 			BaseClass::CalcIronsight(origin, angles);

@@ -37,6 +37,7 @@ public:
 	void		PrimaryAttack();
 	void		Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 	void		ItemPostFrame();
+	bool		Reload();
 
 	float		WeaponAutoAimScale()	{ return 0.6f; }
 
@@ -205,6 +206,8 @@ void CWeapon357::ItemPostFrame() {
 			UpdateAds(true);
 		} else if ((pPlayer->m_afButtonReleased & IN_ATTACK2)) {
 			UpdateAds(false);
+		} else {
+			UpdateAds(m_bScoped);
 		}
 	}
 	//bandaid fix for it not updating idle properly
@@ -212,17 +215,29 @@ void CWeapon357::ItemPostFrame() {
 		WeaponIdle();
 	if (pPlayer && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0 && (pPlayer->m_nButtons & IN_ATTACK))
 		WeaponIdle();
+	if (m_bScoped.Get() && GetActivity() == ACT_VM_FIDGET) {
+		SendWeaponAnim(ACT_VM_IDLE_EXTENDED);
+	}
 	BaseClass::ItemPostFrame();
 }
 
+bool CWeapon357::Reload() {
+	UpdateAds(false);
+	return BaseClass::Reload();
+}
+
 void CWeapon357::UpdateAds(bool inAds) {
+	//check if we are playing any activities where we shouldnt be scoped in
+	if (GetActivity() == ACT_VM_HOLSTER || GetActivity() == ACT_VM_CLIMB_HIGH || GetActivity() == ACT_VM_KICK) {
+		inAds = false;
+	}
 	if (inAds != m_bScoped.Get()) {
 		CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
 		if (inAds) {
 			if (pPlayer->SetFOV(this, pPlayer->GetDefaultFOV() - 15.0f, 0.1f)) {
 				m_bScoped = true;
 				m_bStopSprintSecondary = true;
-				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED){
+				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED  &&  GetActivity() != ACT_VM_CLIMB_HIGH){
 					SendWeaponAnim(ACT_VM_IDLE_EXTENDED);
 				}
 			}
@@ -231,7 +246,7 @@ void CWeapon357::UpdateAds(bool inAds) {
 			if (pPlayer->SetFOV(this, 0, 0.2f)) {
 				m_bScoped = false;
 				m_bStopSprintSecondary = false;
-				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED){
+				if (GetActivity() != ACT_VM_RELOAD &&  GetActivity() != ACT_VM_PRIMARYATTACK &&  GetActivity() != ACT_VM_FIRE_EXTENDED  &&  GetActivity() != ACT_VM_CLIMB_HIGH){
 					SendWeaponAnim(ACT_VM_IDLE);
 				}
 			}
