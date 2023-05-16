@@ -274,7 +274,7 @@ void CVancePlayer::CheatImpulseCommands(int iImpulse)
 		GiveNamedItem("weapon_resistancegun");
 		GiveNamedItem("weapon_ar2");
 		GiveNamedItem("weapon_shotgun");
-		GiveNamedItem("weapon_physcannon");
+		//GiveNamedItem("weapon_physcannon");
 		GiveNamedItem("weapon_bugbait");
 		GiveNamedItem("weapon_rpg");
 		GiveNamedItem("weapon_357");
@@ -844,6 +844,8 @@ bool CVancePlayer::Weapon_CanUse(CBaseCombatWeapon* pWeapon)
 			UTIL_Remove(pWeapon);
 		return false;
 	}
+	if (pWeapon->ClassMatches("weapon_physcannon"))
+		return false;
 
 	return BaseClass::Weapon_CanUse(pWeapon);
 }
