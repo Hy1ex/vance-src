@@ -5434,7 +5434,7 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 		CBaseCombatWeapon *pWeapon = GetActiveWeapon();
 		if ( pWeapon != NULL )
 		{
-			pWeapon->Holster( NULL );
+			pWeapon->SetWeaponVisible(false); //hide it immedietly instead of holstering since we are gonna have fancy entry anims
 		}
 
 #ifndef HL2_DLL

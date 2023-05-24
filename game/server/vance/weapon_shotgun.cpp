@@ -65,6 +65,8 @@ public:
 
 	virtual float			GetFireRate( void );
 
+	virtual bool			ShouldDisplayAltFireHUDHint(){ return false; }
+
 	bool StartReload( void );
 	bool Reload( void );
 	void FillClip( void );

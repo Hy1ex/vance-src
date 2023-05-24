@@ -1166,6 +1166,11 @@ void CVancePlayer::Bleed()
 
 void CVancePlayer::UseStimOrTourniquet()
 {
+	//if we are in a vehicle then its gonna be the vehicles job to trigger the gestures, since it has to wait for the vehicle bodys hand to go offscreen
+	//for now we just wont worry about it
+	if (IsInAVehicle())
+		return;
+
 	if ( m_bBleeding && m_iNumTourniquets > 0 )
 	{
 		UseTourniquet();
@@ -1664,9 +1669,18 @@ void CVancePlayer::PostThink()
 
 	CBaseViewModel *pLegsViewModel = GetViewModel( VM_LEGS );
 
+	//the weapon will have refused to deploy when the actual vehicle tells it to since it tells it to deploy way too early so we have to manually deploy once we are actually clear of the vehicle
+	//i should just edit the actual code for deploying the weapon but i cant be bothered to lol
+	if (IsInAVehicle() != m_bWasInAVehicle) {
+		if (!IsInAVehicle()){ //just existed vehicle
+			if (pWeapon)
+				pWeapon->Deploy();
+		}
+		m_bWasInAVehicle = IsInAVehicle();
+	}
 
 	//grenade
-	if (m_afButtonPressed & IN_THROWGRENADE)
+	if (m_afButtonPressed & IN_THROWGRENADE && !IsInAVehicle())
 	{
 		if (GetAmmoCount(GetAmmoDef()->Index("Grenade")) <= 0)
 		{
@@ -1685,7 +1699,7 @@ void CVancePlayer::PostThink()
 		ThrowingGrenade();
 	}
 
-	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime && m_ParkourAction.Get() != ParkourAction::Climb)
+	if (m_afButtonPressed & IN_ATTACK3 && m_flNextKick < gpGlobals->curtime && m_ParkourAction.Get() != ParkourAction::Climb && !IsInAVehicle())
 	{
 		// Play a kick animation for the legs
 		if ( pLegsViewModel )
@@ -2534,6 +2548,10 @@ void CVancePlayer::SlideTick()
 
 void CVancePlayer::TrySlide()
 {
+	// i dont think sliding in vehicles even does anything but we should do it
+	if (IsInAVehicle())
+		return;
+
 	// dont slide in air
 	if (!(GetFlags() & FL_ONGROUND))
 	{
@@ -2609,6 +2627,10 @@ void CVancePlayer::LedgeClimbTick()
 
 void CVancePlayer::TryLedgeClimb()
 {
+	//dont even think about it if we are in a vehicle
+	if (IsInAVehicle())
+		return;
+
 	auto checkClimbability = [this](Vector vecStart) -> bool {
 		Vector vecForward;
 		EyeVectors(&vecForward);

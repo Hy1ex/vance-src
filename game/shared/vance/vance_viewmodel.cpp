@@ -364,6 +364,9 @@ void CVanceViewModel::CalcViewModelCollision(Vector& origin, QAngle& angles, CBa
 	if (pWeapon->GetVanceWpnData().iWeaponLength == 0)
 		return;
 
+	if (owner->IsInAVehicle())
+		return;
+
 	Vector forward, right, up;
 	AngleVectors(owner->EyeAngles(), &forward, &right, &up);
 	trace_t tr;

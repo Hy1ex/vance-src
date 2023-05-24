@@ -220,6 +220,9 @@ private:
 	float		m_fMidairSlideWindowTime = 0.0f;
 	bool		m_bAllowMidairSlide = true;
 
+	// vehicle
+	bool		m_bWasInAVehicle;
+
 	friend class CVanceGameMovement;
 };
 

@@ -168,11 +168,14 @@ bool CBaseVanceWeapon::CanWalkBob()
 //-----------------------------------------------------------------------------
 bool CBaseVanceWeapon::Deploy(void)
 {
-	// If we should be lowered, deploy in the lowered position
-	// We have to ask the player if the last time it checked, the weapon was lowered
 	if (GetOwner() && GetOwner()->IsPlayer())
 	{
 		CVancePlayer *pPlayer = assert_cast<CVancePlayer *>(GetOwner());
+		//if we are a player in a vehicle we should not deploy until we arent in the vehicle anymore
+		if (pPlayer->IsInAVehicle())
+			return false;
+		// If we should be lowered, deploy in the lowered position
+		// We have to ask the player if the last time it checked, the weapon was lowered
 		if (pPlayer->IsWeaponLowered())
 		{
 			if (CanLower())
