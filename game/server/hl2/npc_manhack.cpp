@@ -2470,6 +2470,9 @@ void CNPC_Manhack::Spawn(void)
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::StartEye( void )
 {
+	delete m_pEyeGlow;
+	m_pEyeGlow = NULL;
+
 	//Create our Eye sprite
 	if ( m_pEyeGlow == NULL )
 	{

@@ -337,6 +337,7 @@ public:
 
 	bool		IsHacked() { return m_bHacked; }
 	virtual void Hack( CBaseEntity *pActivator, CBaseEntity *pCaller );
+	//virtual void Hack();
 #endif
 
 private:

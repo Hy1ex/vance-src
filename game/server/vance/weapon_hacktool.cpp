@@ -159,6 +159,7 @@ void CWeaponHackTool::HackThink(void)
 	if (!m_bShock)
 	{
 		m_hTarget->Hack( GetOwner(), this );
+		//m_hTarget->Hack();
 	}
 
 	EmitSound("AlyxEMP.Discharge");
