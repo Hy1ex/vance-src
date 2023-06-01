@@ -54,6 +54,9 @@ ConVar cl_vm_sway_wiggle_rate( "cl_vm_sway_wiggle_rate", "1.0" );
 ConVar cl_vm_sway_tilt( "cl_vm_sway_tilt", "280.0" );
 ConVar cl_vm_sway_offset( "cl_vm_sway_offset", "5.0" );
 ConVar cl_vm_sway_jump_velocity_division( "cl_vm_sway_jump_velocity_division", "24.0" );
+ConVar cl_vm_crouch_rotatespeed("cl_vm_crouch_rotatespeed", "0.4");
+ConVar cl_vm_crouch_angle("cl_vm_crouch_angle", "-6");
+ConVar cl_vm_crouch_offset("cl_vm_crouch_offset", "-1");
 #endif
 
 //-----------------------------------------------------------------------------
@@ -381,6 +384,24 @@ void CVanceViewModel::CalcViewModelCollision(Vector& origin, QAngle& angles, CBa
 	angles += pWeapon->GetVanceWpnData().angCollisionRotation * (1.0f - m_flCurrentDistance);
 }
 
+//deals with additional offsets from crouching and jumping and the like
+void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBasePlayer* owner)
+{
+	Vector forward, right, up;
+	AngleVectors(owner->EyeAngles(), &forward, &right, &up);
+	//crouching: we are ducked or ducking, but we arent ducked AND ducking (which happens when standing up), and we are on the ground not crouch jumping
+	if ((owner->GetFlags() & FL_DUCKING || owner->m_Local.m_bDucking) && !(owner->GetFlags() & FL_DUCKING && owner->m_Local.m_bDucking) && owner->GetFlags() & FL_ONGROUND) {
+		m_flDucking += gpGlobals->frametime / cl_vm_crouch_rotatespeed.GetFloat();
+	} else {
+		m_flDucking -= gpGlobals->frametime / cl_vm_crouch_rotatespeed.GetFloat();
+	}
+	m_flDucking = Clamp(m_flDucking, 0.0f, 1.0f);
+	float flDuckingEased = (m_flDucking < 0.5 ? 4 * m_flDucking * m_flDucking * m_flDucking : 1 - powf(-2 * m_flDucking + 2, 3) / 2); //easeInOutCubic
+	angles += QAngle(0.0f, 0.0f, cl_vm_crouch_angle.GetFloat()) * flDuckingEased;
+	origin += right * cl_vm_crouch_offset.GetFloat() * flDuckingEased;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose
 //-----------------------------------------------------------------------------
@@ -394,6 +415,7 @@ void CVanceViewModel::CalcViewModelView(CBasePlayer* owner, const Vector& eyePos
 	//Allow weapon lagging
 	if (pWeapon != NULL)
 	{
+		CalcViewModelBasePose(vmorigin, vmangles, owner);
 		CalcViewModelCollision(vmorigin, vmangles, owner);
 
 		pWeapon->CalcIronsight(vmorigin, vmangles);

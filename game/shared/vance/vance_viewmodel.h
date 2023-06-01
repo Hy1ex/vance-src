@@ -74,6 +74,7 @@ public:
 	virtual void CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles );
 
 	virtual void CalcViewModelCollision(Vector& origin, QAngle& eyeAngles, CBasePlayer* pOwner);
+	virtual void CalcViewModelBasePose(Vector& origin, QAngle& eyeAngles, CBasePlayer* pOwner);
 	virtual void CalcViewModelView(CBasePlayer* owner, const Vector& eyePosition,
 		const QAngle& eyeAngles);
 
@@ -98,6 +99,9 @@ private:
 	float m_flSideTiltDifference;
 	float m_flForwardOffsetResult;
 	float m_flForwardOffsetDifference;
+
+	// additional offset timers
+	float m_flDucking = 0.0f;
 
 	// Wall collision thingy like in tarkov and stuff
 	float m_flCurrentDistance;

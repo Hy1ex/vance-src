@@ -35,6 +35,7 @@ protected:
 	virtual bool	CheckJumpButton(void);
 	virtual void	Duck(void);
 	virtual bool	CanUnduck();
+	virtual void	HandleDuckingSpeedCrop();
 
 private:
 

@@ -7,6 +7,7 @@
 
 ConVar vance_slide_time( "vance_slide_time", "2.0", FCVAR_CHEAT );
 ConVar vance_slide_movescale( "vance_slide_movescale", "0.05", FCVAR_CHEAT );
+ConVar vance_crouch_speed_scale("vance_duck_speed_scale", "0.5", FCVAR_CHEAT);
 
 CVanceGameMovement::CVanceGameMovement()
 {
@@ -54,6 +55,19 @@ bool CVanceGameMovement::CanUnduck()
 
 	return BaseClass::CanUnduck();
 }
+
+void CVanceGameMovement::HandleDuckingSpeedCrop()
+{
+	if (!(m_iSpeedCropped & SPEED_CROPPED_DUCK) && (player->GetFlags() & FL_DUCKING) && (player->GetGroundEntity() != NULL))
+	{
+		float frac = vance_crouch_speed_scale.GetFloat();
+		mv->m_flForwardMove *= frac;
+		mv->m_flSideMove *= frac;
+		mv->m_flUpMove *= frac;
+		m_iSpeedCropped |= SPEED_CROPPED_DUCK;
+	}
+}
+
 
 // Expose our interface.
 static CVanceGameMovement g_GameMovement;
