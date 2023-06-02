@@ -60,6 +60,7 @@ private:
 
 	bool	m_bSemiAutoMode;
 	float	m_flDoneSwitchingMode;
+	float	m_flCloseEnoughToDoneSwitchingMode;
 
 	bool	m_bInBurst;
 	int		m_nBurstShot;
@@ -123,6 +124,7 @@ CWeaponResistanceGun::CWeaponResistanceGun()
 	m_bSemiAutoMode = false;
 	m_bInTransition = false;
 	m_flDoneSwitchingMode = 0.0f;
+	m_flCloseEnoughToDoneSwitchingMode = 0.0f;
 
 	m_bInBurst = false;
 }
@@ -134,6 +136,7 @@ void CWeaponResistanceGun::Spawn()
 {
 	m_bInTransition = false;
 	m_flDoneSwitchingMode = 0.0f;
+	m_flCloseEnoughToDoneSwitchingMode = 0.0f;
 
 	BaseClass::Spawn();
 }
@@ -263,6 +266,7 @@ void CWeaponResistanceGun::SecondaryAttack()
 
 	m_bInTransition = true;
 	m_flDoneSwitchingMode = gpGlobals->curtime + GetViewModelSequenceDuration();
+	m_flCloseEnoughToDoneSwitchingMode = gpGlobals->curtime + (GetViewModelSequenceDuration()/2.0f); //time at which we can consider the transition finished if we need to cancel it
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
 	m_flSoonestPrimaryAttack = m_flNextSecondaryAttack;
@@ -286,6 +290,7 @@ void CWeaponResistanceGun::ItemPostFrame()
 		else
 		{
 			m_flDoneSwitchingMode = 0.0f;
+			m_flCloseEnoughToDoneSwitchingMode = 0.0f;
 			m_bInTransition = false;
 		}
 	}
@@ -313,15 +318,16 @@ void CWeaponResistanceGun::ItemPostFrame()
 bool CWeaponResistanceGun::Deploy()
 {
 	m_flDoneSwitchingMode = 0.0f;
+	m_flCloseEnoughToDoneSwitchingMode = 0.0f;
 
 	return BaseClass::Deploy();
 }
 
 bool CWeaponResistanceGun::Holster(CBaseCombatWeapon* pSwitchingTo)
 {
-	if (m_bInTransition && m_flDoneSwitchingMode > gpGlobals->curtime)
+	if (m_bInTransition && m_flCloseEnoughToDoneSwitchingMode > gpGlobals->curtime)
 	{
-		// Still switching mode. Cancel the transition.
+		// Still switching mode and not halfway done. Cancel the transition.
 		m_bSemiAutoMode = !m_bSemiAutoMode;
 	}
 
