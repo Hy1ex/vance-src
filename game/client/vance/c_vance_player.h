@@ -49,12 +49,20 @@ public:
 
 protected:
 
+	void				AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles);
 	void				AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate = false);
 
 	virtual void		CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
 	virtual void		CalcViewModelView(const Vector& eyeOrigin, const QAngle& eyeAngles);
 
 private:
+	//landing kick
+	float  m_fLandingKickEaseIn = 2.0f; //first half is down, second half is up
+	float  m_fLandingKickEaseOut = 0.0f;
+	float  m_fLandingKickLastOffset = 0.0f;
+	float  m_fLandingKickLastVelocity = 0.0f;
+
+	//bob
 	C_BobModel *m_pBobViewModel;
 	float m_flBobModelAmount;
 	QAngle m_angLastBobAngle;

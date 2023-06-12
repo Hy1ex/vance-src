@@ -264,6 +264,33 @@ Vector C_VancePlayer::GetAutoaimVector(float flScale)
 	return	forward;
 }
 
+void C_VancePlayer::AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles)
+{
+	//if we are in the air then keep track of our velocity and ease out any residual offset, when we land do the easing to apply that velocity to the offset keeping track of the result
+	if (GetFlags() & FL_ONGROUND) {
+		if (m_fLandingKickEaseIn < 1.0f) {
+			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / 0.1f, 0.0f, 2.0f);
+		} else {
+			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / 0.3f, 0.0f, 2.0f);
+		}
+		if (m_fLandingKickEaseIn < 1.0f) { //down
+			m_fLandingKickLastOffset = 1 - powf(1 - m_fLandingKickEaseIn, 3); //easeOutCubic
+		} else { //up
+			m_fLandingKickLastOffset = 1 - ((m_fLandingKickEaseIn - 1.0f) < 0.5 ? 2 * (m_fLandingKickEaseIn - 1.0f) * (m_fLandingKickEaseIn - 1.0f) : 1 - powf(-2 * (m_fLandingKickEaseIn - 1.0f) + 2, 2) / 2); //inverse easeInOutQuad
+		}
+		m_fLandingKickLastOffset *= m_fLandingKickLastVelocity / 200;
+		m_fLandingKickLastOffset *= 10.0f;
+		eyeOrigin += m_fLandingKickLastOffset * Vector(0, 0, 1);
+		m_fLandingKickEaseOut = 0.0f;
+	} else {
+		m_fLandingKickEaseOut = Clamp(m_fLandingKickEaseOut + gpGlobals->frametime / 0.2f, 0.0f, 1.0f);
+		float easedLandingKickEaseOut = 1.0f - (m_fLandingKickEaseOut < 0.5 ? 2 * m_fLandingKickEaseOut * m_fLandingKickEaseOut : 1 - powf(-2 * m_fLandingKickEaseOut + 2, 2) / 2);
+		eyeOrigin += m_fLandingKickLastOffset * easedLandingKickEaseOut * Vector(0, 0, 1);
+		m_fLandingKickLastVelocity = GetAbsVelocity().z;
+		m_fLandingKickEaseIn = 0.0f;
+	}
+}
+
 void C_VancePlayer::AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate)
 {
 	if ( cl_viewbob_enabled.GetBool() )
@@ -329,6 +356,7 @@ void C_VancePlayer::CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 	eyeOrigin += vSmoothOffset;
 	m_flObserverChaseDistance = 0.0;
 
+	AddViewLandingKick(eyeOrigin, eyeAngles);
 	AddViewBob(eyeOrigin, eyeAngles, true);
 
 	// calc current FOV

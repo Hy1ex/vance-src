@@ -2542,6 +2542,7 @@ void CVancePlayer::SlideTick()
 	else
 	{
 		m_flSlideFrictionScale = 1.0f;
+		m_flNextSprint = gpGlobals->curtime + 0.21f;
 		m_ParkourAction = ParkourAction::None;
 	}
 }

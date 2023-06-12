@@ -53,7 +53,7 @@ ConVar cl_vm_sway_rate( "cl_vm_sway_rate", "1.0" );
 ConVar cl_vm_sway_wiggle_rate( "cl_vm_sway_wiggle_rate", "1.0" );
 ConVar cl_vm_sway_tilt( "cl_vm_sway_tilt", "280.0" );
 ConVar cl_vm_sway_offset( "cl_vm_sway_offset", "5.0" );
-ConVar cl_vm_sway_jump_velocity_division( "cl_vm_sway_jump_velocity_division", "24.0" );
+ConVar cl_vm_sway_jump_velocity_division( "cl_vm_sway_jump_velocity_division", "50.0" );
 ConVar cl_vm_crouch_rotatespeed("cl_vm_crouch_rotatespeed", "0.4");
 ConVar cl_vm_crouch_angle("cl_vm_crouch_angle", "-6");
 ConVar cl_vm_crouch_offset("cl_vm_crouch_offset", "-1");
@@ -389,10 +389,69 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 {
 	Vector forward, right, up;
 	AngleVectors(owner->EyeAngles(), &forward, &right, &up);
+
+	//jump offset
+	bool bInAir = false;
+	if (owner->GetFlags() & FL_ONGROUND) 
+	{
+		bInAir = false; 
+	}
+	else {
+		bInAir = true;
+	};
+	if (bInAir != m_bJumpModeInAir)
+	{
+		m_bJumpModeInAir = bInAir;
+		if (bInAir) 
+		{
+			m_fJumpBlendIn = 0.0f;
+		} else {
+			m_fJumpBlendOut = 0.0f;
+		}
+	}
+	//calculated offset based on velocity, which is faded in and out
+	float jumpOffset = Clamp(owner->GetLocalVelocity().z * -0.003f, -1.0f, 1.0f);
+	if (jumpOffset >= 0.0f) 
+	{
+		jumpOffset = sinf((jumpOffset * 3.14159) / 2); //easeOutSine
+	}
+	else {
+		jumpOffset *= -1.0f;
+		jumpOffset = sinf((jumpOffset * 3.14159) / 2); //easeOutSine
+		jumpOffset *= -1.0f;
+	}
+	if (bInAir)
+	{
+		//ease in the jump, ease out the effects of the previous blend out
+		m_fJumpBlendIn += gpGlobals->frametime / 0.2f;
+		m_fJumpBlendIn = Clamp(m_fJumpBlendIn, 0.0f, 1.0f);
+
+		jumpOffset *= -(cosf(3.141590894f * m_fJumpBlendIn) - 1) / 2; //easeInOutSine
+		jumpOffset += m_fJumpBlendOutFinalPrevious * (-(cosf(3.14159 * m_fJumpBlendIn) - 1) / 2); //m_fJumpBlendOutFinalPrevious * easeInOutSine
+
+		//save final jump offset
+		m_fJumpOffsetFinalPrevious = jumpOffset;
+	}
+	else {
+		//ease out the saved final offset
+		m_fJumpBlendOut += gpGlobals->frametime / 1.3f;
+		m_fJumpBlendOut = Clamp(m_fJumpBlendOut, 0.0f, 1.0f);
+
+		jumpOffset = m_fJumpOffsetFinalPrevious;
+		jumpOffset *= 1 - (m_fJumpBlendOut == 0 ? 0 : m_fJumpBlendOut == 1 ? 1 : powf(2, -10 * m_fJumpBlendOut) * sinf((m_fJumpBlendOut * 10 - 0.75) * ((2 * 3.14159f) / 3)) + 1); //inverse easeOutElastic
+
+		m_fJumpBlendOutFinalPrevious = jumpOffset;
+	}
+	//origin += Vector(0, 0, jumpOffset) * 0.8;
+	origin += jumpOffset * forward * -0.2f;
+	origin += jumpOffset * up * 1.0f;
+
 	//crouching: we are ducked or ducking, but we arent ducked AND ducking (which happens when standing up), and we are on the ground not crouch jumping
-	if ((owner->GetFlags() & FL_DUCKING || owner->m_Local.m_bDucking) && !(owner->GetFlags() & FL_DUCKING && owner->m_Local.m_bDucking) && owner->GetFlags() & FL_ONGROUND) {
+	if ((owner->GetFlags() & FL_DUCKING || owner->m_Local.m_bDucking) && !(owner->GetFlags() & FL_DUCKING && owner->m_Local.m_bDucking) && owner->GetFlags() & FL_ONGROUND) 
+	{
 		m_flDucking += gpGlobals->frametime / cl_vm_crouch_rotatespeed.GetFloat();
-	} else {
+	}
+	else {
 		m_flDucking -= gpGlobals->frametime / cl_vm_crouch_rotatespeed.GetFloat();
 	}
 	m_flDucking = Clamp(m_flDucking, 0.0f, 1.0f);

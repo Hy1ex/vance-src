@@ -103,6 +103,13 @@ private:
 	// additional offset timers
 	float m_flDucking = 0.0f;
 
+	//jump offset
+	bool  m_bJumpModeInAir = false;
+	float m_fJumpOffsetFinalPrevious = 0.0f;
+	float m_fJumpBlendOutFinalPrevious = 0.0f;
+	float m_fJumpBlendIn = 0.0f;
+	float m_fJumpBlendOut = 0.0f;
+
 	// Wall collision thingy like in tarkov and stuff
 	float m_flCurrentDistance;
 	float m_flDistanceDifference;
