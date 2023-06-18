@@ -2567,6 +2567,17 @@ void CVancePlayer::TrySlide()
 	if (GetLocalVelocity().Length2D() < 310)
 		return;
 
+	CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
+	if (pWeapon && !pWeapon->m_bInReload) {
+		int idealSequence = pWeapon->SelectWeightedSequence(ACT_VM_SLIDE);
+		if (idealSequence >= 0)
+		{
+			pWeapon->SendWeaponAnim(ACT_VM_SLIDE);
+			SetNextAttack(gpGlobals->curtime + pWeapon->SequenceDuration());
+			pWeapon->m_flNextPrimaryAttack = gpGlobals->curtime + pWeapon->SequenceDuration();
+			pWeapon->m_flNextSecondaryAttack = gpGlobals->curtime + pWeapon->SequenceDuration();
+		}
+	}
 	m_vecSlideDirection = EyeDirection2D();
 	SetAbsVelocity(GetAbsVelocity() + m_vecSlideDirection * vance_slide_addvelocity.GetFloat());
 	m_flSlideEndTime = gpGlobals->curtime + vance_slide_time.GetFloat();

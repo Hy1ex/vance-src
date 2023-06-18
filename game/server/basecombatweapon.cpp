@@ -194,6 +194,12 @@ void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseComb
 				this->m_iClip1 = 1;
 			}
 		}
+		else if (pEvent->event == AE_WEAPON_ALLOWFIRE)
+		{
+			GetOwner()->SetNextAttack(gpGlobals->curtime+0.05f);
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.05f;
+			m_flNextSecondaryAttack = gpGlobals->curtime + 0.05f;
+		}
 	}
 
 	DevWarning( 2, "Unhandled animation event %d from %s --> %s\n", pEvent->event, pOperator->GetClassname(), GetClassname() );

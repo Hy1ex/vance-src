@@ -2377,6 +2377,8 @@ void ActivityList_RegisterSharedActivities( void )
 	REGISTER_SHARED_ACTIVITY( ACT_VM_CLIMB_HIGH_EXTENDED );
 	REGISTER_SHARED_ACTIVITY( ACT_VM_SPRINT2 );
 	REGISTER_SHARED_ACTIVITY( ACT_VM_SPRINT2_EXTENDED );
+	REGISTER_SHARED_ACTIVITY( ACT_VM_SLIDE );
+	REGISTER_SHARED_ACTIVITY( ACT_VM_SLIDE_EXTENDED );
 #endif
 
 	AssertMsg( g_HighestActivity == LAST_SHARED_ACTIVITY - 1, "Not all activities from ai_activity.h registered in activitylist.cpp" ); 
