@@ -15,10 +15,15 @@
 #include "view.h"
 
 ConVar cl_viewpunch_power("cl_viewpunch_power", "0.4", 0, "", true, 0.0f, true, 1.0f);
-ConVar cl_viewbob_enabled( "cl_viewbob_enabled", "0" );
+ConVar cl_viewbob_enabled( "cl_viewbob_enabled", "1" );
 ConVar cl_viewbob_speed( "cl_viewbob_speed", "10" );
 ConVar cl_viewbob_height("cl_viewbob_height", "5");
 ConVar cl_viewbob_viewmodel_add("cl_viewbob_viewmodel_add", "0.1");
+ConVar cl_view_landing_timedown("cl_view_landing_timedown", "0.1");
+ConVar cl_view_landing_timeup("cl_view_landing_timeup", "0.3");
+ConVar cl_view_landing_velclamp("cl_view_landing_velclamp", "800.0");
+ConVar cl_view_landing_veldivide("cl_view_landing_veldivide", "200.0");
+ConVar cl_view_landing_scale("cl_view_landing_scale", "10.0");
 
 ConVar cl_flashlight_lag_interp( "cl_flashlight_lag_interp", "0.05", FCVAR_CHEAT );
 extern ConVar r_flashlightfov;
@@ -269,17 +274,17 @@ void C_VancePlayer::AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles)
 	//if we are in the air then keep track of our velocity and ease out any residual offset, when we land do the easing to apply that velocity to the offset keeping track of the result
 	if (GetFlags() & FL_ONGROUND) {
 		if (m_fLandingKickEaseIn < 1.0f) {
-			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / 0.1f, 0.0f, 2.0f);
+			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / cl_view_landing_timedown.GetFloat(), 0.0f, 2.0f);
 		} else {
-			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / 0.3f, 0.0f, 2.0f);
+			m_fLandingKickEaseIn = Clamp(m_fLandingKickEaseIn + gpGlobals->frametime / cl_view_landing_timeup.GetFloat(), 0.0f, 2.0f);
 		}
 		if (m_fLandingKickEaseIn < 1.0f) { //down
 			m_fLandingKickLastOffset = 1 - powf(1 - m_fLandingKickEaseIn, 3); //easeOutCubic
 		} else { //up
 			m_fLandingKickLastOffset = 1 - ((m_fLandingKickEaseIn - 1.0f) < 0.5 ? 2 * (m_fLandingKickEaseIn - 1.0f) * (m_fLandingKickEaseIn - 1.0f) : 1 - powf(-2 * (m_fLandingKickEaseIn - 1.0f) + 2, 2) / 2); //inverse easeInOutQuad
 		}
-		m_fLandingKickLastOffset *= m_fLandingKickLastVelocity / 200;
-		m_fLandingKickLastOffset *= 10.0f;
+		m_fLandingKickLastOffset *= Clamp(m_fLandingKickLastVelocity, -cl_view_landing_velclamp.GetFloat(), cl_view_landing_velclamp.GetFloat()) / cl_view_landing_veldivide.GetFloat();
+		m_fLandingKickLastOffset *= cl_view_landing_scale.GetFloat();
 		eyeOrigin += m_fLandingKickLastOffset * Vector(0, 0, 1);
 		m_fLandingKickEaseOut = 0.0f;
 	} else {
@@ -293,7 +298,7 @@ void C_VancePlayer::AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles)
 
 void C_VancePlayer::AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate)
 {
-	if ( cl_viewbob_enabled.GetBool() )
+	if (cl_viewbob_enabled.GetBool())
 	{
 		float cycle;
 
@@ -315,7 +320,7 @@ void C_VancePlayer::AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calcul
 
 		cycle = m_fBobTime;
 
-		eyeOrigin.z += abs( sin( cycle ) ) * cl_viewbob_height.GetFloat() * bob_offset;
+		eyeOrigin.z += abs(sin(cycle)) * cl_viewbob_height.GetFloat() * bob_offset * m_flBobModelAmount;
 	}
 }
 

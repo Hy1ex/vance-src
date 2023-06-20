@@ -141,6 +141,12 @@ bool C_BobModel::CanBobDuringActivity( Activity act )
 		case ACT_VM_LOWERED_TO_IDLE:
 		case ACT_VM_DRAW:
 		case ACT_VM_HOLSTER:
+		case ACT_VM_WALK:
+		case ACT_VM_WALK_EXTENDED:
+		case ACT_VM_SPRINT:
+		case ACT_VM_SPRINT_EXTENDED:
+		case ACT_VM_SPRINT2:
+		case ACT_VM_SPRINT2_EXTENDED:
 			return false;
 		default:
 			return true;
