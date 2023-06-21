@@ -235,6 +235,9 @@ void CVancePlayer::Precache()
 	PrecacheScriptSound( "AlyxPlayer.SprintPain" );
 	PrecacheScriptSound( "AlyxPlayer.Sprint" );
 
+	PrecacheScriptSound("AlyxPlayer.Slide_default_start");
+	PrecacheScriptSound("AlyxPlayer.Slide_default_end");
+
 	PrecacheScriptSound( "AlyxPlayer.Jump" );
 	PrecacheScriptSound( "AlyxPlayer.JumpGear" );
 	PrecacheScriptSound( "AlyxPlayer.Land" );
@@ -2544,6 +2547,8 @@ void CVancePlayer::SlideTick()
 		m_flSlideFrictionScale = 1.0f;
 		m_flNextSprint = gpGlobals->curtime + 0.21f;
 		m_ParkourAction = ParkourAction::None;
+		StopSound("AlyxPlayer.Slide_default_start");
+		EmitSound("AlyxPlayer.Slide_default_end");
 	}
 }
 
@@ -2578,6 +2583,7 @@ void CVancePlayer::TrySlide()
 			pWeapon->m_flNextSecondaryAttack = gpGlobals->curtime + pWeapon->SequenceDuration();
 		}
 	}
+	EmitSound("AlyxPlayer.Slide_default_start");
 	m_vecSlideDirection = EyeDirection2D();
 	SetAbsVelocity(GetAbsVelocity() + m_vecSlideDirection * vance_slide_addvelocity.GetFloat());
 	m_flSlideEndTime = gpGlobals->curtime + vance_slide_time.GetFloat();

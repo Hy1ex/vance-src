@@ -15,7 +15,7 @@
 #include "view.h"
 
 ConVar cl_viewpunch_power("cl_viewpunch_power", "0.4", 0, "", true, 0.0f, true, 1.0f);
-ConVar cl_viewbob_enabled( "cl_viewbob_enabled", "1" );
+ConVar cl_viewbob_enabled( "cl_viewbob_enabled", "0" );
 ConVar cl_viewbob_speed( "cl_viewbob_speed", "10" );
 ConVar cl_viewbob_height("cl_viewbob_height", "5");
 ConVar cl_viewbob_viewmodel_add("cl_viewbob_viewmodel_add", "0.1");
