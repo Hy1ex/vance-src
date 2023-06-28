@@ -19,11 +19,11 @@ ConVar cl_viewbob_enabled( "cl_viewbob_enabled", "0" );
 ConVar cl_viewbob_speed( "cl_viewbob_speed", "10" );
 ConVar cl_viewbob_height("cl_viewbob_height", "5");
 ConVar cl_viewbob_viewmodel_add("cl_viewbob_viewmodel_add", "0.1");
-ConVar cl_view_landing_timedown("cl_view_landing_timedown", "0.1");
+ConVar cl_view_landing_timedown("cl_view_landing_timedown", "0.08");
 ConVar cl_view_landing_timeup("cl_view_landing_timeup", "0.3");
-ConVar cl_view_landing_velclamp("cl_view_landing_velclamp", "800.0");
+ConVar cl_view_landing_velclamp("cl_view_landing_velclamp", "400.0");
 ConVar cl_view_landing_veldivide("cl_view_landing_veldivide", "200.0");
-ConVar cl_view_landing_scale("cl_view_landing_scale", "10.0");
+ConVar cl_view_landing_scale("cl_view_landing_scale", "8.5");
 
 ConVar cl_flashlight_lag_interp( "cl_flashlight_lag_interp", "0.05", FCVAR_CHEAT );
 extern ConVar r_flashlightfov;

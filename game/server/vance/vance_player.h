@@ -9,13 +9,17 @@
 #define P_PLAYER_HEV	"models/player/hev.mdl"
 #define P_PLAYER_SYNTH	"models/player/synth.mdl"
 
+#define P_PLAYER_LEGS_ALYX	"models/player/hev_fpp.mdl" //"models/player/alyx_fpp.mdl"
+#define P_PLAYER_LEGS_HEV	"models/player/hev_fpp.mdl"
+#define P_PLAYER_LEGS_SYNTH	"models/player/hev_fpp.mdl" //"models/player/synth_fpp.mdl"
+
 #define C_ARMS_ALYX		"models/weapons/v_arms_nosuit.mdl"
 #define C_ARMS_HEV		"models/weapons/v_arms_suit.mdl"
-#define C_ARMS_SYNTH		"models/weapons/v_arms_synth.mdl"
+#define C_ARMS_SYNTH	"models/weapons/v_arms_synth.mdl"
 
 #define V_KICK_ALYX		"models/weapons/v_kick_nosuit.mdl"
 #define V_KICK_HEV		"models/weapons/v_kick_suit.mdl"
-#define V_KICK_SYNTH		"models/weapons/v_kick_synth.mdl"
+#define V_KICK_SYNTH	"models/weapons/v_kick_synth.mdl"
 
 // Needs better name
 enum class GestureAction
@@ -106,12 +110,19 @@ public:
 	inline bool CanBreathUnderwater() const { return (IsSuitEquipped() || IsSynthEquipped()) && m_HL2Local.m_flSuitPower > 0.0f ;}
 
 	inline const char* GetPlayerWorldModel() const {
-		if (IsSynthEquipped())
-			return P_PLAYER_SYNTH;
-		else if (IsSuitEquipped())
-			return P_PLAYER_HEV;
-
-		return P_PLAYER_ALYX;
+		if (GetObserverMode() == 0 || GetObserverMode() == 4) {
+			if (IsSynthEquipped())
+				return P_PLAYER_LEGS_SYNTH;
+			else if (IsSuitEquipped())
+				return P_PLAYER_LEGS_HEV;
+			return P_PLAYER_LEGS_ALYX;
+		} else {
+			if (IsSynthEquipped())
+				return P_PLAYER_SYNTH;
+			else if (IsSuitEquipped())
+				return P_PLAYER_HEV;
+			return P_PLAYER_ALYX;
+		}
 	}
 
 	inline const char* GetLegsViewModel() const {

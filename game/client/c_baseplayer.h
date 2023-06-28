@@ -228,6 +228,7 @@ public:
 	virtual void				ThirdPersonSwitch( bool bThirdperson );
 	static bool					LocalPlayerInFirstPersonView();
 	static bool					ShouldDrawLocalPlayer();
+	static bool					ShouldDrawLocalPlayerViewmodel();
 	static C_BasePlayer			*GetLocalPlayer( void );
 	int							GetUserID( void );
 	virtual bool				CanSetSoundMixer( void );

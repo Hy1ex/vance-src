@@ -378,7 +378,7 @@ void CBaseVanceWeapon::OnDataChanged(DataUpdateType_t updateType)
 
 	// check if weapon is carried by local player
 	bool bIsLocalPlayer = pPlayer && pPlayer == pOwner;
-	if (bIsLocalPlayer && !C_BasePlayer::ShouldDrawLocalPlayer())		// TODO: figure out the purpose of the ShouldDrawLocalPlayer() test.
+	if (bIsLocalPlayer && C_BasePlayer::ShouldDrawLocalPlayerViewmodel())		// TODO: figure out the purpose of the ShouldDrawLocalPlayer() test.
 	{
 		// If I was just picked up, or created & immediately carried, add myself to this client's list of weapons
 		if ((m_iState != WEAPON_NOT_CARRIED) && (m_iOldState == WEAPON_NOT_CARRIED))

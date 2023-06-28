@@ -113,6 +113,12 @@ ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT,
 
 static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
 
+#ifdef VANCE
+static ConVar	cl_first_person_legs("cl_first_person_legs", "1", FCVAR_ARCHIVE, "Like cl_first_person_uses_world_model, but still draws the viewmodel and doesnt draw the upper body (and some other stuff)");
+#else
+static ConVar	cl_first_person_legs("cl_first_person_legs", "0", FCVAR_ARCHIVE, "Like cl_first_person_uses_world_model, but still draws the viewmodel and doesnt draw the upper body (and some other stuff)");
+#endif
+
 ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
 
 // This only needs to be approximate - it just controls the distance to the pivot-point of the head ("the neck") of the in-game character, not the player's real-world neck length.
@@ -1950,9 +1956,17 @@ void C_BasePlayer::ThirdPersonSwitch( bool bThirdperson )
 	}
 
 	static ConVarRef vr_first_person_uses_world_model( "vr_first_person_uses_world_model" );
-	return !LocalPlayerInFirstPersonView() || vr_first_person_uses_world_model.GetBool();
+	return !LocalPlayerInFirstPersonView() || vr_first_person_uses_world_model.GetBool() || cl_first_person_legs.GetBool();
 }
 
+bool C_BasePlayer::ShouldDrawLocalPlayerViewmodel()
+{
+	if (cl_first_person_legs.GetBool()) {
+		return true;
+	} else {
+		return !ShouldDrawLocalPlayer();
+	}
+}
 
 
 //-----------------------------------------------------------------------------
@@ -1989,6 +2003,10 @@ bool C_BasePlayer::ShouldDrawThisPlayer()
 		return true;
 	}
 	if ( !UseVR() && cl_first_person_uses_world_model.GetBool() )
+	{
+		return true;
+	}
+	if (!UseVR() && cl_first_person_legs.GetBool())
 	{
 		return true;
 	}

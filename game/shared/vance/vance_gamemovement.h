@@ -37,6 +37,11 @@ protected:
 	virtual bool	CanUnduck();
 	virtual void	HandleDuckingSpeedCrop();
 
+	virtual void	PlayerMove();
+	virtual void	SetDuckedEyeOffset(float duckFraction);
+	float			m_fDuckFraction = 0.0f;
+	bool			m_bWasInDuckJump = false;
+
 private:
 
 	CVancePlayer *GetVancePlayer();

@@ -83,7 +83,7 @@ static inline bool ShouldDrawLocalPlayerViewModel( void )
 #if defined( PORTAL )
 	return false;
 #else
-	return !C_BasePlayer::ShouldDrawLocalPlayer();
+	return C_BasePlayer::ShouldDrawLocalPlayerViewmodel(); //this logic is done in c_baseplayer now, for the fp legs to work correctly
 #endif
 }
 
@@ -203,7 +203,7 @@ ShadowType_t C_BaseCombatWeapon::ShadowCastType()
 	if (!IsBeingCarried())
 		return SHADOWS_RENDER_TO_TEXTURE;
 
-	if (IsCarriedByLocalPlayer() && !C_BasePlayer::ShouldDrawLocalPlayer())
+	if (IsCarriedByLocalPlayer() && C_BasePlayer::ShouldDrawLocalPlayerViewmodel())
 		return SHADOWS_NONE;
 
 	return SHADOWS_RENDER_TO_TEXTURE;
@@ -326,7 +326,7 @@ bool C_BaseCombatWeapon::IsCarriedByLocalPlayer( void )
 //-----------------------------------------------------------------------------
 bool C_BaseCombatWeapon::ShouldDrawUsingViewModel( void )
 {
-	return IsCarriedByLocalPlayer() && !C_BasePlayer::ShouldDrawLocalPlayer();
+	return IsCarriedByLocalPlayer() && C_BasePlayer::ShouldDrawLocalPlayerViewmodel();
 }
 
 

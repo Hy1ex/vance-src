@@ -4125,7 +4125,7 @@ void CGameMovement::FinishUnDuck( void )
 	player->RemoveFlag( FL_DUCKING );
 	player->m_Local.m_bDucking  = false;
 	player->m_Local.m_bInDuckJump  = false;
-	player->SetViewOffset( GetPlayerViewOffset( false ) );
+	//player->SetViewOffset( GetPlayerViewOffset( false ) );
 	player->m_Local.m_flDucktime = 0;
 
 	mv->SetAbsOrigin( newOrigin );
@@ -4215,7 +4215,7 @@ void CGameMovement::FinishDuck( void )
 	player->m_Local.m_bDucked = true;
 	player->m_Local.m_bDucking = false;
 
-	player->SetViewOffset( GetPlayerViewOffset( true ) );
+	//player->SetViewOffset( GetPlayerViewOffset( true ) );
 
 	// HACKHACK - Fudge for collision bug - no time to fix this properly
 	if ( player->GetGroundEntity() != NULL )
@@ -4264,7 +4264,7 @@ void CGameMovement::StartUnDuckJump( void )
 	player->m_Local.m_bDucked = true;
 	player->m_Local.m_bDucking = false;
 
-	player->SetViewOffset( GetPlayerViewOffset( true ) );
+	//player->SetViewOffset( GetPlayerViewOffset( true ) );
 
 	Vector hullSizeNormal = VEC_HULL_MAX_SCALED( player ) - VEC_HULL_MIN_SCALED( player );
 	Vector hullSizeCrouch = VEC_DUCK_HULL_MAX_SCALED( player ) - VEC_DUCK_HULL_MIN_SCALED( player );
@@ -4287,6 +4287,8 @@ void CGameMovement::StartUnDuckJump( void )
 //-----------------------------------------------------------------------------
 void CGameMovement::SetDuckedEyeOffset( float duckFraction )
 {
+	return; //disabling this function completely, ducking eye offset is now handled by vance_gamemovement
+
  	Vector vDuckHullMin = GetPlayerMins( true );
 	Vector vStandHullMin = GetPlayerMins( false );
 

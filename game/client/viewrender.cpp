@@ -1028,7 +1028,7 @@ bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 	if ( !r_drawviewmodel.GetBool() )
 		return false;
 
-	if ( C_BasePlayer::ShouldDrawLocalPlayer() )
+	if (!C_BasePlayer::ShouldDrawLocalPlayerViewmodel())
 		return false;
 
 	if ( !ShouldDrawEntities() )

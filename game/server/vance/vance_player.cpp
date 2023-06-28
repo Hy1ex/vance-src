@@ -214,6 +214,10 @@ void CVancePlayer::Precache()
 	PrecacheModel( P_PLAYER_HEV );
 	PrecacheModel( P_PLAYER_SYNTH );
 
+	PrecacheModel(P_PLAYER_LEGS_ALYX);
+	PrecacheModel(P_PLAYER_LEGS_HEV);
+	PrecacheModel(P_PLAYER_LEGS_SYNTH);
+
 	PrecacheModel( C_ARMS_ALYX );
 	PrecacheModel( C_ARMS_HEV );
 	PrecacheModel( C_ARMS_SYNTH );
