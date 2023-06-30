@@ -47,6 +47,15 @@ public:
 		return m_ParkourAction == ParkourAction::Slide;
 	}
 
+	Vector GetVaultCameraAdjustment(){
+		return m_vecVaultCameraAdjustment;
+	}
+
+	bool IsVaulting()
+	{
+		return m_ParkourAction == ParkourAction::Climb && m_bVaulting;
+	}
+
 protected:
 
 	void				AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles);
@@ -79,6 +88,10 @@ private:
 
 	float m_flSlideEndTime;
 	float m_flSlideFrictionScale;
+
+	//parkour stuff
+	bool m_bVaulting;
+	Vector m_vecVaultCameraAdjustment;
 
 	friend class CVanceGameMovement;
 };

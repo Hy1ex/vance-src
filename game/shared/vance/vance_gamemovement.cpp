@@ -74,11 +74,10 @@ void CVanceGameMovement::HandleDuckingSpeedCrop()
 //ducking logic replacement thats hopefully less fucked up
 void CVanceGameMovement::PlayerMove() //just using this as a think function lol
 {
-	BaseClass::PlayerMove(); //very important lol
+	BaseClass::PlayerMove(); //very important
 	
 	//crouching logic
-	//crouching: we are ducked or ducking, but we arent ducked AND ducking (which happens when standing up), and we are on the ground not crouch jumping
-	if ((player->m_Local.m_bDucked || player->m_Local.m_bDucking) && !(player->m_Local.m_bDucked && player->m_Local.m_bDucking) || (mv->m_nButtons & IN_DUCK) || (GetVancePlayer()->IsSliding() && (player->GetFlags() & FL_ONGROUND))) {
+	if (((player->m_Local.m_bDucked || player->m_Local.m_bDucking) && !(player->m_Local.m_bDucked && player->m_Local.m_bDucking) || (mv->m_nButtons & IN_DUCK) || (GetVancePlayer()->IsSliding() && (player->GetFlags() & FL_ONGROUND))) && !GetVancePlayer()->IsVaulting()) {
 		if (player->m_Local.m_bInDuckJump){
 			m_fDuckFraction = 1.0f;
 		} else if (GetVancePlayer()->IsSliding()) {
@@ -96,10 +95,20 @@ void CVanceGameMovement::PlayerMove() //just using this as a think function lol
 		}
 	}
 	m_fDuckFraction = Clamp(m_fDuckFraction, 0.0f, 1.0f);
-	SetDuckedEyeOffset(m_fDuckFraction < 0.5 ? 2 * m_fDuckFraction * m_fDuckFraction : 1 - powf(-2 * m_fDuckFraction + 2, 2) / 2); //easeInOutQuad
+	Vector vecDuckOffset = GetDuckedEyeOffset(m_fDuckFraction < 0.5 ? 2 * m_fDuckFraction * m_fDuckFraction : 1 - powf(-2 * m_fDuckFraction + 2, 2) / 2); //easeInOutQuad
+	//add in the correctional offset from vaulting
+	m_vecVaultOffset = GetVancePlayer()->GetVaultCameraAdjustment();
+	if (GetVancePlayer()->IsVaulting()){
+		m_fVaultOFfsetBlend = 1.0f;
+	} else {
+		m_fVaultOFfsetBlend -= gpGlobals->frametime / 0.27f;
+	}
+	m_fVaultOFfsetBlend = Clamp(m_fVaultOFfsetBlend, 0.0f, 1.0f);
+	vecDuckOffset.z += m_vecVaultOffset.z * (m_fVaultOFfsetBlend < 0.5 ? 2 * m_fVaultOFfsetBlend * m_fVaultOFfsetBlend : 1 - powf(-2 * m_fVaultOFfsetBlend + 2, 2) / 2); //easeInOutQuad
+	player->SetViewOffset(vecDuckOffset);
 }
 
-void CVanceGameMovement::SetDuckedEyeOffset(float duckFraction)
+Vector CVanceGameMovement::GetDuckedEyeOffset(float duckFraction)
 {
 	Vector vDuckHullMin = GetPlayerMins(true);
 	Vector vStandHullMin = GetPlayerMins(false);
@@ -111,7 +120,7 @@ void CVanceGameMovement::SetDuckedEyeOffset(float duckFraction)
 	Vector temp = player->GetViewOffset();
 	temp.z = ((vecDuckViewOffset.z - fMore) * duckFraction) +
 		(vecStandViewOffset.z * (1 - duckFraction));
-	player->SetViewOffset(temp);
+	return temp;
 }
 
 // Expose our interface.

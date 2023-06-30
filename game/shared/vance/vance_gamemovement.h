@@ -38,9 +38,11 @@ protected:
 	virtual void	HandleDuckingSpeedCrop();
 
 	virtual void	PlayerMove();
-	virtual void	SetDuckedEyeOffset(float duckFraction);
+	Vector			GetDuckedEyeOffset(float duckFraction);
 	float			m_fDuckFraction = 0.0f;
 	bool			m_bWasInDuckJump = false;
+	Vector			m_vecVaultOffset = Vector(0, 0, 0);
+	float			m_fVaultOFfsetBlend = 0.0f;
 
 private:
 

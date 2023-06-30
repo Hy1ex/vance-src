@@ -114,7 +114,7 @@ ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT,
 static ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
 
 #ifdef VANCE
-static ConVar	cl_first_person_legs("cl_first_person_legs", "1", FCVAR_ARCHIVE, "Like cl_first_person_uses_world_model, but still draws the viewmodel and doesnt draw the upper body (and some other stuff)");
+static ConVar	cl_first_person_legs("cl_first_person_legs", "0", FCVAR_ARCHIVE, "Like cl_first_person_uses_world_model, but still draws the viewmodel and doesnt draw the upper body (and some other stuff)");
 #else
 static ConVar	cl_first_person_legs("cl_first_person_legs", "0", FCVAR_ARCHIVE, "Like cl_first_person_uses_world_model, but still draws the viewmodel and doesnt draw the upper body (and some other stuff)");
 #endif

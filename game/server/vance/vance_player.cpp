@@ -134,6 +134,8 @@ IMPLEMENT_SERVERCLASS_ST( CVancePlayer, DT_Vance_Player )
 	SendPropInt(SENDINFO(m_ParkourAction)),
 	SendPropFloat(SENDINFO(m_flSlideEndTime)),
 	SendPropFloat(SENDINFO(m_flSlideFrictionScale)),
+	SendPropVector(SENDINFO(m_vecVaultCameraAdjustment)),
+	SendPropBool(SENDINFO(m_bVaulting))
 END_SEND_TABLE()
 
 static void Cmd_UseStimOrTourniquet()
@@ -171,6 +173,36 @@ static void Cmd_Bleed( const CCommand &args )
 	}
 }
 ConCommand bleed( "bleed", Cmd_Bleed, "Makes the executing Player start bleeding.", FCVAR_CHEAT );
+
+static void Cmd_Holster(const CCommand &args)
+{
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetCommandClient());
+	if (pPlayer)
+	{
+		pPlayer->GetActiveWeapon()->Holster(pPlayer->m_UnarmedWeapon);
+	}
+}
+ConCommand holster("holster", Cmd_Holster, "Holsters the players weapon", FCVAR_NONE);
+
+static void Cmd_GiveSuit(const CCommand &args)
+{
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetCommandClient());
+	if (pPlayer)
+	{
+		pPlayer->EquipSuit(false);
+	}
+}
+ConCommand GiveSuit("GiveSuit", Cmd_GiveSuit, "equips the hev suit", FCVAR_NONE);
+
+static void Cmd_RemoveSuit(const CCommand &args)
+{
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetCommandClient());
+	if (pPlayer)
+	{
+		pPlayer->RemoveSuit();
+	}
+}
+ConCommand RemoveSuit("RemoveSuit", Cmd_RemoveSuit, "unequips the hev suit", FCVAR_NONE);
 
 CVancePlayer::CVancePlayer()
 {
@@ -297,7 +329,6 @@ void CVancePlayer::CheatImpulseCommands(int iImpulse)
 		gEvilImpulse101 = false;
 
 		break;
-
 	default:
 		BaseClass::CheatImpulseCommands(iImpulse);
 	}
@@ -1807,7 +1838,7 @@ void CVancePlayer::Spawn()
 
 	SetModel( GetPlayerWorldModel() );
 
-	GiveNamedItem("weapon_unarmed");
+	m_UnarmedWeapon = static_cast<CBaseCombatWeapon *>(GiveNamedItem("weapon_unarmed"));
 
 	CreateViewModel( VM_LEGS );
 
@@ -2549,7 +2580,7 @@ void CVancePlayer::SlideTick()
 	else
 	{
 		m_flSlideFrictionScale = 1.0f;
-		m_flNextSprint = gpGlobals->curtime + 0.21f;
+		m_flNextSprint = gpGlobals->curtime + 0.11f;
 		m_ParkourAction = ParkourAction::None;
 		StopSound("AlyxPlayer.Slide_default_start");
 		EmitSound("AlyxPlayer.Slide_default_end");
@@ -2598,14 +2629,21 @@ void CVancePlayer::LedgeClimbTick()
 {
 	if (m_flClimbFraction >= 1.0f)
 	{
-		Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
-			m_vecClimbStartOrigin -Vector(0, 0, VEC_HULL_MAX.z) * 2, // pre
-			m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
-			m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // next
-			0.9f,
-			m_vecClimbOutVelocity);
+		if (m_bVault) {
+			m_vecClimbOutVelocity = m_vecClimbDesiredOrigin - m_vecClimbStartOrigin;
+			m_vecClimbOutVelocity.z = 0.0f;
+			m_vecClimbOutVelocity = m_vecClimbOutVelocity.Normalized() * 320.0f;
+		} else {
+			Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
+				m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // pre
+				m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
+				m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // next
+				0.9f,
+				m_vecClimbOutVelocity);
 
-		m_vecClimbOutVelocity = (m_vecClimbOutVelocity - m_vecClimbDesiredOrigin) * -10;
+			m_vecClimbOutVelocity = (m_vecClimbOutVelocity - m_vecClimbDesiredOrigin) * -10;
+		}
+		m_bVaulting = false;
 
 		m_ParkourAction = ParkourAction::None;
 		m_vecClimbStartOrigin = vec3_origin;
@@ -2618,23 +2656,56 @@ void CVancePlayer::LedgeClimbTick()
 	}
 	else
 	{
-		if (m_bBigClimb){
-			m_flClimbFraction += CLIMB_LERPSPEED_SLOW;
+		if (m_bVault) {
+			m_flClimbFraction += 0.05f; //we need to calculate a velocity here that would allow us to move laterally at running speed
+
+			float fEasedClimbFraction = m_flClimbFraction;
+			if (m_flClimbFraction < 0.5f){
+				fEasedClimbFraction = 4 * pow(m_flClimbFraction, 3);
+			}
+
+			Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
+				m_vecClimbStartOriginHull, // pre
+				m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
+				m_vecClimbStartOriginHull, // next
+				fEasedClimbFraction,
+				m_vecClimbCurrentOrigin);
+
+			float fEasedClimbCurrentOriginZ = m_vecClimbCurrentOrigin.z;
+
+			Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
+				m_vecClimbStartOriginHull, // pre
+				m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
+				m_vecClimbStartOriginHull, // next
+				m_flClimbFraction,
+				m_vecClimbCurrentOrigin);
+
+			m_vecClimbCurrentOrigin = Vector(m_vecClimbCurrentOrigin.x, m_vecClimbCurrentOrigin.y, fEasedClimbCurrentOriginZ);
+
+			m_vecVaultCameraAdjustment = -0.8f * (m_vecClimbCurrentOrigin - m_vecClimbStartOrigin);
 		} else {
-			m_flClimbFraction += CLIMB_LERPSPEED;
-		}
+			if (m_bBigClimb){
+				m_flClimbFraction += CLIMB_LERPSPEED_SLOW;
+			} else {
+				m_flClimbFraction += CLIMB_LERPSPEED;
+			}
 
-		float fEasedClimbFraction = m_flClimbFraction;
-		if (m_flClimbFraction < 0.5f){
-			fEasedClimbFraction = 4 * pow(m_flClimbFraction, 3);
-		}
+			float fEasedClimbFraction = m_flClimbFraction;
+			if (m_flClimbFraction < 0.5f){
+				fEasedClimbFraction = 4 * pow(m_flClimbFraction, 3);
+			}
 
-		Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
-			m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // pre
-			m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
-			m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2, // next
-			fEasedClimbFraction,
-			m_vecClimbCurrentOrigin);
+			Interpolator_CurveInterpolate(INTERPOLATE_CATMULL_ROM,
+				m_vecClimbStartOriginHull, // pre
+				m_vecClimbStartOrigin, m_vecClimbDesiredOrigin, // start end
+				m_vecClimbStartOriginHull, // next
+				fEasedClimbFraction,
+				m_vecClimbCurrentOrigin);
+			
+			if (!m_bBigClimb) {
+				m_vecVaultCameraAdjustment = -0.2f * (m_vecClimbCurrentOrigin - m_vecClimbStartOrigin);
+			}
+		}
 
 		if (vance_climb_debug.GetBool())
 		{
@@ -2678,7 +2749,9 @@ void CVancePlayer::TryLedgeClimb()
 
 		m_vecClimbDesiredOrigin = tr.endpos + Vector(0, 0, 5.0f);
 		m_vecClimbStartOrigin = GetAbsOrigin();
+		m_vecClimbStartOriginHull = m_vecClimbStartOrigin - Vector(0, 0, VEC_HULL_MAX.z) * 2;
 		m_flClimbFraction = 0.0f;
+		m_vecVaultCameraAdjustment = Vector(0, 0, 0);
 		m_ParkourAction = ParkourAction::Climb;
 
 		// Don't get stuck during this traversal since we'll just be slamming the player origin
@@ -2692,9 +2765,29 @@ void CVancePlayer::TryLedgeClimb()
 			if (m_vecClimbDesiredOrigin.z - m_vecClimbStartOrigin.z > 56.0f) {
 				pWeapon->SendWeaponAnim(ACT_VM_CLIMB_HIGH);
 				m_bBigClimb = true;
+				m_bVault = false;
+				m_bVaulting = false;
 			} else {
 				pWeapon->SendWeaponAnim(ACT_VM_CLIMB);
-				m_bBigClimb = false;
+				//if we are going pretty quick and not sliding we can vault instead of climbing
+				Vector pPosVel;
+				GetVelocity(&pPosVel, NULL);
+				if ((GetLocalVelocity().Length2D() >= 300.0f) && (m_nButtons & IN_SPEED)) {
+					m_bBigClimb = false;
+					m_bVault = true;
+					m_bVaulting = true;
+					CBaseViewModel *pLegsViewModel = GetViewModel(VM_LEGS);
+					if (pLegsViewModel)
+					{
+						float idealSequence = pLegsViewModel->SelectWeightedSequence(ACT_VM_CLIMB);
+						if (idealSequence >= 0)
+							pLegsViewModel->SendViewModelMatchingSequence(idealSequence);
+					}
+				} else {
+					m_bBigClimb = false;
+					m_bVault = false;
+					m_bVaulting = false;
+				}
 			}
 		}
 

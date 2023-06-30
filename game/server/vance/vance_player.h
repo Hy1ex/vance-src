@@ -157,6 +157,17 @@ public:
 	{
 		return m_ParkourAction.Get() == ParkourAction::Slide;
 	}
+
+	Vector GetVaultCameraAdjustment(){
+		return m_vecVaultCameraAdjustment;
+	}
+
+	bool IsVaulting()
+	{
+		return m_ParkourAction.Get() == ParkourAction::Climb && m_bVaulting;
+	}
+
+	CBaseCombatWeapon* m_UnarmedWeapon;
 	
 private:
 
@@ -224,6 +235,10 @@ private:
 	Vector		m_vecClimbOutVelocity;
 	float		m_flClimbFraction;
 	bool		m_bBigClimb;
+	bool		m_bVault;
+	Vector		m_vecClimbStartOriginHull;
+	CNetworkVar( bool, m_bVaulting );
+	CNetworkVar( Vector, m_vecVaultCameraAdjustment);
 
 	CNetworkVar(float, m_flSlideEndTime);
 	CNetworkVar(float, m_flSlideFrictionScale);

@@ -41,6 +41,8 @@ RecvPropFloat(RECVINFO(m_flKickAnimLength)),
 RecvPropInt(RECVINFO(m_ParkourAction)),
 RecvPropFloat(RECVINFO(m_flSlideEndTime)),
 RecvPropFloat(RECVINFO(m_flSlideFrictionScale)),
+RecvPropVector(RECVINFO(m_vecVaultCameraAdjustment)),
+RecvPropBool(RECVINFO(m_bVaulting))
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA(C_VancePlayer)
