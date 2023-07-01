@@ -59,6 +59,7 @@ public:
 protected:
 
 	void				AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles);
+	void				AddViewSlide(Vector& eyeOrigin, QAngle& eyeAngles);
 	void				AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate = false);
 
 	virtual void		CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
@@ -70,6 +71,9 @@ private:
 	float  m_fLandingKickEaseOut = 0.0f;
 	float  m_fLandingKickLastOffset = 0.0f;
 	float  m_fLandingKickLastVelocity = 0.0f;
+
+	//slide
+	float  m_fSlideBlend = 0.0f;
 
 	//bob
 	C_BobModel *m_pBobViewModel;

@@ -298,6 +298,18 @@ void C_VancePlayer::AddViewLandingKick(Vector& eyeOrigin, QAngle& eyeAngles)
 	}
 }
 
+void C_VancePlayer::AddViewSlide(Vector& eyeOrigin, QAngle& eyeAngles)
+{
+	if (IsSliding()) {
+		m_fSlideBlend += gpGlobals->frametime / 0.4f;
+	} else {
+		m_fSlideBlend -= gpGlobals->frametime / 0.2f;
+	}
+	m_fSlideBlend = Clamp(m_fSlideBlend, 0.0f, 1.0f);
+	float fSlideBlendEased = m_fSlideBlend < 0.5 ? 4 * m_fSlideBlend * m_fSlideBlend * m_fSlideBlend : 1 - powf(-2 * m_fSlideBlend + 2, 3) / 2; //easeInOutCubic
+	eyeAngles += QAngle(0.0f, 0.0f, -3.0f * fSlideBlendEased);
+}
+
 void C_VancePlayer::AddViewBob(Vector& eyeOrigin, QAngle& eyeAngles, bool calculate)
 {
 	if (cl_viewbob_enabled.GetBool())
@@ -364,6 +376,7 @@ void C_VancePlayer::CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& 
 	m_flObserverChaseDistance = 0.0;
 
 	AddViewLandingKick(eyeOrigin, eyeAngles);
+	AddViewSlide(eyeOrigin, eyeAngles);
 	AddViewBob(eyeOrigin, eyeAngles, true);
 
 	// calc current FOV
