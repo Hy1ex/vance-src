@@ -101,6 +101,8 @@ ConVar vance_climb_debug("vance_climb_debug", "0");
 extern ConVar vance_slide_time;
 ConVar vance_slide_addvelocity( "vance_slide_addvelocity", "200.0", FCVAR_CHEAT );
 ConVar vance_slide_frictionscale( "vance_slide_frictionscale", "0.1", FCVAR_CHEAT );
+ConVar vance_slide_cooldown("vance_slide_cooldown", "0.5", FCVAR_CHEAT);
+ConVar vance_slide_sprint_time("vance_slide_sprint_time", "0.3", FCVAR_CHEAT);
 ConVar vance_slide_midair_window("vance_slide_midair_window", "0.4", FCVAR_CHEAT);
 
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
@@ -179,7 +181,14 @@ static void Cmd_Holster(const CCommand &args)
 	CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetCommandClient());
 	if (pPlayer)
 	{
-		pPlayer->GetActiveWeapon()->Holster(pPlayer->m_UnarmedWeapon);
+		if (pPlayer->GetActiveWeapon() == pPlayer->m_UnarmedWeapon) {
+			if (pPlayer->m_HolsteredWeapon) {
+				pPlayer->GetActiveWeapon()->Holster(pPlayer->m_HolsteredWeapon);
+			}
+		} else {
+			pPlayer->m_HolsteredWeapon = pPlayer->GetActiveWeapon();
+			pPlayer->GetActiveWeapon()->Holster(pPlayer->m_UnarmedWeapon);
+		}
 	}
 }
 ConCommand holster("holster", Cmd_Holster, "Holsters the players weapon", FCVAR_NONE);
@@ -2568,7 +2577,7 @@ void CVancePlayer::SlideTick()
 
 	if (gpGlobals->curtime >= m_flSlideEndTime) //out of time
 		ContinueSlide = false;
-	else if (GetLocalVelocity().Length2D() < 300) //too slow
+	else if (GetLocalVelocity().Length2D() < 150) //too slow
 		ContinueSlide = false;
 	else if (!(GetFlags() & FL_ONGROUND)) //nothing under us
 		ContinueSlide = false;
@@ -2576,6 +2585,7 @@ void CVancePlayer::SlideTick()
 	if (ContinueSlide)
 	{
 		m_flSlideFrictionScale = vance_slide_frictionscale.GetFloat() + (5 * pow(1.0f - ((m_flSlideEndTime - gpGlobals->curtime) / vance_slide_time.GetFloat()), 2));
+		m_fNextSlideTime = gpGlobals->curtime + vance_slide_cooldown.GetFloat();
 	}
 	else
 	{
@@ -2589,7 +2599,7 @@ void CVancePlayer::SlideTick()
 
 void CVancePlayer::TrySlide()
 {
-	// i dont think sliding in vehicles even does anything but we should do it
+	// i dont think sliding in vehicles even does anything but we shouldnt do it
 	if (IsInAVehicle())
 		return;
 
@@ -2606,6 +2616,15 @@ void CVancePlayer::TrySlide()
 	//gotta be going quick enough
 	if (GetLocalVelocity().Length2D() < 310)
 		return;
+
+	if (m_fSprintTime < vance_slide_sprint_time.GetFloat())
+		return;
+
+	// respect the cooldown
+	if (m_fNextSlideTime > gpGlobals->curtime)
+		return;
+
+	//we are sliding now
 
 	CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
 	if (pWeapon && !pWeapon->m_bInReload) {
@@ -2762,7 +2781,7 @@ void CVancePlayer::TryLedgeClimb()
 		CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
 		if (pWeapon) {
 			pWeapon->AbortReload();
-			if (m_vecClimbDesiredOrigin.z - m_vecClimbStartOrigin.z > 56.0f) {
+			if (abs(m_vecClimbDesiredOrigin.z - m_vecClimbStartOrigin.z) > 56.0f) {
 				pWeapon->SendWeaponAnim(ACT_VM_CLIMB_HIGH);
 				m_bBigClimb = true;
 				m_bVault = false;
@@ -2772,7 +2791,7 @@ void CVancePlayer::TryLedgeClimb()
 				//if we are going pretty quick and not sliding we can vault instead of climbing
 				Vector pPosVel;
 				GetVelocity(&pPosVel, NULL);
-				if ((GetLocalVelocity().Length2D() >= 300.0f) && (m_nButtons & IN_SPEED)) {
+				if ((GetLocalVelocity().Length2D() >= 300.0f) && (m_nButtons & IN_SPEED) && (GetFlags() & FL_ONGROUND)) {
 					m_bBigClimb = false;
 					m_bVault = true;
 					m_bVaulting = true;
@@ -2847,6 +2866,12 @@ void CVancePlayer::TryLedgeClimb()
 
 void CVancePlayer::Think()
 {
+	if (IsSprinting()) {
+		m_fSprintTime += gpGlobals->frametime;
+	} else {
+		m_fSprintTime = 0.0f;
+	}
+
 	if (m_ParkourAction.Get() == ParkourAction::None)
 	{
 		// If we're on the ground, sprinting, holding the duck key and not sliding already

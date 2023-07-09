@@ -168,6 +168,7 @@ public:
 	}
 
 	CBaseCombatWeapon* m_UnarmedWeapon;
+	CBaseCombatWeapon* m_HolsteredWeapon;
 	
 private:
 
@@ -245,6 +246,8 @@ private:
 	Vector		m_vecSlideDirection;
 	float		m_fMidairSlideWindowTime = 0.0f;
 	bool		m_bAllowMidairSlide = true;
+	float		m_fNextSlideTime = 0.0f;
+	float		m_fSprintTime = 0.0f;
 
 	// vehicle
 	bool		m_bWasInAVehicle;
