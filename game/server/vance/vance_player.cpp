@@ -327,6 +327,9 @@ void CVancePlayer::CheatImpulseCommands(int iImpulse)
 		GiveNamedItem("weapon_rpg");
 		GiveNamedItem("weapon_357");
 		GiveNamedItem("weapon_sniper");
+		GiveNamedItem("weapon_anastasia");
+		GiveNamedItem("weapon_akms");
+		GiveNamedItem("weapon_gauss");
 		if (GetHealth() < 100)
 		{
 			TakeHealth(25, DMG_GENERIC);
