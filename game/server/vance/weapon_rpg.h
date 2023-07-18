@@ -16,6 +16,7 @@
 #include "Sprite.h"
 #include "npcevent.h"
 #include "beam_shared.h"
+#include "vance_baseweapon_shared.h"
 
 class CWeaponRPG;
 class CLaserDot;
@@ -169,9 +170,9 @@ CAPCMissile *FindAPCMissileInCone( const Vector &vecOrigin, const Vector &vecDir
 //-----------------------------------------------------------------------------
 // RPG
 //-----------------------------------------------------------------------------
-class CWeaponRPG : public CBaseHLCombatWeapon
+class CWeaponRPG : public CBaseVanceWeapon
 {
-	DECLARE_CLASS( CWeaponRPG, CBaseHLCombatWeapon );
+	DECLARE_CLASS( CWeaponRPG, CBaseVanceWeapon);
 public:
 
 	CWeaponRPG();
