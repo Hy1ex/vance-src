@@ -993,16 +993,24 @@ int CVancePlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 	bool bHeavy = (m_iHealth < 50);
 	bool bCritical = (m_iHealth < 30);
 
-	// Don't make pain sounds for a pinch of damage
-	if (!bTrivial && m_flNextPainSound < gpGlobals->curtime)
+	if ( m_iHealth < 1 )
 	{
-		if(bHeavy)
-			EmitSound("AlyxPlayer.PainHeavy");
-		else
-			EmitSound("Player.Death"); // should be "Player.Pain" or something, bad name...
-
-		m_flNextPainSound = gpGlobals->curtime + RandomFloat(3.0f, 5.0f);
+		EmitSound( "AlyxPlayer.Die" ); // Death sound
 	}
+	else
+	{
+		// Don't make pain sounds for a pinch of damage
+		if ( !bTrivial && m_flNextPainSound < gpGlobals->curtime )
+		{
+			if ( bHeavy )
+				EmitSound( "AlyxPlayer.PainHeavy" ); // Heavy Pain sound
+			else
+				EmitSound( "Player.Death" ); // should be "Player.Pain" or something, bad name...
+
+			m_flNextPainSound = gpGlobals->curtime + RandomFloat( 2.0f, 3.0f );
+		}
+	}
+
 
 	m_bitsDamageType |= bitsDamage; // Save this so we can report it to the client
 	m_bitsHUDDamage = -1;  // make sure the damage bits get resent
