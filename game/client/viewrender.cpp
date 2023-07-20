@@ -82,14 +82,6 @@
 // Projective textures
 #include "C_Env_Projected_Texture.h"
 
-#ifdef VANCE
-#include "IDeferredExt.h"
-#include "c_env_global_light.h"
-#include "c_deferred_common.h"
-#include "c_light_manager.h"
-#include "callqueue.h"
-#endif
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -193,12 +185,6 @@ extern ConVar localplayer_visionflags;
 static ConVar r_nearz_skybox( "r_nearz_skybox", "2.0", FCVAR_CHEAT );
 #endif
 
-#ifdef VANCE
-static ConVar r_csm_angle("r_csm_angle", "0");
-
-ConVar r_volumetrics("r_volumetrics", "1");
-#endif
-
 //-----------------------------------------------------------------------------
 // Globals
 //-----------------------------------------------------------------------------
@@ -211,9 +197,6 @@ IntroData_t *g_pIntroData = NULL;
 static bool	g_bRenderingView = false;			// For debugging...
 static int g_CurrentViewID = VIEW_NONE;
 bool g_bRenderingScreenshot = false;
-#ifdef VANCE
-static bool s_bDrawViewmodelShadow = false;
-#endif
 
 
 #define FREEZECAM_SNAPSHOT_FADE_SPEED 340
@@ -431,46 +414,6 @@ protected:
 	sky3dparams_t *m_pSky3dParams;
 };
 
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-class CDepthView : public CRendering3dView
-{
-	DECLARE_CLASS(CDepthView, CRendering3dView);
-public:
-	CDepthView(CViewRender* pMainView) :
-		CRendering3dView(pMainView)
-	{
-	}
-
-	bool			Setup(const CViewSetup& view, ITexture* pDepthTexture = NULL, ITexture* pRenderTarget = NULL);
-	void			Draw();
-
-protected:
-	ITexture* m_pColorTexture;
-	ITexture* m_pDepthTexture;
-	void			DrawInternal(view_id_t iSkyBoxViewID);
-};
-
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-class CVolumetricsView : public CRendering3dView
-{
-	DECLARE_CLASS(CVolumetricsView, CRendering3dView);
-public:
-	CVolumetricsView(CViewRender* pMainView) :
-		CRendering3dView(pMainView)
-	{
-	}
-
-	bool			Setup(const CViewSetup& view, ITexture* pDepthTexture = NULL, ITexture* pRenderTarget = NULL);
-	void			Draw();
-
-protected:
-	void			DrawInternal(view_id_t iSkyBoxViewID);
-};
-
 //-----------------------------------------------------------------------------
 // 3d skybox view when drawing portals
 //-----------------------------------------------------------------------------
@@ -496,27 +439,6 @@ private:
 };
 #endif
 
-#ifdef VANCE
-//-----------------------------------------------------------------------------
-// Cascaded Shadow map depth texture
-//-----------------------------------------------------------------------------
-class CCSMDepthView : public CRendering3dView
-{
-	DECLARE_CLASS(CCSMDepthView, CRendering3dView);
-public:
-	CCSMDepthView(CViewRender* pMainView, int &cascade) : CRendering3dView(pMainView), nCascade(cascade) {}
-
-	void Setup(const CViewSetup& shadowViewIn, ITexture* pRenderTarget, ITexture* pDepthTexture);
-	void Draw();
-
-private:
-
-	ITexture *m_pRenderTarget;
-	ITexture *m_pDepthTexture;
-
-	int nCascade;
-};
-#endif
 
 //-----------------------------------------------------------------------------
 // Shadow depth texture
@@ -1171,12 +1093,6 @@ void CViewRender::DrawViewModels( const CViewSetup &view, bool drawViewmodel )
 		pRTDepth = g_pSourceVR->GetRenderTarget( (ISourceVirtualReality::VREye)(view.m_eStereoEye-1), ISourceVirtualReality::RT_Depth );
 	}
 
-	if ( !s_bDrawViewmodelShadow )
-	{
-		render->Push3DView( viewModelSetup, 0, pRTColor, GetFrustum(), pRTDepth );
-		PushGBufferRT();
-	}
-
 	render->Push3DView( viewModelSetup, 0, pRTColor, GetFrustum(), pRTDepth );
 
 #ifdef PORTAL //the depth range hack doesn't work well enough for the portal mod (and messing with the depth hack values makes some models draw incorrectly)
@@ -1185,8 +1101,6 @@ void CViewRender::DrawViewModels( const CViewSetup &view, bool drawViewmodel )
 	bool bUseDepthHack = !LocalPlayerIsCloseToPortal();
 	if( !bUseDepthHack )
 		pRenderContext->ClearBuffers( false, true, false );
-#elif defined( VANCE )
-	const bool bUseDepthHack = /*true*/ !s_bDrawViewmodelShadow;
 #else
 	const bool bUseDepthHack = true;
 #endif
@@ -1246,109 +1160,13 @@ void CViewRender::DrawViewModels( const CViewSetup &view, bool drawViewmodel )
 	if( bUseDepthHack )
 		pRenderContext->DepthRange( depthmin, depthmax );
 
-#ifdef VANCE
-	if ( !s_bDrawViewmodelShadow )
-#endif
-	{	
-		render->PopView( GetFrustum() );
-	}
+	render->PopView( GetFrustum() );
 
 	// Restore the matrices
 	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
 	pRenderContext->PopMatrix();
 }
 
-#ifdef VANCE
-void CViewRender::DrawSky( const CViewSetup &view )
-{
-	float flRadius = 32.0f;
-	int nTheta = 8;
-	int nPhi = 8;
-
-	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->OverrideDepthEnable( true, false );
-
-	int nTriangles = 2 * nTheta * ( nPhi - 1 ); // Two extra degenerate triangles per row (except the last one)
-	int nIndices = 2 * ( nTheta + 1 ) * ( nPhi - 1 );
-
-	pRenderContext->Bind( m_SkydomeMaterial );
-
-	CMeshBuilder meshBuilder;
-	IMesh *pMesh = pRenderContext->GetDynamicMesh();
-
-	meshBuilder.Begin( pMesh, MATERIAL_TRIANGLE_STRIP, nTriangles, nIndices );
-
-	//
-	// Build the index buffer.
-	//
-	int i, j;
-	for ( i = 0; i < nPhi; ++i )
-	{
-		for ( j = 0; j < nTheta; ++j )
-		{
-			float u = j / ( float )( nTheta - 1 );
-			float v = i / ( float )( nPhi - 1 );
-			float theta = 2.0f * M_PI * u;
-			float phi = M_PI * v;
-
-			Vector vecPos;
-			vecPos.x = flRadius * sin( phi ) * cos( theta );
-			vecPos.y = flRadius * sin( phi ) * sin( theta );
-			vecPos.z = flRadius * cos( phi );
-
-			Vector vecNormal = vecPos;
-			VectorNormalize( vecNormal );
-
-			meshBuilder.Position3f( vecPos.x, vecPos.y, vecPos.z );
-			meshBuilder.AdvanceVertex();
-		}
-	}
-
-	//
-	// Emit the triangle strips.
-	//
-	int idx = 0;
-	for ( i = nPhi - 2; i >= 0; --i )
-	{
-		for ( j = nTheta - 1; j >= 0; --j )
-		{
-			idx = nTheta * i + j;
-
-			meshBuilder.Index( idx + nTheta );
-			meshBuilder.AdvanceIndex();
-
-			meshBuilder.Index( idx );
-			meshBuilder.AdvanceIndex();
-		}
-
-		//
-		// Emit a degenerate triangle to skip to the next row without
-		// a connecting triangle.
-		//
-		if ( i < nPhi - 2 )
-		{
-			meshBuilder.Index( idx );
-			meshBuilder.AdvanceIndex();
-
-			meshBuilder.Index( idx + nTheta + 1 );
-			meshBuilder.AdvanceIndex();
-		}
-	}
-
-	pRenderContext->MatrixMode( MATERIAL_MODEL );
-	pRenderContext->PushMatrix();
-	pRenderContext->LoadIdentity();
-	pRenderContext->Translate( view.origin.x, view.origin.y, view.origin.z );
-
-	meshBuilder.End();
-	pMesh->Draw();
-
-	pRenderContext->MatrixMode( MATERIAL_MODEL );
-	pRenderContext->PopMatrix();
-
-	pRenderContext->OverrideDepthEnable( false, true );
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1624,186 +1442,6 @@ bool CViewRender::UpdateShadowDepthTexture( ITexture *pRenderTarget, ITexture *p
 
 	return true;
 }
-
-#ifdef VANCE
-
-
-static ConVar r_csm_size("r_csm_size", "64");
-static ConVar r_csm_bias("r_csm_bias", "0.0002");
-static ConVar r_csm_slopescalebias("r_csm_slopescale_depthbias", "3");
-static ConVar r_csm_performance("r_csm_performance", "0");
-void CViewRender::UpdateLighting(const CViewSetup& view)
-{
-	QAngle angCascadedAngles;
-	Vector vecLight, vecAmbient;
-	g_pCSMLight->GetShadowMappingConstants(angCascadedAngles, vecLight, vecAmbient);
-
-
-	if (r_csm_angle.GetBool())
-	{
-		int iParsed[3];
-		UTIL_StringToIntArray(iParsed, 3, r_csm_angle.GetString());
-		angCascadedAngles.Init(iParsed[0], iParsed[1], iParsed[2]);
-	}
-	CMatRenderContextPtr pRenderContext(materials);
-
-	Vector vecFwd, vecRight, vecUp;
-	AngleVectors(angCascadedAngles, &vecFwd, &vecRight, &vecUp);
-
-
-	Vector vecMainViewFwd;
-	AngleVectors(view.angles, &vecMainViewFwd);
-
-	Vector vecCascadeOrigin(view.origin);
-	vecCascadeOrigin -= vecFwd * 4096.0f;
-
-	float flOrthoSize = 2048.0f;
-
-	struct ShadowConfig_t
-	{
-		float flOrthoSize;
-		float flForwardOffset;
-		float flViewDepthBiasHack;
-	} shadowConfigs[] = {
-		{ r_csm_size.GetFloat(), 0.0f, 0.0f },
-		{ r_csm_size.GetFloat() * 4, 256.0f, 0.0f },
-		{ r_csm_size.GetFloat() * 8, 512.0f, 0.0f },
-		{ r_csm_size.GetFloat() * 32, 1024.0f, 0.0f }
-	};
-
-	static VMatrix s_CSMSwapMatrix[4];
-	static int s_iCSMSwapIndex = 0;
-
-	static CTextureReference s_CascadedShadowDepthTexture;
-	static CTextureReference s_CascadedShadowColorTexture;
-	if (!s_CascadedShadowDepthTexture.IsValid())
-	{
-		s_CascadedShadowDepthTexture.Init(materials->FindTexture("_rt_CascadedShadowDepth", TEXTURE_GROUP_OTHER));
-	}
-
-	if (!s_CascadedShadowColorTexture.IsValid())
-	{
-		s_CascadedShadowColorTexture.Init(materials->FindTexture("_rt_CascadedShadowColor", TEXTURE_GROUP_OTHER));
-	}
-
-	CViewSetup cascadedShadowView;
-	cascadedShadowView.angles = angCascadedAngles;
-	cascadedShadowView.m_bOrtho = true;
-
-	cascadedShadowView.width = s_CascadedShadowDepthTexture->GetMappingWidth() / 4;
-	cascadedShadowView.height = s_CascadedShadowDepthTexture->GetMappingHeight();
-
-	for (int i = 0; i < (s_bDrawViewmodelShadow ? 1 : 4); i++)
-	{
-		const ShadowConfig_t& shadowConfig = shadowConfigs[i];
-
-		cascadedShadowView.m_OrthoTop = -shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoRight = shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoBottom = shadowConfig.flOrthoSize;
-		cascadedShadowView.m_OrthoLeft = -shadowConfig.flOrthoSize;
-
-		cascadedShadowView.x = i * (cascadedShadowView.width);
-		cascadedShadowView.y = 0;
-
-		cascadedShadowView.m_flAspectRatio = 1.0f;
-		cascadedShadowView.m_bDoBloomAndToneMapping = false;
-		cascadedShadowView.zFar = cascadedShadowView.zFarViewmodel = s_bDrawViewmodelShadow ? 4128.0f : 6144.0f;
-		cascadedShadowView.zNear = cascadedShadowView.zNearViewmodel = 128.0f;
-		cascadedShadowView.fov = cascadedShadowView.fovViewmodel = 90.0f;
-
-		Vector vecOrigin = vecCascadeOrigin + vecMainViewFwd * 0.0f;
-		const float flViewFrustumWidthScale = flOrthoSize * 2.0f / cascadedShadowView.width;
-		const float flViewFrustumHeightScale = flOrthoSize * 2.0f / cascadedShadowView.height;
-		const float flFractionX = fmod(DotProduct(vecOrigin, vecRight), flViewFrustumWidthScale);
-		const float flFractionY = fmod(DotProduct(vecOrigin, vecUp), flViewFrustumHeightScale);
-		vecOrigin -= flFractionX * vecRight;
-		vecOrigin -= flFractionY * vecUp;
-
-		cascadedShadowView.origin = vecOrigin;
-
-		if (i == 0)
-		{
-			VMatrix worldToView, viewToProjection, worldToProjection, worldToTexture;
-			render->GetMatricesForView(cascadedShadowView, &worldToView, &viewToProjection, &worldToProjection, &worldToTexture);
-			VMatrix tmp;
-			MatrixBuildScale(tmp, 0.5f, -0.5f, 1.0f);
-			tmp[0][3] = 0.5f;
-			tmp[1][3] = 0.5f;
-
-			VMatrix& currentSwapMatrix = s_CSMSwapMatrix[s_iCSMSwapIndex];
-			MatrixMultiply(tmp, worldToProjection, currentSwapMatrix);
-
-			pRenderContext->SetIntRenderingParameter(INT_RENDERPARM_CASCADED_MATRIX_ADDRESS_0, (int)&currentSwapMatrix);
-		}
-
-		if ((r_csm_performance.GetInt() == 1 && (i == 0 || i == 1)) ||
-			(r_csm_performance.GetInt() >= 2 && (i == 0 || i == 1 || i == 2)) )
-		{
-			continue;
-		}
-
-		ITexture* pDepthTexture = s_CascadedShadowDepthTexture;
-		pRenderContext->SetIntRenderingParameter(INT_RENDERPARM_CASCADED_DEPTHTEXTURE, int(pDepthTexture));
-
-
-		pRenderContext->SetShadowDepthBiasFactors(r_csm_slopescalebias.GetFloat(), r_csm_bias.GetFloat());
-		cascadedShadowView.origin -= vecFwd * -shadowConfig.flViewDepthBiasHack;
-		CRefPtr<CCSMDepthView> pShadowDepthView = new CCSMDepthView(this, i);
-		pShadowDepthView->Setup(cascadedShadowView, s_CascadedShadowColorTexture, s_CascadedShadowDepthTexture);
-		AddViewToScene(pShadowDepthView);
-	}
-
-	s_iCSMSwapIndex = (s_iCSMSwapIndex + 1) % 4;
-
-	lightData_Global_t lightDataState;
-	lightDataState.vecLight.AsVector3D() = vecFwd;
-	lightDataState.light = vecLight.Base();
-	lightDataState.ambient = vecAmbient.Base();
-	lightDataState.sizes = Vector4D(
-		shadowConfigs[0].flOrthoSize,
-		shadowConfigs[1].flOrthoSize / shadowConfigs[0].flOrthoSize,
-		shadowConfigs[2].flOrthoSize / shadowConfigs[0].flOrthoSize,
-		shadowConfigs[3].flOrthoSize / shadowConfigs[0].flOrthoSize);
-	QUEUE_FIRE( CommitLightData_Global, lightDataState );
-}
-
-void CViewRender::ProcessGlobals( const CViewSetup &view )
-{
-	VMatrix matPerspective, matView, matViewInv, matProjInv;
-
-	CMatRenderContextPtr pRenderContext(materials);
-	pRenderContext->GetMatrix(MATERIAL_VIEW, &matView);
-	pRenderContext->GetMatrix(MATERIAL_PROJECTION, &matPerspective);
-
-	MatrixInverseGeneral(matView, matViewInv);
-	MatrixInverseGeneral(matPerspective, matProjInv);
-	
-	Vector vFwd;
-	AngleVectors(view.angles, &vFwd);
-	QUEUE_FIRE( CommitCommonData, view.origin, vFwd, view.zNear, view.zFar,
-		( g_pCSMLight != 0 ) ? g_pCSMLight->CurrentTime() : 0.0f, // HACKHACK: csmlight probably shouldnt store current time of the whole map
-		matView, matPerspective, matViewInv, matProjInv );
-
-	GetLightingManager()->SetRenderConstants(matPerspective, view);
-}
-
-void CViewRender::PushGBufferRT( bool firstPush )
-{
-	CMatRenderContextPtr pRenderContext( materials );
-	pRenderContext->SetRenderTargetEx( 1, m_NormalBuffer );
-	pRenderContext->SetRenderTargetEx( 2, m_MRAOBuffer );
-	pRenderContext->SetRenderTargetEx( 3, m_AlbedoBuffer );
-
-	if ( firstPush )
-	{
-		pRenderContext->ClearColor4ub(0, 0, 0, 255);
-		pRenderContext->ClearBuffers(true, true);
-	}
-
-	pRenderContext.SafeRelease();
-}
-
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Renders world and all entities, etc.
@@ -2498,28 +2136,11 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		pRenderContext->TurnOnToneMapping();
 		pRenderContext.SafeRelease();
 
-#ifdef VANCE
-		if (g_pCSMLight && g_pCSMLight->IsCascadedShadowMappingEnabled())
-		{
-			UpdateLighting(view);
-		}
-		else
-		{
-			CMatRenderContextPtr pRenderContext(materials);
-			pRenderContext->SetIntRenderingParameter(INT_RENDERPARM_CASCADED_DEPTHTEXTURE, 0);
-			pRenderContext.SafeRelease(); // don't want to hold for long periods in case in a locking active share thread mode
-		}
-#endif
-
 		// clear happens here probably
 		SetupMain3DView( view, nClearFlags );
-
+			 	  
 		bool bDrew3dSkybox = false;
 		SkyboxVisibility_t nSkyboxVisible = SKYBOX_NOT_VISIBLE;
-
-#ifdef VANCE
-		ProcessGlobals( view );
-#endif
 
 #ifndef MAPBASE // Moved to respective ViewDrawScenes() for script_intro skybox fix
 		// if the 3d skybox world is drawn, then don't draw the normal skybox
@@ -2573,30 +2194,9 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 #endif
 		}
 
-#ifdef VANCE
-		// HACKHACK: depth pre-pass messes up with view frustum stack in the engine
-		// so i have to do it AFTER we render everything
-		CDepthView *pDepthView = new CDepthView( this );
-		pDepthView->Setup( view );
-		{
-			AddViewToScene( pDepthView );
-		}
-		SafeRelease( pDepthView );
-
-		if ( r_volumetrics.GetBool() )
-		{
-			CVolumetricsView *pVolumetricsView = new CVolumetricsView( this );
-			pVolumetricsView->Setup( view );
-			{
-				AddViewToScene( pVolumetricsView );
-			}
-			SafeRelease( pVolumetricsView );
-		}
-
-#endif
-
 		// We can still use the 'current view' stuff set up in ViewDrawScene
 		s_bCanAccessCurrentView = true;
+
 
 		engine->DrawPortals();
 
@@ -2635,21 +2235,6 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		}
 
 		GetClientModeNormal()->DoPostScreenSpaceEffects( &view );
-
-#ifdef VANCE
-		s_bDrawViewmodelShadow = true;
-		if (g_pCSMLight && g_pCSMLight->IsCascadedShadowMappingEnabled())
-		{
-			UpdateLighting(view);
-		}
-		else
-		{
-			CMatRenderContextPtr pRenderContext(materials);
-			pRenderContext->SetIntRenderingParameter(INT_RENDERPARM_CASCADED_DEPTHTEXTURE, 0);
-			pRenderContext.SafeRelease(); // don't want to hold for long periods in case in a locking active share thread mode
-		}
-		s_bDrawViewmodelShadow = false;
-#endif
 
 		// Now actually draw the viewmodel
 #ifdef MAPBASE
@@ -6140,95 +5725,6 @@ void CShadowDepthView::Draw()
 #endif
 }
 
-#ifdef VANCE
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CCSMDepthView::Setup(const CViewSetup& shadowViewIn, ITexture* pRenderTarget, ITexture* pDepthTexture)
-{
-	BaseClass::Setup(shadowViewIn);
-	m_pRenderTarget = pRenderTarget;
-	m_pDepthTexture = pDepthTexture;
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CCSMDepthView::Draw()
-{
-	VPROF_BUDGET("CShadowDepthView::Draw", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING);
-
-	// Start view
-	//unsigned int visFlags;
-	render->ViewSetupVis(false, 1, &origin);  // @MULTICORE (toml 8/9/2006): Portal problem, not sending custom vis down
-
-	CMatRenderContextPtr pRenderContext(materials);
-
-	pRenderContext->ClearColor3ub(0xFF, 0xFF, 0xFF);
-
-#if defined( _X360 )
-	pRenderContext->PushVertexShaderGPRAllocation(112); //almost all work is done in vertex shaders for depth rendering, max out their threads
-#endif
-
-	pRenderContext.SafeRelease();
-
-
-	render->Push3DView((*this), VIEW_CLEAR_DEPTH, m_pRenderTarget, GetFrustum(), m_pDepthTexture);
-
-
-	SetupCurrentView(origin, angles, VIEW_SHADOW_DEPTH_TEXTURE);
-
-	MDLCACHE_CRITICAL_SECTION();
-
-	{
-		VPROF_BUDGET("BuildWorldRenderLists", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING);
-		BuildWorldRenderLists(true, -1, true, true); // @MULTICORE (toml 8/9/2006): Portal problem, not sending custom vis down
-	}
-
-	if(nCascade < 3)
-	{
-		VPROF_BUDGET("BuildRenderableRenderLists", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING);
-		BuildRenderableRenderLists(CurrentViewID());
-	}
-
-	engine->Sound_ExtraUpdate();	// Make sure sound doesn't stutter
-
-	m_DrawFlags = m_pMainView->GetBaseDrawFlags() | DF_RENDER_UNDERWATER | DF_RENDER_ABOVEWATER | DF_SHADOW_DEPTH_MAP;	// Don't draw water surface...
-
-	{
-		VPROF_BUDGET("DrawWorld", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING);
-		DrawWorld(0.0f);
-	}
-
-	// Draw opaque and translucent renderables with appropriate override materials
-	// OVERRIDE_DEPTH_WRITE is OK with a NULL material pointer
-	modelrender->ForcedMaterialOverride(NULL, OVERRIDE_DEPTH_WRITE);
-
-	if (nCascade < 3)
-	{
-		VPROF_BUDGET("DrawOpaqueRenderables", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING);
-		DrawOpaqueRenderables(DEPTH_MODE_SHADOW);
-	}
-
-	if (s_bDrawViewmodelShadow)
-		m_pMainView->DrawViewModels((*this), true);
-
-	modelrender->ForcedMaterialOverride(0);
-
-	m_DrawFlags = 0;
-
-	pRenderContext.GetFrom(materials);
-
-	render->PopView(GetFrustum());
-
-#if defined( _X360 )
-	pRenderContext->PopVertexShaderGPRAllocation();
-#endif
-}
-
-#endif
-
 
 //-----------------------------------------------------------------------------
 // 
@@ -6852,158 +6348,6 @@ void CSimpleWorldView::Draw()
 #endif
 }
 
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-bool CDepthView::Setup(const CViewSetup& view, ITexture* pDepthTexture, ITexture* pRenderTarget)
-{
-	BaseClass::Setup(view);
-
-	// At this point, we've cleared everything we need to clear
-	// The next path will need to clear depth, though.
-	m_ClearFlags = VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL | VIEW_CLEAR_FULL_TARGET;
-
-	m_DrawFlags = DF_RENDER_UNDERWATER | DF_RENDER_ABOVEWATER | DF_RENDER_WATER;
-
-	zNear = view.zNear;
-	zFar = view.zFar;
-
-	m_pDepthTexture = pDepthTexture;
-	m_pColorTexture = pRenderTarget;
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CDepthView::Draw()
-{
-	VPROF_BUDGET("CViewRender::Draw3dSkyboxworld", "3D Skybox");
-
-	DrawInternal(CurrentViewID());
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CDepthView::DrawInternal(view_id_t iSkyBoxViewID)
-{
-	ITexture* DepthBufferTexture = materials->FindTexture("_rt_DepthBuffer", TEXTURE_GROUP_RENDER_TARGET);
-
-	if (m_pDepthTexture == NULL && m_pColorTexture == NULL)
-	{
-		render->Push3DView((*this), m_ClearFlags, DepthBufferTexture, GetFrustum(), NULL);
-	}
-	else
-	{
-		render->Push3DView((*this), m_ClearFlags, m_pDepthTexture, GetFrustum(), m_pColorTexture);
-	}
-	render->BeginUpdateLightmaps();
-	BuildWorldRenderLists(true, true, -1);
-	BuildRenderableRenderLists(iSkyBoxViewID);
-	render->EndUpdateLightmaps();
-
-	m_DrawFlags |= DF_SSAO_DEPTH_PASS;
-
-	DrawWorld(0.0f);
-
-	// Draw opaque and translucent renderables with appropriate override materials
-	// OVERRIDE_SSAO_DEPTH_WRITE is OK with a NULL material pointer
-	modelrender->ForcedMaterialOverride(nullptr, OVERRIDE_SSAO_DEPTH_WRITE);
-
-	// Iterate over all leaves and render objects in those leaves
-	DrawOpaqueRenderables(DEPTH_MODE_SSA0);
-
-	m_pMainView->DrawViewModels((*this), true);
-
-	modelrender->ForcedMaterialOverride(nullptr);
-
-	render->PopView(GetFrustum());
-
-#if defined( _X360 )
-	pRenderContext.GetFrom(materials);
-	pRenderContext->PopVertexShaderGPRAllocation();
-#endif
-}
-
-
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-bool CVolumetricsView::Setup(const CViewSetup& view, ITexture* pDepthTexture, ITexture* pRenderTarget)
-{
-	BaseClass::Setup(view);
-	
-	m_ClearFlags = VIEW_CLEAR_COLOR | VIEW_CLEAR_DEPTH | VIEW_CLEAR_STENCIL;
-
-	m_DrawFlags = DF_RENDER_UNDERWATER | DF_RENDER_ABOVEWATER | DF_RENDER_WATER;
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CVolumetricsView::Draw()
-{
-	VPROF_BUDGET("CViewRender::Draw3dSkyboxworld", "3D Skybox");
-
-	DrawInternal(VIEW_VOLUMETRICS);
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CVolumetricsView::DrawInternal(view_id_t iSkyBoxViewID)
-{
-	ITexture* ColorBufferTexture = materials->FindTexture("_rt_VolumetricsBuffer", TEXTURE_GROUP_RENDER_TARGET);
-
-	render->Push3DView((*this), m_ClearFlags, ColorBufferTexture, GetFrustum(), NULL);
-
-	view_id_t iSavedID = CurrentViewID();
-	// Store off view origin and angles
-	SetupCurrentView(origin, angles, iSkyBoxViewID);
-
-	CMatRenderContextPtr pRenderContext(materials);
-	pRenderContext->Viewport(0, 0, ColorBufferTexture->GetActualWidth(), ColorBufferTexture->GetActualHeight());
-	pRenderContext.SafeRelease();
-
-	render->BeginUpdateLightmaps();
-	BuildWorldRenderLists(true, true, -1);
-	BuildRenderableRenderLists(iSkyBoxViewID);
-	render->EndUpdateLightmaps();
-
-	m_DrawFlags |= DF_SSAO_DEPTH_PASS;
-	DrawWorld(0.0f);
-
-	// Draw opaque and translucent renderables with appropriate override materials
-	// OVERRIDE_SSAO_DEPTH_WRITE is OK with a NULL material pointer
-	modelrender->ForcedMaterialOverride(nullptr, OVERRIDE_DEPTH_WRITE);
-
-	// Iterate over all leaves and render objects in those leaves
-	DrawOpaqueRenderables(DEPTH_MODE_NORMAL);
-
-	m_pMainView->DrawViewModels((*this), true);
-
-	modelrender->ForcedMaterialOverride(nullptr);
-
-	pRenderContext.GetFrom(materials);
-	pRenderContext->ClearBuffers(true, false);
-	pRenderContext.SafeRelease();
-
-	GetLightingManager()->RenderVolumetrics((*this));
-
-	render->PopView(GetFrustum());
-
-	SetupCurrentView(origin, angles, iSavedID);
-
-#if defined( _X360 )
-	pRenderContext.GetFrom(materials);
-	pRenderContext->PopVertexShaderGPRAllocation();
-#endif
-}
 
 //-----------------------------------------------------------------------------
 // 

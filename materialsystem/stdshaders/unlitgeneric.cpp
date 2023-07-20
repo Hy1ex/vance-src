@@ -6,12 +6,12 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#include "basevsshader.h"
-#include "vertexlitgeneric_helper.h"
+#include "BaseVSShader.h"
+#include "vertexlitgeneric_dx9_helper.h"
 
 extern ConVar r_flashlight_version2;
 
-BEGIN_VS_SHADER( UnlitGeneric, "Help for SDK_UnlitGeneric" )
+BEGIN_VS_SHADER( SDK_UnlitGeneric, "Help for SDK_UnlitGeneric" )
 
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( ALBEDO, SHADER_PARAM_TYPE_TEXTURE, "shadertest/BaseTexture", "albedo (Base texture with no baked lighting)" )

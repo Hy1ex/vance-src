@@ -6,11 +6,14 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "basevsshader.h"
+#include "BaseVSShader.h"
 #include "convar.h"
-#include "lightmappedgeneric_helper.h"
+#include "lightmappedgeneric_dx9_helper.h"
+#include "SDK_lightmappedgeneric_ps20b.inc"
+#include "SDK_lightmappedgeneric_vs20.inc"
 
-BEGIN_VS_SHADER( LightmappedGeneric, "Help for LightmappedGeneric" )
+BEGIN_VS_SHADER( SDK_LightmappedGeneric,
+				 "Help for SDK_LightmappedGeneric" )
 
 	BEGIN_SHADER_PARAMS
 		SHADER_PARAM( ALBEDO, SHADER_PARAM_TYPE_TEXTURE, "shadertest/BaseTexture", "albedo (Base texture with no baked lighting)" )
