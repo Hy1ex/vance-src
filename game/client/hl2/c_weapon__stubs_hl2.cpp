@@ -48,6 +48,7 @@ STUB_WEAPON_CLASS(weapon_resistancegun, WeaponResistanceGun, C_BaseHLCombatWeapo
 //STUB_WEAPON_CLASS(weapon_akms, WeaponAKMS, C_BaseHLCombatWeapon);
 STUB_WEAPON_CLASS( weapon_anastasia, WeaponAnastasia, C_BaseHLCombatWeapon );
 STUB_WEAPON_CLASS(weapon_unarmed, WeaponUnarmed, C_BaseHLBludgeonWeapon);
+STUB_WEAPON_CLASS(weapon_hl2betashitgun, WeaponShitgun, C_BaseHLCombatWeapon );
 #endif
 
 
