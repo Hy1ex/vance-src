@@ -94,6 +94,9 @@ private:
 	CVanceViewModel( const CVanceViewModel & ); // Not defined, not accessible.
 #endif
 
+	// running leveler
+	float m_flSprinting = 0.0f;
+
 	// View-bobbing and swaying.
 	float m_flSideTiltResult;
 	float m_flSideTiltDifference;

@@ -390,6 +390,20 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 	Vector forward, right, up;
 	AngleVectors(owner->EyeAngles(), &forward, &right, &up);
 
+	//sprinting (weapons should stay more level while sprinting)
+	if (GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED) {
+		m_flSprinting += gpGlobals->frametime / 0.3f;
+	} else if (GetSequenceActivity(GetSequence()) == ACT_VM_PRIMARYATTACK || GetSequenceActivity(GetSequence()) == ACT_VM_FIRE_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SECONDARYATTACK) {
+		m_flSprinting = 0.0f;
+	} else {
+		m_flSprinting -= gpGlobals->frametime / 0.3f;
+	}
+	m_flSprinting = Clamp(m_flSprinting, 0.0f, 1.0f);
+	float fSprintingScale = ((1.0f - (m_flSprinting < 0.5 ? 2 * m_flSprinting * m_flSprinting : 1 - powf(-2 * m_flSprinting + 2, 2) / 2)) * 0.6f) + 0.4f;
+	fSprintingScale = Clamp((angles.x * fSprintingScale) - angles.x, 0.0f, 90.0f) / 90.0f;
+	fSprintingScale *= fSprintingScale;
+	angles.x += fSprintingScale * 90.0f; //easeInOutQuad with some extra stuff
+
 	//jump offset
 	bool bInAir = false;
 	if (owner->GetFlags() & FL_ONGROUND) 
