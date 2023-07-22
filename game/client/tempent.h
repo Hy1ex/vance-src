@@ -51,6 +51,7 @@
 #define FTENT_CLIENTSIDEPARTICLES	0x08000000	// The object has a clientside particle system.
 #define FTENT_USEFASTCOLLISIONS		0x10000000	// Use fast collisions (cl_fasttempentcollision).
 #define FTENT_COLLIDEPROPS			0x20000000	// Collide with the world and props
+#define FTENT_SHELL					0x40000000 // Shell Filter used for particles trails on shells not to die instantly on impact
 
 class C_LocalTempEntity;
 

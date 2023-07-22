@@ -35,6 +35,9 @@
 #include "c_te_effect_dispatch.h"
 #include "c_props.h"
 #include "c_basedoor.h"
+#include "c_baseentity.h"
+#include "c_ai_basenpc.h"
+
 
 // NOTE: Always include this last!
 #include "tier0/memdbgon.h"
@@ -67,6 +70,8 @@ CLIENTEFFECT_REGISTER_END()
 
 //Whether or not to eject brass from weapons
 ConVar cl_ejectbrass( "cl_ejectbrass", "1" );
+
+ConVar vance_shell_smoke( "vance_shell_smoke", "1" );
 
 ConVar func_break_max_pieces( "func_break_max_pieces", "15", FCVAR_ARCHIVE | FCVAR_REPLICATED );
 
@@ -1639,7 +1644,7 @@ void CTempEnts::Sprite_Smoke( C_LocalTempEntity *pTemp, float scale )
 //			angles - 
 //			type - 
 //-----------------------------------------------------------------------------
-void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAngle &gunAngles, int type )
+void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAngle &gunAngles, int type, bool IsNpc = false )
 {
 	if ( cl_ejectbrass.GetBool() == false )
 		return;
@@ -1666,7 +1671,7 @@ void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAng
 
 	pTemp->m_nBody	= 0;
 
-	pTemp->flags |= ( FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_GRAVITY | FTENT_ROTATE );
+	pTemp->flags |= ( FTENT_COLLIDEWORLD | FTENT_FADEOUT | FTENT_GRAVITY | FTENT_ROTATE | FTENT_SHELL );
 
 	pTemp->m_vecTempEntAngVelocity[0] = random->RandomFloat(-1024,1024);
 	pTemp->m_vecTempEntAngVelocity[1] = random->RandomFloat(-1024,1024);
@@ -1687,6 +1692,42 @@ void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAng
 	pTemp->SetVelocity( Vector(dir[0] + random->RandomFloat(-64,64),
 						dir[1] + random->RandomFloat(-64,64),
 						dir[2] + random->RandomFloat(  0,64) ) );
+
+	if ( vance_shell_smoke.GetBool() )
+	{
+
+		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+		C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+
+		//Shell Smoke Section
+		//-Nbc66
+
+		//WE NEED TO DO THIS CAUSE IM FUCKING RETARDED
+		//-Nbc66
+		if ( !IsNpc )
+		{
+			//Special case for Magnum cause we release 6 shells instatnly it would be realy unrealistic to make all the shells smoke so we just make 1 shell smoke
+			//-Nbc66
+			if ( pPlayer && pWeapon && iMagnumShellCount < 5 && FClassnameIs( pWeapon, "weapon_magnum" ) )
+			{
+				iMagnumShellCount++;
+				if ( iMagnumShellCount == 5 )
+				{
+					ShellParticle( pTemp, "weapon_brass_smoke" );
+				}
+			}
+			//If nothing else works just do a random one
+			//-Nbc66
+			else if ( RandomInt( 0, 2 ) == 1 )
+			{
+				ShellParticle( pTemp, "weapon_brass_smoke" );
+			}
+		}
+		else if ( RandomInt( 0, 2 ) == 1 )
+		{
+			ShellParticle( pTemp, "weapon_brass_smoke" );
+		}
+	}
 
 	pTemp->die = gpGlobals->curtime + 1.0f + random->RandomFloat( 0.0f, 1.0f );	// Add an extra 0-1 secs of life	
 }
@@ -3437,3 +3478,38 @@ void CTempEnts::CSEjectBrass( const Vector &vecPosition, const QAngle &angVeloci
 	
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Create particle specificaly for shells
+//
+//
+// Note: Must Have the Shell flag set or this functions wont do jack
+//-----------------------------------------------------------------------------
+void CTempEnts::ShellParticle( C_LocalTempEntity *pTemp, const char *pszParticleName )
+{
+
+	//If we dont have a shell flag set on the temp entity just exit
+	//-Nbc66
+	if ( !( pTemp->flags & FTENT_SHELL ) )
+		return;
+
+	//creates a smoke trail for temp shell entetiys so our game looks like MW2019 cause we are hacks and frauds
+	//-Nbc66
+	ClientEntityList().AddNonNetworkableEntity( pTemp );
+
+	//if we dont have a "smoke" Attachment just set our particle POS to the origin of the model and follow it
+	//-Nbc66
+	if ( pTemp->LookupAttachment( "smoke" ) != NULL )
+	{
+		pTemp->ParticleProp()->Create( pszParticleName, PATTACH_POINT_FOLLOW, "smoke" );
+	}
+	else
+	{
+		pTemp->ParticleProp()->Create( pszParticleName, PATTACH_ABSORIGIN_FOLLOW );
+	}
+
+	// Set the particle flag on the temp entity and save the name of the particle effect.
+	pTemp->flags |= FTENT_CLIENTSIDEPARTICLES;
+	pTemp->SetParticleEffect( pszParticleName );
+
+	iMagnumShellCount = 0;
+}
