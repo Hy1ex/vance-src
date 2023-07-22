@@ -120,7 +120,7 @@ void CVanceViewModel::UpdateViewmodelAddon( int iModelIndex )
 {
 #ifdef CLIENT_DLL
 #else
-	//close enough to a think funciton, we just need to keep m_bIsSprinting updated
+	//close enough to a think funciton, we just need to keep some stuff updated for the bob
 	CVancePlayer *pOwner = (CVancePlayer *)(GetOwnerEntity());
 	if (pOwner)
 	{
@@ -431,23 +431,49 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 	if (m_bSprintSeqTracking && m_flSprintBob == 0.0f) {
 		m_flSprintSeqLastStartActive = m_flSprintSeqLastStart;
 	}
+	if (GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED) {
+		if (!m_bWalkSeqTracking) {
+			m_flWalkSeqLastStart = gpGlobals->curtime;
+			m_bWalkSeqTracking = true;
+		}
+	} else if (m_bWalkSeqTracking) {
+		m_bWalkSeqTracking = false;
+	}
+	if (m_bWalkSeqTracking && m_flWalkBob == 0.0f) {
+		m_flWalkSeqLastStartActive = m_flWalkSeqLastStart;
+	}
 	if (owner->GetFlags() & FL_ONGROUND && owner->GetLocalVelocity().Length2D() >= 300 && m_bIsSprinting.Get() && !m_bIsSliding.Get() &&
-	!(GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED)){
+		!(GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED))
+	{
 		m_flSprintBob += gpGlobals->frametime / 0.3f;
+		m_flWalkBob -= gpGlobals->frametime / 0.3f;
+	} else if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 100 && !(GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED)) {
+		m_flWalkBob += gpGlobals->frametime / 0.3f;
+		m_flSprintBob -= gpGlobals->frametime / 0.3f;
 	} else {
 		m_flSprintBob -= gpGlobals->frametime / 0.3f;
+		m_flWalkBob -= gpGlobals->frametime / 0.3f;
 	}
 	if (GetSequenceActivity(GetSequence()) == ACT_VM_PRIMARYATTACK || GetSequenceActivity(GetSequence()) == ACT_VM_FIRE_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SECONDARYATTACK) {
 		m_flSprintBob = 0.0f;
+		m_flWalkBob = 0.0f;
 	}
 	m_flSprintBob = Clamp(m_flSprintBob, 0.0f, 1.0f);
-	float flSprintBobTimeline = ((m_flSprintSeqLastStartActive - gpGlobals->curtime) / 0.66666666f); //length of the sprint anims
+	m_flWalkBob = Clamp(m_flWalkBob, 0.0f, 1.0f);
+	float flSprintBobTimeline = ((m_flSprintSeqLastStartActive - gpGlobals->curtime) / 0.66666666f); //length of the sprint anims (40 frames)
 	flSprintBobTimeline = flSprintBobTimeline - floorf(flSprintBobTimeline);
 	origin += right * sinf((flSprintBobTimeline + 0.25f) * 6.28318) * 0.7f * m_flSprintBob; //main side to side sway
 	origin += up * ((-cosf((flSprintBobTimeline - 0.25f)*12.56636f) + sinf((flSprintBobTimeline - 0.25f)*6.28318) * 0.2f) + 0.8f * (-cosf((flSprintBobTimeline - 0.25f)*12.56636f) + sinf((flSprintBobTimeline - 0.25f)*6.28318) * 0.2f)) * 0.3f * m_flSprintBob;//step jolts
 	angles.z += sinf(((flSprintBobTimeline + 0.1 - floorf(flSprintBobTimeline + 0.1)) + 0.25f) * 6.28318) * 2.0f * m_flSprintBob; //rotational sway
 	origin += up * sinf(((flSprintBobTimeline + 0.1 - floorf(flSprintBobTimeline + 0.1)) + 0.25f) * 6.28318) * 0.28f * m_flSprintBob; //vertical sway to counteract rotational sway
-
+	float flWalkBobTimeline = ((m_flWalkSeqLastStartActive - gpGlobals->curtime) / 0.93333333f); //length of the walk anims (56 frames)
+	flWalkBobTimeline = flWalkBobTimeline - floorf(flWalkBobTimeline);
+	origin += right * sinf((flWalkBobTimeline + 0.25f) * 6.28318) * 0.45f * m_flWalkBob; //main side to side sway
+	origin += up * ((-cosf((flWalkBobTimeline - 0.25f)*12.56636f) + sinf((flWalkBobTimeline - 0.25f)*6.28318) * 0.2f) + 0.8f * (-cosf((flWalkBobTimeline - 0.25f)*12.56636f) + sinf((flWalkBobTimeline - 0.25f)*6.28318) * 0.2f)) * 0.15f * m_flWalkBob;//step jolts
+	angles.z += sinf(((flWalkBobTimeline + 0.05 - floorf(flWalkBobTimeline + 0.05)) + 0.25f) * 6.28318) * 1.5f * m_flWalkBob; //rotational tilt sway
+	origin += up * sinf(((flWalkBobTimeline + 0.05 - floorf(flWalkBobTimeline + 0.05)) + 0.25f) * 6.28318) * 0.21f * m_flWalkBob; //vertical sway to counteract rotational tilt sway
+	flWalkBobTimeline = flWalkBobTimeline - 0.05 - floorf(flWalkBobTimeline - 0.05); //offset it for the rotation step jolts
+	angles.x += ((-cosf((flWalkBobTimeline - 0.25f)*12.56636f) + sinf((flWalkBobTimeline - 0.25f)*6.28318) * 0.2f) + 0.8f * (-cosf((flWalkBobTimeline - 0.25f)*12.56636f) + sinf((flWalkBobTimeline - 0.25f)*6.28318) * 0.2f)) * 0.15f * m_flWalkBob;//rotation step jolts
 
 	//jump offset
 	bool bInAir = false;

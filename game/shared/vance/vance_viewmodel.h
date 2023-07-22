@@ -111,6 +111,11 @@ private:
 	float m_flSprintSeqLastStartActive = 0.0f;
 	CNetworkVar( bool, m_bIsSprinting);
 	CNetworkVar( bool, m_bIsSliding);
+	float m_flWalkBob = 0.0f;
+	bool  m_bWalkSeqTracking = false;
+	float m_flWalkSeqLastStart = 0.0f;
+	float m_flWalkSeqLastStartActive = 0.0f;
+	CNetworkVar( bool, m_bCanWalkBob);
 
 	//jump offset
 	bool  m_bJumpModeInAir = false;

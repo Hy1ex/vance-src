@@ -36,6 +36,7 @@
 #include "interpolatortypes.h"
 #include "ammodef.h"
 #include "grenade_frag.h"
+#include "func_breakablesurf.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2761,10 +2762,9 @@ void CVancePlayer::TryLedgeClimb()
 		trace_t tr;
 		UTIL_TraceHull( vecStart + Vector( 0, 0, vance_climb_checkray_height.GetFloat() ),
 				vecStart - Vector( 0, 0, vance_climb_checkray_height.GetFloat() ) * 2,
-			VEC_HULL_MIN, VEC_HULL_MAX, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+				VEC_HULL_MIN, VEC_HULL_MAX, (CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_GRATE), this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
-		UTIL_TraceHull(tr.endpos, tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, 
-			MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+		UTIL_TraceHull(tr.endpos, tr.endpos, VEC_HULL_MIN, VEC_HULL_MAX, (CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_GRATE), this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 		if (tr.DidHit())
 			return true;
@@ -2783,6 +2783,20 @@ void CVancePlayer::TryLedgeClimb()
 		m_flClimbFraction = 0.0f;
 		m_vecVaultCameraAdjustment = Vector(0, 0, 0);
 		m_ParkourAction = ParkourAction::Climb;
+
+		//break through glass ceiling
+		UTIL_TraceLine(m_vecClimbStartOrigin * Vector(1,1,0) + Vector(0, 0, m_vecClimbDesiredOrigin.z + 30), m_vecClimbDesiredOrigin + Vector(0, 0, 30) + ((m_vecClimbDesiredOrigin - m_vecClimbStartOrigin) * Vector(1,1,0)).Normalized() * 50.0, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+		tr.endpos = m_vecClimbDesiredOrigin + Vector(0, 0, 30) + ((m_vecClimbDesiredOrigin - m_vecClimbStartOrigin) * Vector(1, 1, 0)).Normalized() * 50.0;
+		debugoverlay->AddLineOverlay(tr.startpos, tr.endpos, 0, 255, 255, true, 10);
+		if (tr.DidHit()) {
+			Msg("FHJIAWFHAI");
+			CTakeDamageInfo triggerInfo(this, this, 40.0f, DMG_KICK);
+			triggerInfo.SetDamagePosition(tr.startpos);
+			triggerInfo.SetDamageForce(triggerInfo.GetDamageForce() * 5.0f);
+			TraceAttackToTriggers(triggerInfo, tr.startpos, tr.endpos, vecForward);
+
+			Hit(tr, ACT_VM_PRIMARYATTACK);
+		}
 
 		// Don't get stuck during this traversal since we'll just be slamming the player origin
 		SetMoveType(MOVETYPE_NOCLIP);
@@ -2821,6 +2835,8 @@ void CVancePlayer::TryLedgeClimb()
 			}
 		}
 
+
+
 		return false;
 	};
 
@@ -2836,7 +2852,7 @@ void CVancePlayer::TryLedgeClimb()
 	trace_t tr;
 
 	// check for ceiling first, dont want to climb through the roof
-	UTIL_TraceLine(vecStart, vecStart + Vector(0, 0, vance_climb_checkray_allowedheight.GetFloat()), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+	UTIL_TraceLine(vecStart, vecStart + Vector(0, 0, vance_climb_checkray_allowedheight.GetFloat()), (CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_GRATE), this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 	if ( vance_climb_debug.GetBool() ) 
 		debugoverlay->AddLineOverlay( EyePosition(), tr.endpos, 255, 0, 0, true, 10 );
 
@@ -2847,7 +2863,7 @@ void CVancePlayer::TryLedgeClimb()
 	}
 
 	 // check for a surface in front of the player, we do it from crouch eye level
-	UTIL_TraceLine(vecEyeDuck, vecEyeDuck + (vecForward * CLIMB_TRACE_DIST), MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+	UTIL_TraceLine(vecEyeDuck, vecEyeDuck + (vecForward * CLIMB_TRACE_DIST), (CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_GRATE), this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 	if (!tr.DidHitWorld())
 	{
@@ -2866,7 +2882,7 @@ void CVancePlayer::TryLedgeClimb()
 	{
 		vecStart = vecAbsPos + ( vecEyePos - vecAbsPos ) * posFraction;
 		vecEnd = vecStart + (vecForward * CLIMB_TRACE_DIST);
-		UTIL_TraceLine(vecStart, vecEnd, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
+		UTIL_TraceLine(vecStart, vecEnd, (CONTENTS_SOLID | CONTENTS_MOVEABLE | CONTENTS_GRATE), this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 
 		if (vance_climb_debug.GetBool())
 		{
