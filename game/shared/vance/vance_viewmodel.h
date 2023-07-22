@@ -94,9 +94,6 @@ private:
 	CVanceViewModel( const CVanceViewModel & ); // Not defined, not accessible.
 #endif
 
-	// running leveler
-	float m_flSprinting = 0.0f;
-
 	// View-bobbing and swaying.
 	float m_flSideTiltResult;
 	float m_flSideTiltDifference;
@@ -105,6 +102,15 @@ private:
 
 	// additional offset timers
 	float m_flDucking = 0.0f;
+	float m_flSprinting = 0.0f;
+
+	//vm bob
+	float m_flSprintBob = 0.0f;
+	bool  m_bSprintSeqTracking = false;
+	float m_flSprintSeqLastStart = 0.0f;
+	float m_flSprintSeqLastStartActive = 0.0f;
+	CNetworkVar( bool, m_bIsSprinting);
+	CNetworkVar( bool, m_bIsSliding);
 
 	//jump offset
 	bool  m_bJumpModeInAir = false;

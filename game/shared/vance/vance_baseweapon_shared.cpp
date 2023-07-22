@@ -259,7 +259,9 @@ void CBaseVanceWeapon::WeaponIdle(void)
 						GetActivity() == GetIdleLoweredActivity()
 					) ||
 					GetActivity() == ACT_VM_IDLE_TO_LOWERED ||
-					GetActivity() == ACT_VM_LOWERED_TO_IDLE
+					GetActivity() == ACT_VM_LOWERED_TO_IDLE ||
+					GetActivity() == ACT_VM_FIDGET ||
+					GetActivity() == ACT_VM_FIDGET_EXTENDED
 				)
 			)
 			// (idling || not kicking && activity == idle, walk or lowered || 

@@ -33,10 +33,14 @@ BEGIN_NETWORK_TABLE(CVanceViewModel, DT_Vance_ViewModel)
 	RecvPropEHandle(RECVINFO(m_hOwnerEntity)),
 	RecvPropInt(RECVINFO(m_iViewModelType)),
 	RecvPropInt(RECVINFO(m_iViewModelAddonModelIndex)),
+	RecvPropBool(RECVINFO(m_bIsSprinting)),
+	RecvPropBool(RECVINFO(m_bIsSliding)),
 #else
 	SendPropEHandle(SENDINFO(m_hOwnerEntity)),
 	SendPropInt(SENDINFO(m_iViewModelType), 3),
 	SendPropModelIndex(SENDINFO(m_iViewModelAddonModelIndex)),
+	SendPropBool(SENDINFO(m_bIsSprinting)),
+	SendPropBool(SENDINFO(m_bIsSliding)),
 #endif
 END_NETWORK_TABLE()
 
@@ -114,6 +118,17 @@ void CVanceViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *
 //-----------------------------------------------------------------------------
 void CVanceViewModel::UpdateViewmodelAddon( int iModelIndex )
 {
+#ifdef CLIENT_DLL
+#else
+	//close enough to a think funciton, we just need to keep m_bIsSprinting updated
+	CVancePlayer *pOwner = (CVancePlayer *)(GetOwnerEntity());
+	if (pOwner)
+	{
+		m_bIsSprinting = pOwner->IsSprinting();
+		m_bIsSliding = pOwner->IsSliding();
+	}
+#endif
+
 	if ( ViewModelIndex() > VM_WEAPON )
 		return;
 
@@ -403,6 +418,36 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 	fSprintingScale = Clamp((angles.x * fSprintingScale) - angles.x, 0.0f, 90.0f) / 90.0f;
 	fSprintingScale *= fSprintingScale;
 	angles.x += fSprintingScale * 90.0f; //easeInOutQuad with some extra stuff
+
+	//movement view bob
+	if (GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED) {
+		if (!m_bSprintSeqTracking) {
+			m_flSprintSeqLastStart = gpGlobals->curtime;
+			m_bSprintSeqTracking = true;
+		}
+	} else if (m_bSprintSeqTracking) {
+		m_bSprintSeqTracking = false;
+	}
+	if (m_bSprintSeqTracking && m_flSprintBob == 0.0f) {
+		m_flSprintSeqLastStartActive = m_flSprintSeqLastStart;
+	}
+	if (owner->GetFlags() & FL_ONGROUND && owner->GetLocalVelocity().Length2D() >= 300 && m_bIsSprinting.Get() && !m_bIsSliding.Get() &&
+	!(GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED)){
+		m_flSprintBob += gpGlobals->frametime / 0.3f;
+	} else {
+		m_flSprintBob -= gpGlobals->frametime / 0.3f;
+	}
+	if (GetSequenceActivity(GetSequence()) == ACT_VM_PRIMARYATTACK || GetSequenceActivity(GetSequence()) == ACT_VM_FIRE_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SECONDARYATTACK) {
+		m_flSprintBob = 0.0f;
+	}
+	m_flSprintBob = Clamp(m_flSprintBob, 0.0f, 1.0f);
+	float flSprintBobTimeline = ((m_flSprintSeqLastStartActive - gpGlobals->curtime) / 0.66666666f); //length of the sprint anims
+	flSprintBobTimeline = flSprintBobTimeline - floorf(flSprintBobTimeline);
+	origin += right * sinf((flSprintBobTimeline + 0.25f) * 6.28318) * 0.7f * m_flSprintBob; //main side to side sway
+	origin += up * ((-cosf((flSprintBobTimeline - 0.25f)*12.56636f) + sinf((flSprintBobTimeline - 0.25f)*6.28318) * 0.2f) + 0.8f * (-cosf((flSprintBobTimeline - 0.25f)*12.56636f) + sinf((flSprintBobTimeline - 0.25f)*6.28318) * 0.2f)) * 0.3f * m_flSprintBob;//step jolts
+	angles.z += sinf(((flSprintBobTimeline + 0.1 - floorf(flSprintBobTimeline + 0.1)) + 0.25f) * 6.28318) * 2.0f * m_flSprintBob; //rotational sway
+	origin += up * sinf(((flSprintBobTimeline + 0.1 - floorf(flSprintBobTimeline + 0.1)) + 0.25f) * 6.28318) * 0.28f * m_flSprintBob; //vertical sway to counteract rotational sway
+
 
 	//jump offset
 	bool bInAir = false;
