@@ -523,7 +523,7 @@ bool C_LocalTempEntity::Frame( float frametime, int framenumber )
 			}
 
 			// Check for a collision and stop the particle system.
-			if ( flags & FTENT_CLIENTSIDEPARTICLES )
+			if ( ( flags & FTENT_CLIENTSIDEPARTICLES ) && !(flags & FTENT_SHELL))
 			{
 				// Stop the emission of particles on collision - removed from the ClientEntityList on removal from the tempent pool.
 				ParticleProp()->StopEmission();
@@ -1644,7 +1644,7 @@ void CTempEnts::Sprite_Smoke( C_LocalTempEntity *pTemp, float scale )
 //			angles - 
 //			type - 
 //-----------------------------------------------------------------------------
-void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAngle &gunAngles, int type, bool IsNpc = false )
+void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAngle &gunAngles, int type, bool IsNpc )
 {
 	if ( cl_ejectbrass.GetBool() == false )
 		return;
@@ -1693,9 +1693,9 @@ void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAng
 						dir[1] + random->RandomFloat(-64,64),
 						dir[2] + random->RandomFloat(  0,64) ) );
 
+	
 	if ( vance_shell_smoke.GetBool() )
 	{
-
 		C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 		C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
 
@@ -1704,11 +1704,12 @@ void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAng
 
 		//WE NEED TO DO THIS CAUSE IM FUCKING RETARDED
 		//-Nbc66
+
 		if ( !IsNpc )
 		{
 			//Special case for Magnum cause we release 6 shells instatnly it would be realy unrealistic to make all the shells smoke so we just make 1 shell smoke
 			//-Nbc66
-			if ( pPlayer && pWeapon && iMagnumShellCount < 5 && FClassnameIs( pWeapon, "weapon_magnum" ) )
+			if ( pPlayer && pWeapon && iMagnumShellCount < 5 && FClassnameIs( pWeapon, "weapon_357" ) )
 			{
 				iMagnumShellCount++;
 				if ( iMagnumShellCount == 5 )
@@ -1729,7 +1730,7 @@ void CTempEnts::EjectBrass( const Vector &pos1, const QAngle &angles, const QAng
 		}
 	}
 
-	pTemp->die = gpGlobals->curtime + 1.0f + random->RandomFloat( 0.0f, 1.0f );	// Add an extra 0-1 secs of life	
+	pTemp->die = gpGlobals->curtime + 1.0f + random->RandomFloat( 6.0f, 8.0f );	// Add an extra 6-8 secs of life	
 }
 
 //-----------------------------------------------------------------------------
