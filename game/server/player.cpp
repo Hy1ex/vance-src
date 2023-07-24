@@ -5676,6 +5676,10 @@ void CBloodSplat::Think( void )
 //-----------------------------------------------------------------------------
 CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
 {
+	//this is slightly cringe way to do this but we are just gonna assume they want the weapon_resistancegun if they type in weapon_alyxgun
+	if (FStrEq(pszName, "weapon_alyxgun"))
+		pszName = "weapon_resistancegun";
+
 	// If I already own this type don't create one
 	if ( Weapon_OwnsThisType(pszName, iSubType) )
 		return NULL;

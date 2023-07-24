@@ -2787,9 +2787,7 @@ void CVancePlayer::TryLedgeClimb()
 		//break through glass ceiling
 		UTIL_TraceLine(m_vecClimbStartOrigin * Vector(1,1,0) + Vector(0, 0, m_vecClimbDesiredOrigin.z + 30), m_vecClimbDesiredOrigin + Vector(0, 0, 30) + ((m_vecClimbDesiredOrigin - m_vecClimbStartOrigin) * Vector(1,1,0)).Normalized() * 50.0, MASK_PLAYERSOLID, this, COLLISION_GROUP_PLAYER_MOVEMENT, &tr);
 		tr.endpos = m_vecClimbDesiredOrigin + Vector(0, 0, 30) + ((m_vecClimbDesiredOrigin - m_vecClimbStartOrigin) * Vector(1, 1, 0)).Normalized() * 50.0;
-		debugoverlay->AddLineOverlay(tr.startpos, tr.endpos, 0, 255, 255, true, 10);
 		if (tr.DidHit()) {
-			Msg("FHJIAWFHAI");
 			CTakeDamageInfo triggerInfo(this, this, 40.0f, DMG_KICK);
 			triggerInfo.SetDamagePosition(tr.startpos);
 			triggerInfo.SetDamageForce(triggerInfo.GetDamageForce() * 5.0f);

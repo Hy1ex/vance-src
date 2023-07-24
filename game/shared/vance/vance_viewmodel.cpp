@@ -118,6 +118,7 @@ void CVanceViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *
 void CVanceViewModel::Think()
 {
 	BaseClass::Think();
+
 	#ifdef CLIENT_DLL
 	#else
 	CVancePlayer *pOwner = (CVancePlayer *)(GetOwnerEntity());
