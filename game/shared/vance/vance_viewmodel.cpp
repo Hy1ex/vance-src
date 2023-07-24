@@ -88,6 +88,8 @@ CVanceViewModel::CVanceViewModel()
 	m_angMotion = QAngle( 0.0f, 0.0f, 0.0f );
 	m_angCounterMotion = QAngle( 0.0f, 0.0f, 0.0f );
 	m_angCompensation = QAngle( 0.0f, 0.0f, 0.0f );
+
+	SetNextThink(gpGlobals->curtime);
 }
 
 //-----------------------------------------------------------------------------
@@ -113,22 +115,26 @@ void CVanceViewModel::SetWeaponModel( const char *modelname, CBaseCombatWeapon *
 	BaseClass::SetWeaponModel( modelname, weapon );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CVanceViewModel::UpdateViewmodelAddon( int iModelIndex )
+void CVanceViewModel::Think()
 {
-#ifdef CLIENT_DLL
-#else
-	//close enough to a think funciton, we just need to keep some stuff updated for the bob
+	BaseClass::Think();
+	#ifdef CLIENT_DLL
+	#else
 	CVancePlayer *pOwner = (CVancePlayer *)(GetOwnerEntity());
 	if (pOwner)
 	{
 		m_bIsSprinting = pOwner->IsSprinting();
 		m_bIsSliding = pOwner->IsSliding();
 	}
-#endif
+	SetNextThink(gpGlobals->curtime + 0.05f);
+	#endif
+}
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CVanceViewModel::UpdateViewmodelAddon( int iModelIndex )
+{
 	if ( ViewModelIndex() > VM_WEAPON )
 		return;
 
@@ -442,17 +448,17 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 	if (m_bWalkSeqTracking && m_flWalkBob == 0.0f) {
 		m_flWalkSeqLastStartActive = m_flWalkSeqLastStart;
 	}
-	if (owner->GetFlags() & FL_ONGROUND && owner->GetLocalVelocity().Length2D() >= 300 && m_bIsSprinting.Get() && !m_bIsSliding.Get() &&
+	if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 300 && m_bIsSprinting.Get() && !m_bIsSliding.Get() &&
 		!(GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED))
 	{
-		m_flSprintBob += gpGlobals->frametime / 0.3f;
-		m_flWalkBob -= gpGlobals->frametime / 0.3f;
-	} else if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 100 && !(GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED)) {
-		m_flWalkBob += gpGlobals->frametime / 0.3f;
-		m_flSprintBob -= gpGlobals->frametime / 0.3f;
+		m_flSprintBob += gpGlobals->frametime / 0.2f;
+		m_flWalkBob -= gpGlobals->frametime / 0.2f;
+	} else if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 100 && !m_bIsSliding.Get() && !(GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED)) {
+		m_flWalkBob += gpGlobals->frametime / 0.2f;
+		m_flSprintBob -= gpGlobals->frametime / 0.2f;
 	} else {
-		m_flSprintBob -= gpGlobals->frametime / 0.3f;
-		m_flWalkBob -= gpGlobals->frametime / 0.3f;
+		m_flSprintBob -= gpGlobals->frametime / 0.2f;
+		m_flWalkBob -= gpGlobals->frametime / 0.2f;
 	}
 	if (GetSequenceActivity(GetSequence()) == ACT_VM_PRIMARYATTACK || GetSequenceActivity(GetSequence()) == ACT_VM_FIRE_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SECONDARYATTACK) {
 		m_flSprintBob = 0.0f;

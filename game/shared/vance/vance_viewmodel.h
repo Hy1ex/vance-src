@@ -46,6 +46,8 @@ public:
 
 	virtual void SetWeaponModel( const char *pszModelname, CBaseCombatWeapon *weapon );
 
+	virtual void Think();
+
 	void UpdateViewmodelAddon( int iModelIndex );
 	void RemoveViewmodelAddon( void );
 
