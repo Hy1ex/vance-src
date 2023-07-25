@@ -454,7 +454,9 @@ void CVanceViewModel::CalcViewModelBasePose(Vector& origin, QAngle& angles, CBas
 	{
 		m_flSprintBob += gpGlobals->frametime / 0.2f;
 		m_flWalkBob -= gpGlobals->frametime / 0.2f;
-	} else if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 100 && !m_bIsSliding.Get() && !(GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED)) {
+	} else if (owner->GetWaterLevel() != 3 && (owner->GetFlags() & FL_ONGROUND) && owner->GetLocalVelocity().Length2D() >= 100 && !m_bIsSliding.Get() && !(GetSequenceActivity(GetSequence()) == ACT_VM_WALK || GetSequenceActivity(GetSequence()) == ACT_VM_WALK_EXTENDED) &&
+		!(GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2 || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT_EXTENDED || GetSequenceActivity(GetSequence()) == ACT_VM_SPRINT2_EXTENDED))
+	{
 		m_flWalkBob += gpGlobals->frametime / 0.2f;
 		m_flSprintBob -= gpGlobals->frametime / 0.2f;
 	} else {

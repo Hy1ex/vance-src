@@ -232,6 +232,8 @@ public:
 
 	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
 
+	bool	m_bWantsToHaveHadBeenGuiding = true;
+
 	virtual const Vector& GetBulletSpread( void )
 	{
 		static Vector cone = VECTOR_CONE_3DEGREES;

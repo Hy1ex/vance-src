@@ -1431,6 +1431,9 @@ CWeaponRPG::CWeaponRPG()
 
 	m_fMinRange1 = m_fMinRange2 = 40*12;
 	m_fMaxRange1 = m_fMaxRange2 = 500*12;
+
+	m_bUseCustomStopSprint = true;
+	m_bStopSprintSecondary = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1733,40 +1736,51 @@ void CWeaponRPG::ItemPostFrame( void )
 	BaseClass::ItemPostFrame();
 
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CVancePlayer *pOwner = (CVancePlayer *)(GetOwnerEntity());
 	
 	if ( pPlayer == NULL )
 		return;
 
-	//If we're pulling the weapon out for the first time, wait to draw the laser
-	if ( ( m_bInitialStateUpdate ) && ( GetActivity() != ACT_VM_DRAW ) && (!IsHolstered()) )
-	{
-		StartGuiding();
-		m_bInitialStateUpdate = false;
-	}
-
 	// Supress our guiding effects if we're lowered
-	if ( GetIdealActivity() == ACT_VM_IDLE_LOWERED || GetIdealActivity() == ACT_VM_RELOAD )
+	if (GetIdealActivity() == ACT_VM_IDLE_LOWERED || GetIdealActivity() == ACT_VM_RELOAD || GetIdealActivity() == ACT_VM_HOLSTER || (pOwner && pOwner->IsSprinting() && pOwner->GetLocalVelocity().Length2D() >= 300 && m_hMissile == NULL))
 	{
 		SuppressGuiding();
-	}
-	else if (!IsHolstered())
+	}  else if (!IsHolstered())
 	{
-		SuppressGuiding( false );
+		SuppressGuiding(!m_bWantsToHaveHadBeenGuiding);
 	}
 
 	//Player has toggled guidance state
 	//Adrian: Players are not allowed to remove the laser guide in single player anymore, bye!
-	if ( g_pGameRules->IsMultiplayer() == true )
+	//john: fuck you adrian the player can remove the laser guide in singleplayer now hehehhe
+	if ( pPlayer->m_afButtonPressed & IN_ATTACK2 )
 	{
-		if ( pPlayer->m_afButtonPressed & IN_ATTACK2 )
-		{
-			ToggleGuiding();
-		}
+		SuppressGuiding(false);
+		ToggleGuiding();
+		m_bWantsToHaveHadBeenGuiding = !m_bWantsToHaveHadBeenGuiding;
 	}
+
+	if (IsHolstered())
+		StopGuiding();
 
 	//Move the laser
 	UpdateLaserPosition();
 	UpdateLaserEffects();
+
+	//we dont want the laser on while we sprint cause it sticks in the center of the screen and looks goofy
+	if (m_bWantsToHaveHadBeenGuiding != IsGuiding() && !IsHolstered()) {
+		ToggleGuiding();
+	}
+
+	//If we're pulling the weapon out for the first time, wait to draw the laser
+	if ((m_bInitialStateUpdate) && (GetActivity() != ACT_VM_DRAW) && (!IsHolstered()))
+	{
+		SuppressGuiding(!m_bWantsToHaveHadBeenGuiding);
+		if (m_bWantsToHaveHadBeenGuiding != IsGuiding()) {
+			ToggleGuiding();
+		}
+		m_bInitialStateUpdate = false;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1860,6 +1874,9 @@ bool CWeaponRPG::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 void CWeaponRPG::StartGuiding( void )
 {
+	if (IsGuiding() && m_hLaserDot != NULL) //already guiding
+		return;
+
 	// Don't start back up if we're overriding this
 	if ( m_bHideGuiding )
 		return;
@@ -1877,6 +1894,9 @@ void CWeaponRPG::StartGuiding( void )
 //-----------------------------------------------------------------------------
 void CWeaponRPG::StopGuiding( void )
 {
+	if (!IsGuiding() && m_hLaserDot == NULL) //already not guiding
+		return;
+
 	m_bGuiding = false;
 
 	WeaponSound( SPECIAL2 );

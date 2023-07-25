@@ -119,7 +119,8 @@ CWeaponResistanceGun::CWeaponResistanceGun()
 	m_fMinRange2 = 24;
 	m_fMaxRange2 = 200;
 
-	m_bFiresUnderwater = false;
+	m_bFiresUnderwater = true;
+	m_bAltFiresUnderwater = true;
 
 	m_bSemiAutoMode = false;
 	m_bInTransition = false;
@@ -127,6 +128,9 @@ CWeaponResistanceGun::CWeaponResistanceGun()
 	m_flCloseEnoughToDoneSwitchingMode = 0.0f;
 
 	m_bInBurst = false;
+
+	m_bUseCustomStopSprint = true;
+	m_bStopSprintSecondary = false;
 }
 
 //-----------------------------------------------------------------------------
