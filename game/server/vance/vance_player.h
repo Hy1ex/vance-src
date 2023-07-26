@@ -107,6 +107,8 @@ public:
 
 	void					Think();
 
+	void					StartHealing();
+
 	inline bool CanBreathUnderwater() const { return (IsSuitEquipped() || IsSynthEquipped()) && m_HL2Local.m_flSuitPower > 0.0f ;}
 
 	inline const char* GetPlayerWorldModel() const {

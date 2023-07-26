@@ -94,6 +94,10 @@ typedef enum
 	AE_WPN_STAGE_ONEBULLET,
 	AE_WEAPON_ALLOWFIRE,
 
+#ifdef VANCE
+	AE_SV_STARTHEAL,
+#endif
+
 	LAST_SHARED_ANIMEVENT,
 } Animevent;
 

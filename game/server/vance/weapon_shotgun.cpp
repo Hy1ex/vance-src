@@ -67,6 +67,9 @@ public:
 
 	virtual bool			ShouldDisplayAltFireHUDHint(){ return false; }
 
+	virtual void			AbortReload();
+	bool					m_bShellMadeItIn = false;
+
 	bool StartReload( void );
 	bool Reload( void );
 	void FillClip( void );
@@ -225,6 +228,7 @@ void CWeaponShotgun::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatC
 			{
 				if (Clip1() < GetMaxClip1())
 				{
+					m_bShellMadeItIn = true;
 					m_iClip1++;
 					pOwner->RemoveAmmo(1, m_iPrimaryAmmoType);
 				}
@@ -366,11 +370,20 @@ bool CWeaponShotgun::Reload( void )
 	// Play reload on different channel as otherwise steals channel away from fire sound
 	WeaponSound(RELOAD);
 	SendWeaponAnim( ACT_VM_RELOAD );
+	m_bShellMadeItIn = false;
 
 	pOwner->m_flNextAttack = gpGlobals->curtime;
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 
 	return true;
+}
+
+void CWeaponShotgun::AbortReload()
+{
+	if (!m_bShellMadeItIn) {
+		StopWeaponSound(RELOAD);
+	}
+	BaseClass::AbortReload();
 }
 
 //-----------------------------------------------------------------------------

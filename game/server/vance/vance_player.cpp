@@ -278,6 +278,8 @@ void CVancePlayer::Precache()
 
 	PrecacheScriptSound( "AlyxPlayer.PainHeavy" );
 
+	PrecacheScriptSound("AlyxPlayer.InjectStim");
+
 	PrecacheScriptSound( "AlyxPlayer.SprintPain" );
 	PrecacheScriptSound( "AlyxPlayer.Sprint" );
 
@@ -1304,6 +1306,23 @@ void CVancePlayer::UseStim()
 	}
 }
 
+//apply either the stim or tourniquette, depending on whats onscreen (AE_SV_STARTHEAL)
+void CVancePlayer::StartHealing()
+{
+	if (m_PerformingGesture == GestureAction::InjectingStim) {
+		m_bStimRegeneration = true;
+		m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
+		m_fStimRegenerationEndTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat() + sk_stim_regen_lifetime.GetFloat();
+		m_iNumStims--;
+		EmitSound("AlyxPlayer.InjectStim");
+		color32 green = { 0, 255, 128, 50 };
+		UTIL_ScreenFade(this, green, 0.5f, 0.0f, FFADE_IN);
+	} else if (m_PerformingGesture == GestureAction::EquippingTourniquet) {
+		m_bBleeding = false;
+		m_iNumTourniquets--;
+	}
+}
+
 void CVancePlayer::ThrowGrenade()
 {
 	//is it time..
@@ -1623,12 +1642,6 @@ void CVancePlayer::PostThink()
 					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
 					GetActiveWeapon()->Deploy();
 				}
-
-				m_bStimRegeneration = true;
-				m_fStimRegenerationNextHealTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat();
-				m_fStimRegenerationEndTime = gpGlobals->curtime + sk_stim_heal_interval.GetFloat() +
-					sk_stim_regen_lifetime.GetFloat();
-				m_iNumStims--;
 				break;
 			case GestureAction::EquippingTourniquet:
 				if (GetActiveWeapon())
@@ -1636,9 +1649,6 @@ void CVancePlayer::PostThink()
 					GetActiveWeapon()->m_fDoNotDisturb = 0.0f;
 					GetActiveWeapon()->Deploy();
 				}
-
-				m_bBleeding = false;
-				m_iNumTourniquets--;
 				break;
 			case GestureAction::ThrowingGrenade:
 				if (GetActiveWeapon())

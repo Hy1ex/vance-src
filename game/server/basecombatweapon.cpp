@@ -209,6 +209,15 @@ void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseComb
 // routed through the character, and then back into CharacterAnimEvent() 
 void CBaseCombatWeapon::HandleAnimEvent( animevent_t *pEvent )
 {
+#ifdef VANCE
+	if (pEvent->event == AE_SV_STARTHEAL) {
+		//notify the player that a health item should start acting
+		CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetLocalPlayer());
+		if (pPlayer)
+			pPlayer->StartHealing();
+	}
+#endif
+
 	//If the player is receiving this message, pass it through
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 
