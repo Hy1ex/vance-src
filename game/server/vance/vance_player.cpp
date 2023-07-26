@@ -107,7 +107,7 @@ ConVar vance_slide_sprint_time("vance_slide_sprint_time", "0.3", FCVAR_CHEAT);
 ConVar vance_slide_midair_window("vance_slide_midair_window", "0.4", FCVAR_CHEAT);
 
 ConVar vance_kick_meleedamageforce( "kick_meleedamageforce", "2", FCVAR_ARCHIVE, "The default throw force of kick without player velocity." );
-ConVar vance_kick_powerscale( "kick_powerscale", "4", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
+ConVar vance_kick_powerscale( "kick_powerscale", "1", FCVAR_ARCHIVE, "The default damage of kick without player velocity." );
 ConVar vance_kick_time_adjust("kick_time_adjust", "0.1", FCVAR_CHEAT);
 ConVar vance_kick_range("kick_range", "100", FCVAR_CHEAT);
 ConVar vance_kick_firerate("kick_firerate", "1", FCVAR_CHEAT);

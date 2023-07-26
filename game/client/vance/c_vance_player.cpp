@@ -234,12 +234,22 @@ void C_VancePlayer::OverrideView(CViewSetup *pSetup)
 		m_flBobModelAmount = Approach(flGoalBobAmount, m_flBobModelAmount, gpGlobals->frametime * 5.0f);
 	}
 
+	//fade out camera movement on movement anims so that we can do it programatically instead, giving us more consistent camera bob
+	//slightly lame hack but manimal doesnt want to update all the weapons to remove camera from movement anims so blame it on him
+	Activity aVMActivity = pViewModel->GetSequenceActivity(pViewModel->GetSequence());
+	if (aVMActivity == ACT_VM_SPRINT || aVMActivity == ACT_VM_SPRINT2 || aVMActivity == ACT_VM_SPRINT_EXTENDED || aVMActivity == ACT_VM_SPRINT2_EXTENDED || aVMActivity == ACT_VM_WALK || aVMActivity == ACT_VM_WALK_EXTENDED) {
+		m_BobScaleForMovementAnims -= gpGlobals->frametime / 0.2f;
+	} else if (aVMActivity == ACT_VM_FIRE_EXTENDED || aVMActivity == ACT_VM_PRIMARYATTACK || aVMActivity == ACT_VM_SECONDARYATTACK) {
+		m_BobScaleForMovementAnims = 1.0f;
+	} else {
+		m_BobScaleForMovementAnims += gpGlobals->frametime / 0.2f;
+	}
+	m_BobScaleForMovementAnims = Clamp(m_BobScaleForMovementAnims, 0.0f, 1.0f);
+
 	if (render->GetViewEntity() == entindex())
 	{
-		pSetup->angles += m_angLastBobAngle
-			* m_flBobModelAmount;
-		pSetup->origin += m_vecLastBobPos
-			* m_flBobModelAmount;
+		pSetup->angles += m_angLastBobAngle * m_flBobModelAmount * m_BobScaleForMovementAnims;
+		pSetup->origin += m_vecLastBobPos * m_flBobModelAmount * m_BobScaleForMovementAnims;
 	}
 }
 

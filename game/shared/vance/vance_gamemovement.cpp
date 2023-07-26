@@ -78,14 +78,14 @@ void CVanceGameMovement::PlayerMove() //just using this as a think function lol
 	
 	//crouching logic
 	if (((player->m_Local.m_bDucked || player->m_Local.m_bDucking) && !(player->m_Local.m_bDucked && player->m_Local.m_bDucking) || (mv->m_nButtons & IN_DUCK) || (GetVancePlayer()->IsSliding() && (player->GetFlags() & FL_ONGROUND))) && !GetVancePlayer()->IsVaulting()) {
-		if (player->m_Local.m_bInDuckJump){
+		if (!(player->GetFlags() & FL_ONGROUND)){
 			m_fDuckFraction = 1.0f;
 		} else if (GetVancePlayer()->IsSliding()) {
 			m_fDuckFraction += gpGlobals->frametime / vance_duck_down_slide_speed.GetFloat();
 		} else {
 			m_fDuckFraction += gpGlobals->frametime / vance_duck_down_speed.GetFloat();
 		}
-		m_bWasInDuckJump = (player->m_Local.m_bInDuckJump && !(player->GetFlags() & FL_ONGROUND));
+		m_bWasInDuckJump = !(player->GetFlags() & FL_ONGROUND);
 	} else {
 		if (m_bWasInDuckJump) {
 			m_fDuckFraction = 0.0f;

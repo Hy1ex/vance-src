@@ -4150,6 +4150,8 @@ void CGameMovement::FinishUnDuck( void )
 //-----------------------------------------------------------------------------
 void CGameMovement::UpdateDuckJumpEyeOffset( void )
 {
+	return;
+
 	if ( player->m_Local.m_flDuckJumpTime != 0.0f )
 	{
  		float flDuckMilliseconds = MAX( 0.0f, GAMEMOVEMENT_DUCK_TIME - ( float )player->m_Local.m_flDuckJumpTime );
@@ -4194,7 +4196,7 @@ void CGameMovement::FinishUnDuckJump( trace_t &trace )
 
 	Vector vecViewOffset = GetPlayerViewOffset( false );
 	vecViewOffset.z -= flDeltaZ;
-	player->SetViewOffset( vecViewOffset );
+	//player->SetViewOffset( vecViewOffset );
 
 	VectorSubtract( vecNewOrigin, viewDelta, vecNewOrigin );
 	mv->SetAbsOrigin( vecNewOrigin );

@@ -81,6 +81,8 @@ private:
 	QAngle m_angLastBobAngle;
 	Vector m_vecLastBobPos;
 
+	float m_BobScaleForMovementAnims = 1.0f;
+
 	float m_fBobTime;
 	float m_fLastBobTime;
 
