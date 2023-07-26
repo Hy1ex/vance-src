@@ -18,7 +18,7 @@
 //-----------------------------------------------------------------------------
 class CHudNumericDisplay : public vgui::Panel
 {
-	DECLARE_CLASS_SIMPLE( CHudNumericDisplay, vgui::Panel );
+	DECLARE_CLASS_SIMPLE(CHudNumericDisplay, vgui::Panel);
 
 public:
 	CHudNumericDisplay(vgui::Panel *parent, const char *name);
@@ -31,8 +31,8 @@ public:
 	void SetIndent(bool state);
 	void SetIsTime(bool state);
 
-	bool ShouldDisplayValue( void ) { return m_bDisplayValue; }
-	bool ShouldDisplaySecondaryValue( void ) { return m_bDisplaySecondaryValue; }
+	bool ShouldDisplayValue(void) { return m_bDisplayValue; }
+	bool ShouldDisplaySecondaryValue(void) { return m_bDisplaySecondaryValue; }
 
 	virtual void Reset();
 
@@ -46,27 +46,36 @@ protected:
 protected:
 
 	int m_iValue;
+	bool m_VanceNewHealth;
+	bool m_VanceDivider;
 	int m_iSecondaryValue;
 	wchar_t m_LabelText[32];
 	bool m_bDisplayValue, m_bDisplaySecondaryValue;
 	bool m_bIndent;
 	bool m_bIsTime;
 
-	CPanelAnimationVar( float, m_flBlur, "Blur", "0" );
-	CPanelAnimationVar( Color, m_TextColor, "TextColor", "FgColor" );
-	CPanelAnimationVar( Color, m_Ammo2Color, "Ammo2Color", "FgColor" );
+	CPanelAnimationVar(float, m_flBlur, "Blur", "4");
+	CPanelAnimationVar(Color, m_TextColor, "TextColor", "FgColor");
+	CPanelAnimationVar(Color, m_Ammo2Color, "Ammo2Color", "FgColor");
 
-	CPanelAnimationVar( vgui::HFont, m_hNumberFont, "NumberFont", "HudNumbers" );
-	CPanelAnimationVar( vgui::HFont, m_hNumberGlowFont, "NumberGlowFont", "HudNumbersGlow" );
-	CPanelAnimationVar( vgui::HFont, m_hSmallNumberFont, "SmallNumberFont", "HudNumbersSmall" );
-	CPanelAnimationVar( vgui::HFont, m_hTextFont, "TextFont", "Default" );
+	CPanelAnimationVar(vgui::HFont, m_hNumberFont, "NumberFont", "HudNumbers");
+	CPanelAnimationVar(vgui::HFont, m_hNumberGlowFont, "NumberGlowFont", "HudNumbersGlow");
+	CPanelAnimationVar(vgui::HFont, m_hSmallNumberFont, "SmallNumberFont", "HudNumbersSmall");
 
-	CPanelAnimationVarAliasType( float, text_xpos, "text_xpos", "8", "proportional_float" );
-	CPanelAnimationVarAliasType( float, text_ypos, "text_ypos", "20", "proportional_float" );
-	CPanelAnimationVarAliasType( float, digit_xpos, "digit_xpos", "50", "proportional_float" );
-	CPanelAnimationVarAliasType( float, digit_ypos, "digit_ypos", "2", "proportional_float" );
-	CPanelAnimationVarAliasType( float, digit2_xpos, "digit2_xpos", "98", "proportional_float" );
-	CPanelAnimationVarAliasType( float, digit2_ypos, "digit2_ypos", "16", "proportional_float" );
+	CPanelAnimationVar(vgui::HFont, m_hLabelFont, "LabelFont", "HudLabel");
+	CPanelAnimationVar(vgui::HFont, m_hLabelGlowFont, "LabelGlowFont", "HudLabelGlow");
+
+	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "Default");
+
+
+	CPanelAnimationVarAliasType(float, separator_ypos, "separator_ypos", "0", "proportional_float");
+	CPanelAnimationVarAliasType(float, text2_xpos, "text2_xpos", "0", "proportional_float");
+	CPanelAnimationVarAliasType(float, text_xpos, "text_xpos", "8", "proportional_float");
+	CPanelAnimationVarAliasType(float, text_ypos, "text_ypos", "20", "proportional_float");
+	CPanelAnimationVarAliasType(float, digit_xpos, "digit_xpos", "50", "proportional_float");
+	CPanelAnimationVarAliasType(float, digit_ypos, "digit_ypos", "2", "proportional_float");
+	CPanelAnimationVarAliasType(float, digit2_xpos, "digit2_xpos", "98", "proportional_float");
+	CPanelAnimationVarAliasType(float, digit2_ypos, "digit2_ypos", "16", "proportional_float");
 };
 
 

@@ -33,40 +33,48 @@ using namespace vgui;
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+#include <c_basehlplayer.h>
 
 #define INIT_HEALTH -1
+#define INIT_BAT	-1
+
+int m_iNewBat;
+int m_iBat;
 
 //-----------------------------------------------------------------------------
 // Purpose: Health panel
 //-----------------------------------------------------------------------------
 class CHudHealth : public CHudElement, public CHudNumericDisplay
 {
-	DECLARE_CLASS_SIMPLE( CHudHealth, CHudNumericDisplay );
+	DECLARE_CLASS_SIMPLE(CHudHealth, CHudNumericDisplay);
 
 public:
-	CHudHealth( const char *pElementName );
-	virtual void Init( void );
-	virtual void VidInit( void );
-	virtual void Reset( void );
+	CHudHealth(const char *pElementName);
+	virtual void Init(void);
+	virtual void VidInit(void);
+	virtual void Reset(void);
 	virtual void OnThink();
-			void MsgFunc_Damage( bf_read &msg );
+	void MsgFunc_Damage(bf_read &msg);
+	void MsgFunc_Battery(bf_read& msg);
 
 private:
 	// old variables
 	int		m_iHealth;
-	
+	int		m_iBat;
 	int		m_bitsDamage;
-};	
+};
 
-DECLARE_HUDELEMENT( CHudHealth );
-DECLARE_HUD_MESSAGE( CHudHealth, Damage );
+DECLARE_HUDELEMENT(CHudHealth);
+DECLARE_HUD_MESSAGE(CHudHealth, Damage);
+DECLARE_HUD_MESSAGE(CHudHealth, Battery);
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CHudHealth::CHudHealth( const char *pElementName ) : CHudElement( pElementName ), CHudNumericDisplay(NULL, "HudHealth")
+CHudHealth::CHudHealth(const char *pElementName) : CHudElement(pElementName), CHudNumericDisplay(NULL, "HudHealth")
 {
-	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT );
+	SetHiddenBits(HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD | HIDEHUD_NEEDSUIT);
 }
 
 //-----------------------------------------------------------------------------
@@ -74,7 +82,8 @@ CHudHealth::CHudHealth( const char *pElementName ) : CHudElement( pElementName )
 //-----------------------------------------------------------------------------
 void CHudHealth::Init()
 {
-	HOOK_HUD_MESSAGE( CHudHealth, Damage );
+	HOOK_HUD_MESSAGE(CHudHealth, Damage);
+	usermessages->HookMessage("Battery", __MsgFunc_CHudHealth_Battery);
 	Reset();
 }
 
@@ -83,10 +92,11 @@ void CHudHealth::Init()
 //-----------------------------------------------------------------------------
 void CHudHealth::Reset()
 {
-	m_iHealth		= INIT_HEALTH;
-	m_bitsDamage	= 0;
+	m_iHealth = INIT_HEALTH;
+	m_iBat = INIT_BAT;
+	m_bitsDamage = 0;
 
-	wchar_t *tempString = g_pVGuiLocalize->Find("#Valve_Hud_HEALTH");
+	wchar_t *tempString = g_pVGuiLocalize->Find("+");
 
 	if (tempString)
 	{
@@ -94,9 +104,13 @@ void CHudHealth::Reset()
 	}
 	else
 	{
-		SetLabelText(L"HEALTH");
+		SetLabelText(L"+");
 	}
+	m_VanceNewHealth = true;
+	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("HealthPulse");
 	SetDisplayValue(m_iHealth);
+	SetSecondaryValue(m_iNewBat);
+	SetShouldDisplaySecondaryValue(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -113,38 +127,46 @@ void CHudHealth::VidInit()
 void CHudHealth::OnThink()
 {
 	int newHealth = 0;
+
+
 	C_BasePlayer *local = C_BasePlayer::GetLocalPlayer();
-	if ( local )
+
+
+	if (local)
 	{
 		// Never below zero
-		newHealth = MAX( local->GetHealth(), 0 );
+		newHealth = MAX(local->GetHealth(), 0);
 	}
 
 	// Only update the fade if we've changed health
-	if ( newHealth == m_iHealth )
+
+	if (newHealth == m_iHealth && m_iNewBat == m_iBat)
 	{
 		return;
 	}
 
 	m_iHealth = newHealth;
 
-	if ( m_iHealth >= 20 )
+	if (m_iHealth >= 20)
 	{
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("HealthIncreasedAbove20");
+
 	}
-	else if ( m_iHealth > 0 )
+	else if (m_iHealth > 0)
 	{
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("HealthIncreasedBelow20");
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("HealthLow");
 	}
 
 	SetDisplayValue(m_iHealth);
+	SetSecondaryValue(m_iNewBat);
+	m_iBat = m_iNewBat;
+
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CHudHealth::MsgFunc_Damage( bf_read &msg )
+void CHudHealth::MsgFunc_Damage(bf_read &msg)
 {
 
 	int armor = msg.ReadByte();	// armor
@@ -159,12 +181,17 @@ void CHudHealth::MsgFunc_Damage( bf_read &msg )
 	vecFrom.z = msg.ReadBitCoord();
 
 	// Actually took damage?
-	if ( damageTaken > 0 || armor > 0 )
+	if (damageTaken > 0 || armor > 0)
 	{
-		if ( damageTaken > 0 )
+		if (damageTaken > 0)
 		{
 			// start the animation
 			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("HealthDamageTaken");
 		}
 	}
+}
+
+void CHudHealth::MsgFunc_Battery(bf_read& msg)
+{
+	m_iNewBat = msg.ReadShort();
 }

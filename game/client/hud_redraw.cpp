@@ -31,16 +31,16 @@ const int CHud::HUDPB_VERTICAL = 1;
 const int CHud::HUDPB_HORIZONTAL_INV = 2;
 
 // Called when a ConVar changes value
-static void FovChanged_Callback( IConVar *pConVar, const char *pOldString, float flOldValue )
+static void FovChanged_Callback(IConVar *pConVar, const char *pOldString, float flOldValue)
 {
-	ConVarRef var( pConVar );
-	if ( engine->IsInGame() )
+	ConVarRef var(pConVar);
+	if (engine->IsInGame())
 	{
-		engine->ServerCmd( VarArgs( "fov %f\n", var.GetFloat() ) );
+		engine->ServerCmd(VarArgs("fov %f\n", var.GetFloat()));
 	}
 }
 
-static ConVar fov_watcher( "_fov", "0", 0, "Automates fov command to server.", FovChanged_Callback );
+static ConVar fov_watcher("_fov", "0", 0, "Automates fov command to server.", FovChanged_Callback);
 
 //-----------------------------------------------------------------------------
 // Purpose: Think
@@ -54,7 +54,7 @@ void CHud::Think(void)
 #endif
 
 	// Determine the visibility of all hud elements
-	for ( int i = 0; i < m_HudList.Size(); i++ )
+	for (int i = 0; i < m_HudList.Size(); i++)
 	{
 		// Visible?
 		bool visible = m_HudList[i]->ShouldDraw();
@@ -63,21 +63,21 @@ void CHud::Think(void)
 		visible = visible && !bPlayingReplay;
 #endif
 
-		m_HudList[i]->SetActive( visible );
+		m_HudList[i]->SetActive(visible);
 
 		// If it's a vgui panel, hide/show as appropriate
 		vgui::Panel *pPanel = dynamic_cast<vgui::Panel*>(m_HudList[i]);
-		if ( pPanel && pPanel->IsVisible() != visible )
+		if (pPanel && pPanel->IsVisible() != visible)
 		{
-			pPanel->SetVisible( visible );
+			pPanel->SetVisible(visible);
 		}
-		else if ( !pPanel )
+		else if (!pPanel)
 		{
 			// All HUD elements should now derive from vgui!!!
-			Assert( 0 );
+			Assert(0);
 		}
 
-		if ( visible )
+		if (visible)
 		{
 			m_HudList[i]->ProcessInput();
 		}
@@ -85,16 +85,16 @@ void CHud::Think(void)
 
 	// Let the active weapon at the keybits
 	C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
-	if ( pWeapon )
+	if (pWeapon)
 	{
 		pWeapon->HandleInput();
 	}
 
-	if ( ( m_flScreenShotTime > 0 ) && ( m_flScreenShotTime < gpGlobals->curtime ) )
+	if ((m_flScreenShotTime > 0) && (m_flScreenShotTime < gpGlobals->curtime))
 	{
-		if ( !IsX360() )
+		if (!IsX360())
 		{
-			engine->ClientCmd( "screenshot" );
+			engine->ClientCmd("screenshot");
 		}
 
 		m_flScreenShotTime = -1;
@@ -111,47 +111,47 @@ void CHud::Think(void)
 //			clr - 
 //			type - 
 //-----------------------------------------------------------------------------
-void CHud::DrawProgressBar( int x, int y, int width, int height, float percentage, Color& clr, unsigned char type )
+void CHud::DrawProgressBar(int x, int y, int width, int height, float percentage, Color& clr, unsigned char type)
 {
 	//Clamp our percentage
-	percentage = MIN( 1.0f, percentage );
-	percentage = MAX( 0.0f, percentage );
+	percentage = MIN(1.0f, percentage);
+	percentage = MAX(0.0f, percentage);
 
 	Color lowColor = clr;
-	lowColor[ 0 ] /= 2;
-	lowColor[ 1 ] /= 2;
-	lowColor[ 2 ] /= 2;
+	lowColor[0] /= 2;
+	lowColor[1] /= 2;
+	lowColor[2] /= 2;
 
 	//Draw a vertical progress bar
-	if ( type == HUDPB_VERTICAL )
+	if (type == HUDPB_VERTICAL)
 	{
 		int	barOfs = height * percentage;
 
-		surface()->DrawSetColor( lowColor );
-		surface()->DrawFilledRect( x, y, x + width, y + barOfs );
+		surface()->DrawSetColor(lowColor);
+		surface()->DrawFilledRect(x, y, x + width, y + barOfs);
 
-		surface()->DrawSetColor( clr );
-		surface()->DrawFilledRect( x, y + barOfs, x + width, y + height );
+		surface()->DrawSetColor(clr);
+		surface()->DrawFilledRect(x, y + barOfs, x + width, y + height);
 	}
-	else if ( type == HUDPB_HORIZONTAL )
+	else if (type == HUDPB_HORIZONTAL)
 	{
 		int	barOfs = width * percentage;
 
-		surface()->DrawSetColor( lowColor );
-		surface()->DrawFilledRect( x, y, x + barOfs, y +  height );
+		surface()->DrawSetColor(lowColor);
+		surface()->DrawFilledRect(x, y, x + barOfs, y + height);
 
-		surface()->DrawSetColor( clr );
-		surface()->DrawFilledRect( x + barOfs, y, x + width, y + height );
+		surface()->DrawSetColor(clr);
+		surface()->DrawFilledRect(x + barOfs, y, x + width, y + height);
 	}
-	else if ( type == HUDPB_HORIZONTAL_INV )
+	else if (type == HUDPB_HORIZONTAL_INV)
 	{
 		int	barOfs = width * percentage;
 
-		surface()->DrawSetColor( clr );
-		surface()->DrawFilledRect( x, y, x + barOfs, y + height );
+		surface()->DrawSetColor(clr);
+		surface()->DrawFilledRect(x, y, x + barOfs, y + height);
 
-		surface()->DrawSetColor( lowColor );
-		surface()->DrawFilledRect( x + barOfs, y, x + width, y +  height );
+		surface()->DrawSetColor(lowColor);
+		surface()->DrawFilledRect(x + barOfs, y, x + width, y + height);
 	}
 }
 
@@ -164,46 +164,105 @@ void CHud::DrawProgressBar( int x, int y, int width, int height, float percentag
 //			clr - 
 //			type - 
 //-----------------------------------------------------------------------------
-void CHud::DrawIconProgressBar( int x, int y, CHudTexture *icon, CHudTexture *icon2, float percentage, Color& clr, int type )
+void CHud::DrawIconProgressBar(int x, int y, CHudTexture* icon, CHudTexture* icon2, float percentage, Color& clr, int type)
 {
-	if ( icon == NULL )
+	if (icon == NULL)
 		return;
 
 	//Clamp our percentage
-	percentage = MIN( 1.0f, percentage );
-	percentage = MAX( 0.0f, percentage );
+	percentage = MIN(1.0f, percentage);
+	percentage = MAX(0.0f, percentage);
 
 	int	height = icon->Height();
-	int	width  = icon->Width();
+	int	width = icon->Width();
 
 	//Draw a vertical progress bar
-	if ( type == HUDPB_VERTICAL )
+	if (type == HUDPB_VERTICAL)
 	{
 		int	barOfs = height * percentage;
 
-		icon2->DrawSelfCropped( 
+		icon2->DrawSelfCropped(
 			x, y,  // Pos
 			0, 0, width, barOfs, // Cropped subrect
-			clr );
+			clr);
 
-		icon->DrawSelfCropped( 
-			x, y + barOfs, 
+		icon->DrawSelfCropped(
+			x, y + barOfs,
 			0, barOfs, width, height - barOfs, // Cropped subrect
-			clr );
+			clr);
 	}
-	else if ( type == HUDPB_HORIZONTAL )
+	else if (type == HUDPB_HORIZONTAL)
 	{
 		int	barOfs = width * percentage;
 
-		icon2->DrawSelfCropped( 
+		icon2->DrawSelfCropped(
 			x, y,  // Pos
 			0, 0, barOfs, height, // Cropped subrect
-			clr );
+			clr);
 
-		icon->DrawSelfCropped( 
-			x + barOfs, y, 
+		icon->DrawSelfCropped(
+			x + barOfs, y,
 			barOfs, 0, width - barOfs, height, // Cropped subrect
-			clr );
+			clr);
+	}
+}
+
+void CHud::DrawIconProgressBar2ColorVanceSpecific(int x, int y, const char* fontName, wchar_t value, float percentage, Color& clr, Color& clr2, int type)
+{
+	if (fontName == NULL)
+		return;
+
+
+
+
+
+	//Clamp our percentage
+	percentage = MIN(1.0000f, percentage);
+	percentage = MAX(0.0000f, percentage);
+
+
+
+	vgui::HScheme scheme = vgui::scheme()->GetScheme("ClientScheme");
+	vgui::HFont hudFont = vgui::scheme()->GetIScheme(scheme)->GetFont(fontName, true);
+
+	int	height = surface()->GetFontTall(hudFont);
+	int	width = surface()->GetFontTall(hudFont);
+
+	int	barOfs = height * percentage;
+
+	//Draw a vertical progress bar
+	if (type == HUDPB_VERTICAL)
+	{
+		//int	barOfs = height * percentage;
+
+
+
+
+
+		DrawSelfCropped_VANCESpecific(
+			x, y,  // Pos
+			0, barOfs, width, barOfs, value, // Cropped subrect
+			clr2, hudFont);
+
+		DrawSelfCropped_VANCESpecific(
+			x, y,
+			0, 0, width, height - barOfs, value, // Cropped subrect
+			clr, hudFont);
+
+	}
+	else if (type == HUDPB_HORIZONTAL)
+	{
+		int	barOfs = width * percentage;
+
+		DrawSelfCropped_VANCESpecific(
+			x, y,  // Pos
+			0, 0, barOfs, height, value, clr, hudFont); // Cropped subrect
+
+
+		DrawSelfCropped_VANCESpecific(
+			x + barOfs, y,
+			barOfs, 0, width - barOfs, height, value, clr2, hudFont); // Cropped subrect
+
 	}
 }
 
