@@ -657,7 +657,6 @@ void CHudWeaponSelection::DrawBox(int x, int y, int wide, int tall, Color color,
 		surface()->DrawSetTextColor(Color(255, 95, 95, 255));
 		surface()->DrawSetTextPos((x - 3), (y - 2));
 
-		surface()->Draw
 		surface()->DrawUnicodeString(L"¢");
 
 		surface()->DrawSetTextColor(GetFgColor());

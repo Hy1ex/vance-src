@@ -78,16 +78,9 @@ void CHudAmmo::Init(void)
 
 	m_iconPrimaryAmmo = NULL;
 
+	//Since at this stage, we don't know if the weapon has two ammo digits, we just assume it does until we know otherwise.
 	m_VanceDivider = true;
 
-	//	if (tempString)
-	//{
-	//		SetLabelText(tempString);
-	//	}
-	//else
-	//{
-	//	SetLabelText(L"AMMO");
-	//	}
 }
 
 //-----------------------------------------------------------------------------
@@ -186,6 +179,8 @@ void CHudAmmo::UpdatePlayerAmmo(C_BasePlayer *player)
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence("WeaponChanged");
 		m_hCurrentActiveWeapon = wpn;
 	}
+	//After all this runs, set whether we should display the divider or not.
+	m_VanceDivider = m_hCurrentActiveWeapon->UsesClipsForAmmo1();
 }
 
 void CHudAmmo::UpdateVehicleAmmo(C_BasePlayer *player, IClientVehicle *pVehicle)
