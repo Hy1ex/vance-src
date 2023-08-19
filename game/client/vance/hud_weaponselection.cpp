@@ -188,6 +188,7 @@ private:
 
 DECLARE_HUDELEMENT(CHudWeaponSelection);
 
+CHudTexture *weaponSelector;
 bool isSelectedWeaponBox = false;
 using namespace vgui;
 
@@ -282,7 +283,7 @@ bool CHudWeaponSelection::ShouldDraw()
 void CHudWeaponSelection::LevelInit()
 {
 	CHudElement::LevelInit();
-
+	weaponSelector = gHUD.GetIcon( "weapon_selector" );
 	m_iSelectedWeaponBox = -1;
 	m_iSelectedSlideDir = 0;
 	m_pLastWeapon = NULL;
@@ -650,25 +651,12 @@ void CHudWeaponSelection::DrawBox(int x, int y, int wide, int tall, Color color,
 
 	if (isSelectedWeaponBox == true)
 	{
-
-		surface()->DrawSetTextFont(m_hLabelFont);
-
-
-		surface()->DrawSetTextColor(Color(255, 95, 95, 255));
-		surface()->DrawSetTextPos((x - 3), (y - 2));
-
-		surface()->DrawUnicodeString(L"¢");
-
-		surface()->DrawSetTextColor(GetFgColor());
-		surface()->DrawSetTextFont(m_hLabelGlowFont);
-		surface()->DrawSetTextPos(x, y);
-		surface()->DrawUnicodeString(L"¢");
-
-
-
-
-
-
+		//For some reason the source engine will initalize the things in VGUI classes even when their not in use, just 
+		//pointing them to nothing, so this prevents us from trying anything if it hasn't been "fully" initialized yet.
+		if ( weaponSelector )
+		{	
+			weaponSelector->DrawSelf(x, y, wide, tall, Color(255, 255, 255, 255));
+		}
 	}
 
 
