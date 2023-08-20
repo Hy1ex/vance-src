@@ -1235,11 +1235,14 @@ void CVancePlayer::UseStimOrTourniquet()
 	if ( m_bBleeding && m_iNumTourniquets > 0 )
 	{
 		UseTourniquet();
+		return;
 	}
-	else if ( m_iNumStims > 0 )
+	else if ( GetHealth() < GetMaxHealth() && m_iNumStims > 0 )
 	{
 		UseStim();
+		return;
 	}
+	m_bPlayUseDenySound = true;
 }
 
 void CVancePlayer::UseTourniquet()
