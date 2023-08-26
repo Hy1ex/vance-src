@@ -234,6 +234,8 @@ void C_VancePlayer::OverrideView(CViewSetup *pSetup)
 		m_flBobModelAmount = Approach(flGoalBobAmount, m_flBobModelAmount, gpGlobals->frametime * 5.0f);
 	}
 
+	/*
+
 	//fade out camera movement on movement anims so that we can do it programatically instead, giving us more consistent camera bob
 	//slightly lame hack but manimal doesnt want to update all the weapons to remove camera from movement anims so blame it on him
 	Activity aVMActivity = pViewModel->GetSequenceActivity(pViewModel->GetSequence());
@@ -244,7 +246,7 @@ void C_VancePlayer::OverrideView(CViewSetup *pSetup)
 	} else {
 		m_BobScaleForMovementAnims += gpGlobals->frametime / 0.2f;
 	}
-	m_BobScaleForMovementAnims = Clamp(m_BobScaleForMovementAnims, 0.0f, 1.0f);
+	m_BobScaleForMovementAnims = Clamp(m_BobScaleForMovementAnims, 0.0f, 1.0f); */
 
 	if (render->GetViewEntity() == entindex())
 	{
