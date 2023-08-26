@@ -144,6 +144,7 @@ static  kbutton_t   in_grenade1;
 static  kbutton_t   in_grenade2;
 static	kbutton_t	in_attack3;
 static  kbutton_t   in_throwgrenade;
+static kbutton_t in_gravgloves;
 kbutton_t	in_ducktoggle;
 
 /*
@@ -493,6 +494,9 @@ void IN_Attack3Down( const CCommand &args ) { KeyDown(&in_attack3, args[1] );}
 void IN_Attack3Up( const CCommand &args ) { KeyUp(&in_attack3, args[1] );}
 void IN_ThrowGrenadeDown( const CCommand &args ){KeyDown( &in_throwgrenade, args[1] );}
 void IN_ThrowGrenadeUp( const CCommand &args ) {KeyUp( &in_throwgrenade, args[1] );}
+void IN_GravGlovesUp( const CCommand &args ) { KeyUp( &in_gravgloves, args[1]);}
+void IN_GravGlovesDown(const CCommand &args) { KeyDown(&in_gravgloves, args[1]); }
+
 
 void IN_DuckToggle( const CCommand &args ) 
 { 
@@ -1473,6 +1477,7 @@ int CInput::GetButtonBits( int bResetState )
 	CalcButtonBits( bits, IN_GRENADE2, s_ClearInputState, &in_grenade2, bResetState );
 	CalcButtonBits( bits, IN_ATTACK3, s_ClearInputState, &in_attack3, bResetState );
 	CalcButtonBits( bits, IN_THROWGRENADE, s_ClearInputState, &in_throwgrenade, bResetState );
+	CalcButtonBits( bits, IN_GRAVGLOVES, s_ClearInputState, &in_gravgloves, bResetState );
 
 	if ( KeyState(&in_ducktoggle) )
 	{
@@ -1632,6 +1637,8 @@ static ConCommand startattack3("+attack3", IN_Attack3Down);
 static ConCommand endattack3("-attack3", IN_Attack3Up);
 static ConCommand startgrenadethrow( "+throwgrenade", IN_ThrowGrenadeDown );
 static ConCommand endgrenadethrow( "-throwgrenade", IN_ThrowGrenadeUp );
+static ConCommand startgravgloves("+gravgloves", IN_GravGlovesUp );
+static ConCommand endgravgloves("-gravgloves", IN_GravGlovesDown);
 
 #ifdef TF_CLIENT_DLL
 static ConCommand toggle_duck( "toggle_duck", IN_DuckToggle );
