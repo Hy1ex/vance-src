@@ -146,6 +146,7 @@ extern ConVar cl_crosshair_scale;
 
 void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera, QAngle angleCrosshairOffset )
 {
+
 	QAngle curViewAngles = CurrentViewAngles();
 	Vector curViewOrigin = CurrentViewOrigin();
 
@@ -161,16 +162,16 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 	bool bBehindCamera = false;
 
 	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
 	if ( ( pPlayer != NULL ) && ( pPlayer->GetObserverMode()==OBS_MODE_NONE ) )
 	{
 		bool bUseOffset = false;
 		
 		Vector vecStart;
 		Vector vecEnd;
-
 		if ( UseVR() 
 #ifdef VANCE
-		|| cl_crosshair_forceaimdirection.GetBool()
+			|| cl_crosshair_forceaimdirection.GetBool() && !(strcmp(pWeapon->GetSequenceName(pWeapon->GetSequence()), "idle01") == 0)
 #endif
 		)
 		{
