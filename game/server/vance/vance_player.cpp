@@ -160,9 +160,9 @@ static void Cmd_Damage( const CCommand &args )
 	}
 
 	CVancePlayer *pPlayer = static_cast<CVancePlayer *>( UTIL_GetCommandClient() );
-	if ( pPlayer )
+	if (pPlayer)
 	{
-		pPlayer->Damage( V_atoi( args.Arg( 1 ) ) );
+		pPlayer->Damage(V_atoi(args.Arg(1)));
 	}
 }
 ConCommand damage( "damage", Cmd_Damage, "Makes the executing Player take damage by a certain amount.", FCVAR_CHEAT );
@@ -193,6 +193,18 @@ static void Cmd_Holster(const CCommand &args)
 	}
 }
 ConCommand holster("holster", Cmd_Holster, "Holsters the players weapon", FCVAR_NONE);
+
+static void Cmd_Inspect(const CCommand &args)
+{
+	CVancePlayer *pPlayer = static_cast<CVancePlayer *>(UTIL_GetCommandClient());
+	if (pPlayer->CanSwitchViewmodelSequence()) {
+		CBaseVanceWeapon *pVanceWeapon = dynamic_cast<CBaseVanceWeapon *>(pPlayer->GetActiveWeapon());
+		if (pVanceWeapon) {
+			pVanceWeapon->SendWeaponAnim(ACT_VM_INSPECT);
+		}
+	}
+}
+ConCommand inspect("inspect", Cmd_Inspect, "plays inspect animation", FCVAR_NONE);
 
 static void Cmd_GiveSuit(const CCommand &args)
 {
@@ -1803,7 +1815,7 @@ void CVancePlayer::PostThink()
 		}
 
 		// Play a special animation for weapons when kicking
-		if (pWeapon && !pWeapon->m_bInReload )
+		if (pWeapon && CanSwitchViewmodelSequence())
 		{
 			pWeapon->SendWeaponAnim( ACT_VM_KICK );
 		}
@@ -2619,6 +2631,7 @@ void CVancePlayer::SlideTick()
 		m_ParkourAction = ParkourAction::None;
 		StopSound("AlyxPlayer.Slide_default_start");
 		EmitSound("AlyxPlayer.Slide_default_end");
+		UnforceButtons(IN_DUCK);
 	}
 }
 
@@ -2626,6 +2639,14 @@ void CVancePlayer::TrySlide()
 {
 	// i dont think sliding in vehicles even does anything but we shouldnt do it
 	if (IsInAVehicle())
+		return;
+
+	if (m_ParkourAction.Get() != ParkourAction::None) {
+		m_bSlideWaitingForCrouchDebounce = true;
+		return;
+	}
+
+	if (m_bSlideWaitingForCrouchDebounce)
 		return;
 
 	// dont slide in air
@@ -2652,7 +2673,7 @@ void CVancePlayer::TrySlide()
 	//we are sliding now
 
 	CBaseVanceWeapon *pWeapon = dynamic_cast<CBaseVanceWeapon *>(GetActiveWeapon());
-	if (pWeapon && !pWeapon->m_bInReload) {
+	if (pWeapon && CanSwitchViewmodelSequence()) {
 		int idealSequence = pWeapon->SelectWeightedSequence(ACT_VM_SLIDE);
 		if (idealSequence >= 0)
 		{
@@ -2666,7 +2687,9 @@ void CVancePlayer::TrySlide()
 	m_vecSlideDirection = EyeDirection2D();
 	SetAbsVelocity(GetAbsVelocity() + m_vecSlideDirection * vance_slide_addvelocity.GetFloat());
 	m_flSlideEndTime = gpGlobals->curtime + vance_slide_time.GetFloat();
+	m_bSlideWaitingForCrouchDebounce = true;
 	m_ParkourAction = ParkourAction::Slide;
+	ForceButtons(IN_DUCK);
 }
 
 void CVancePlayer::LedgeClimbTick()
@@ -2818,12 +2841,16 @@ void CVancePlayer::TryLedgeClimb()
 		if (pWeapon) {
 			pWeapon->AbortReload();
 			if (abs(m_vecClimbDesiredOrigin.z - m_vecClimbStartOrigin.z) > 56.0f) {
-				pWeapon->SendWeaponAnim(ACT_VM_CLIMB_HIGH);
+				Activity act = pWeapon->GetSequenceActivity(pWeapon->GetSequence());
+				if (!(act == ACT_VM_HOLSTER || act == ACT_VM_HOLSTER_EXTENDED))
+					pWeapon->SendWeaponAnim(ACT_VM_CLIMB_HIGH);
 				m_bBigClimb = true;
 				m_bVault = false;
 				m_bVaulting = false;
 			} else {
-				pWeapon->SendWeaponAnim(ACT_VM_CLIMB);
+				Activity act = pWeapon->GetSequenceActivity(pWeapon->GetSequence());
+				if (!(act == ACT_VM_HOLSTER || act == ACT_VM_HOLSTER_EXTENDED))
+					pWeapon->SendWeaponAnim(ACT_VM_CLIMB);
 				//if we are going pretty quick and not sliding we can vault instead of climbing
 				Vector pPosVel;
 				GetVelocity(&pPosVel, NULL);
@@ -2910,19 +2937,23 @@ void CVancePlayer::Think()
 		m_fSprintTime = 0.0f;
 	}
 
+	// If we're on the ground, sprinting, holding the duck key and not sliding already
+	if (m_bSlideWaitingForCrouchDebounce && !(m_nButtons & IN_DUCK)) {
+		m_bSlideWaitingForCrouchDebounce = false;
+	}
+	if ((m_nButtons & IN_SPEED) && (!m_Local.m_bDucked || !(GetFlags() & FL_ONGROUND)) && (m_nButtons & IN_DUCK))
+	{
+		TrySlide();
+	}
+	if ((m_nButtons & IN_SPEED) && m_fMidairSlideWindowTime >= gpGlobals->curtime)
+	{
+		TrySlide();
+	}
+
 	if (m_ParkourAction.Get() == ParkourAction::None)
 	{
-		// If we're on the ground, sprinting, holding the duck key and not sliding already
-		if ((m_nButtons & IN_SPEED) && (!m_Local.m_bDucked || !(GetFlags() & FL_ONGROUND)) && (m_nButtons & IN_DUCK))
-		{
-			TrySlide();
-		}
-		if ((m_nButtons & IN_SPEED) && m_fMidairSlideWindowTime >= gpGlobals->curtime)
-		{
-			TrySlide();
-		}
 		// Hold jump to climb, no special conditions required
-		else if (m_nButtons & IN_JUMP)
+		if (m_nButtons & IN_JUMP)
 		{
 			TryLedgeClimb();
 		}

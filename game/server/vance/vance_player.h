@@ -4,6 +4,7 @@
 #include "vance_shareddefs.h"
 #include "hl2_player.h"
 #include "singleplayer_animstate.h"
+#include "vance_viewmodel.h"
 
 #define P_PLAYER_ALYX	"models/player/alyx.mdl"
 #define P_PLAYER_HEV	"models/player/hev.mdl"
@@ -160,6 +161,11 @@ public:
 		return m_ParkourAction.Get() == ParkourAction::Slide;
 	}
 
+	bool IsClimbing()
+	{
+		return m_ParkourAction.Get() == ParkourAction::Climb;
+	}
+
 	Vector GetVaultCameraAdjustment(){
 		return m_vecVaultCameraAdjustment;
 	}
@@ -167,6 +173,19 @@ public:
 	bool IsVaulting()
 	{
 		return m_ParkourAction.Get() == ParkourAction::Climb && m_bVaulting;
+	}
+
+	bool CanSwitchViewmodelSequence() {
+		CVanceViewModel *pViewModel = (CVanceViewModel *)GetViewModel();
+		if (!pViewModel)
+			return false;
+		Activity act = pViewModel->GetSequenceActivity(pViewModel->GetSequence());
+		if (act == ACT_VM_HOLSTER || act == ACT_VM_HOLSTER_EXTENDED
+			|| act == ACT_VM_EXTEND || act == ACT_VM_RETRACT
+			|| pViewModel->IsPlayingReloadActivity()
+			|| act == ACT_VM_PRIMARYATTACK || act == ACT_VM_FIRE_EXTENDED)
+			return false;
+		return true;
 	}
 
 	CBaseCombatWeapon* m_UnarmedWeapon;
@@ -250,6 +269,7 @@ private:
 	bool		m_bAllowMidairSlide = true;
 	float		m_fNextSlideTime = 0.0f;
 	float		m_fSprintTime = 0.0f;
+	bool		m_bSlideWaitingForCrouchDebounce;
 
 	// vehicle
 	bool		m_bWasInAVehicle;

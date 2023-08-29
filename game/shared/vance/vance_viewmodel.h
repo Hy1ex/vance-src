@@ -91,6 +91,14 @@ public:
 
 	virtual bool			ShouldReceiveProjectedTextures(int flags) { return true; }
 
+	bool IsPlayingReloadActivity() {
+		Activity act = GetSequenceActivity(GetSequence());
+		if (act == ACT_VM_RELOAD || act == ACT_VM_RELOAD_EXTENDED
+			|| act == ACT_SHOTGUN_RELOAD_START || act == ACT_SHOTGUN_RELOAD_FINISH || act == ACT_SHOTGUN_PUMP)
+			return true;
+		return false;
+	}
+
 private:
 #if defined( CLIENT_DLL )
 	CVanceViewModel( const CVanceViewModel & ); // Not defined, not accessible.

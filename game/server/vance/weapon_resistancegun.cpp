@@ -399,6 +399,9 @@ bool CWeaponResistanceGun::SendWeaponAnim( int iActivity )
 			case ACT_VM_SLIDE:
 				iActivity = ACT_VM_SLIDE_EXTENDED;
 				break;
+			case ACT_VM_INSPECT:
+				iActivity = ACT_VM_INSPECT_EXTENDED;
+				break;
 		}
 	}
 

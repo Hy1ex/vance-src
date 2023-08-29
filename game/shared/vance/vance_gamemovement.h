@@ -43,6 +43,7 @@ protected:
 	bool			m_bWasInDuckJump = false;
 	Vector			m_vecVaultOffset = Vector(0, 0, 0);
 	float			m_fVaultOFfsetBlend = 0.0f;
+	bool			m_bWaitingForDuckDebounce = false;
 
 private:
 

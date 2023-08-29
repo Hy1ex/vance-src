@@ -47,6 +47,11 @@ public:
 		return m_ParkourAction == ParkourAction::Slide;
 	}
 
+	bool IsClimbing()
+	{
+		return m_ParkourAction == ParkourAction::Climb;
+	}
+
 	Vector GetVaultCameraAdjustment(){
 		return m_vecVaultCameraAdjustment;
 	}

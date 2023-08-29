@@ -77,7 +77,16 @@ void CVanceGameMovement::PlayerMove() //just using this as a think function lol
 	BaseClass::PlayerMove(); //very important
 	
 	//crouching logic
-	if (((player->m_Local.m_bDucked || player->m_Local.m_bDucking) && !(player->m_Local.m_bDucked && player->m_Local.m_bDucking) || (mv->m_nButtons & IN_DUCK) || (GetVancePlayer()->IsSliding() && (player->GetFlags() & FL_ONGROUND))) && !GetVancePlayer()->IsVaulting()) {
+
+	//if the player tries to duck during a climb it fucks shit up, so if the player is climbing and the player presses duck we not only have to ignore it, we have to ignore that duck input until its let go of
+	if (m_bWaitingForDuckDebounce && !(mv->m_nButtons & IN_DUCK)) {
+		m_bWaitingForDuckDebounce = false;
+	} else if ((mv->m_nButtons & IN_DUCK) && GetVancePlayer()->IsClimbing()) {
+		m_bWaitingForDuckDebounce = true;
+	}
+
+	//figure out duck fraction and if we are actually crouching or not
+	if (((player->m_Local.m_bDucked || player->m_Local.m_bDucking) && !(player->m_Local.m_bDucked && player->m_Local.m_bDucking) || (mv->m_nButtons & IN_DUCK) || (GetVancePlayer()->IsSliding() && (player->GetFlags() & FL_ONGROUND))) && !m_bWaitingForDuckDebounce && !GetVancePlayer()->IsVaulting()) {
 		if (!(player->GetFlags() & FL_ONGROUND)){
 			m_fDuckFraction = 1.0f;
 		} else if (GetVancePlayer()->IsSliding()) {
