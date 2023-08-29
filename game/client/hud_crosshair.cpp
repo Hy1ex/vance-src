@@ -9,6 +9,7 @@
 #include "hud.h"
 #include "hud_crosshair.h"
 #include "iclientmode.h"
+#include "vance_viewmodel.h"
 #include "view.h"
 #include "vgui_controls/Controls.h"
 #include "vgui/ISurface.h"
@@ -169,12 +170,15 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 		
 		Vector vecStart;
 		Vector vecEnd;
-		if ( UseVR() 
+
+		if (UseVR()
 #ifdef VANCE
-			|| cl_crosshair_forceaimdirection.GetBool() && !(strcmp(pWeapon->GetSequenceName(pWeapon->GetSequence()), "idle01") == 0)
+			|| cl_crosshair_forceaimdirection.GetBool() && pWeapon->GetSequenceActivity(pWeapon->GetSequence()) != ACT_VM_IDLE
 #endif
 		)
 		{
+
+			
 			// These are the correct values to use, but they lag the high-speed view data...
 #ifdef VANCE
 			vecStart = MainViewOrigin();
