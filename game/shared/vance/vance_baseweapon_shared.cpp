@@ -500,7 +500,6 @@ void CVanceMachineGun::PrimaryAttack(void)
 	}
 
 	SendWeaponAnim(GetPrimaryAttackActivity());
-	pPlayer->SetAnimation(PLAYER_ATTACK1);
 
 	// Register a muzzleflash for the AI
 	pPlayer->SetMuzzleFlashTime(gpGlobals->curtime + 0.5);

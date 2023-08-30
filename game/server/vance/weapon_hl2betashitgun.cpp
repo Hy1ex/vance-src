@@ -456,8 +456,6 @@ void CWeaponShitgun::PrimaryAttack( void )
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
-	// player "shoot" animation
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
 	// Don't fire again until fire animation has completed
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
